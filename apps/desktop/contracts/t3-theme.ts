@@ -32,7 +32,7 @@ export const t3ThemeTokens: Readonly<Record<ResolvedTheme, ThemeTokens>> = {
     "--code-border": "#e4e4e7",
     "--sidebar-row-active": "#ffffff",
     "--sidebar-row-hover": "#fcfcfc",
-    "--composer-surface": "#fcfcfc",
+    "--composer-surface": "#ffffff",
   },
   dark: {
     "--window": "#0a0a0a",

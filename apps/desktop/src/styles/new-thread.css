@@ -1,26 +1,26 @@
-/* =============================================================================
- * New-thread empty state — the composer is the hero.
- * Extracted from main.css; hero scale dialed back from marketing-size to a
- * restrained, Codex-like empty state.
- * ========================================================================== */
-
-.canvas--new-thread {
-  display: grid;
+/* Adapted from T3 Code ChatView's draft composer lane and DraftHeroHeadline.
+ * Keep the composer at the center; the headline sits above it. MIT attribution
+ * is included in the packaged third-party notices. */
+.canvas.canvas--new-thread {
+  display: flex;
   align-items: center;
-  padding: 24px 32px 80px;
+  padding: 24px 32px;
 }
 
 .new-thread {
-  width: 100%;
-  display: grid;
-  gap: 32px;
+  position: relative;
+  width: min(var(--chat-max-width), 100%);
   margin: auto;
 }
 
 .new-thread__hero {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 100%;
   display: grid;
   justify-items: center;
   gap: 8px;
+  padding-bottom: 32px;
   text-align: center;
 }
 
@@ -233,8 +233,8 @@
 }
 
 @media (max-width: 760px) {
-  .canvas--new-thread {
-    padding: 24px 16px 48px;
+  .canvas.canvas--new-thread {
+    padding: 24px 16px;
   }
   .new-thread__hero h1 {
     font-size: 22px;

@@ -522,9 +522,12 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     if (!snapshot) {
       return;
     }
+    const emptyWorkspace =
+      snapshot.activeView === "threads" && selectedWorkspace && !snapshot.selectedSessionId;
+    const activeView = emptyWorkspace ? "new-thread" : snapshot.activeView;
     if (
-      snapshot.activeView === "new-thread" &&
-      previousActiveViewRef.current !== "new-thread" &&
+      activeView === "new-thread" &&
+      (previousActiveViewRef.current !== "new-thread" || emptyWorkspace) &&
       !openedInAppRef.current
     ) {
       const nextRootWorkspaceId = resolveRepoWorkspaceId(
@@ -535,8 +538,8 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
         setRootWorkspaceId(nextRootWorkspaceId);
       }
     }
-    if (snapshot.activeView === "new-thread") openedInAppRef.current = false;
-    previousActiveViewRef.current = snapshot.activeView;
+    if (activeView === "new-thread") openedInAppRef.current = false;
+    previousActiveViewRef.current = activeView;
   }, [selectedWorkspace?.id, snapshot]);
 
   return useMemo(

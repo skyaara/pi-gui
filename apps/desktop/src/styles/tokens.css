@@ -12,7 +12,7 @@
 
 :root {
   /* T3 Code desktop geometry; see third-party/t3-code-LICENSE. */
-  --chat-max-width: 768px;
+  --chat-max-width: 46rem;
   --shadow-composer: 0 12px 28px -18px rgb(0 0 0 / 40%);
   /* ---- Spacing (4px base) ------------------------------------------------ */
   --space-0-5: 2px;

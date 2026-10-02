@@ -1088,7 +1088,8 @@ export default function App() {
               onCreateWithPi={handleCreateScheduledTaskWithPi}
               onOpenEditor={setScheduledEditor}
             />
-          ) : snapshot.activeView === "new-thread" ? (
+          ) : snapshot.activeView === "new-thread" ||
+            (snapshot.activeView === "threads" && selectedWorkspace && !selectedSession) ? (
             rootWorkspaceOptions.length > 0 ? (
               <NewThreadView
                 workspaces={rootWorkspaceOptions}
@@ -1308,26 +1309,6 @@ export default function App() {
                 />
               ) : null}
             </>
-          ) : selectedWorkspace ? (
-            <section className="canvas canvas--empty">
-              <div className="empty-panel">
-                <h1>{selectedWorkspace.name}</h1>
-                <p>Create a thread for this folder, then jump between sessions from the sidebar.</p>
-                <div className="empty-panel__actions">
-                  <button
-                    className="button button--primary"
-                    type="button"
-                    onClick={() =>
-                      newThread.openSurface(
-                        selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id,
-                      )
-                    }
-                  >
-                    New thread
-                  </button>
-                </div>
-              </div>
-            </section>
           ) : (
             <WorkspaceWelcome {...welcomeProps} />
           )}

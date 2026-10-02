@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import {
   desktopShortcut,
   getDesktopState,
@@ -12,6 +12,52 @@ import {
   pasteTinyPng,
   seedAgentDir,
 } from "../helpers/electron-app";
+
+test("empty projects open the composer on startup, folder selection, and restart", async () => {
+  const userDataDir = await makeUserDataDir();
+  const agentDir = join(userDataDir, "agent");
+  const firstWorkspace = await makeWorkspace("composer-landing-first");
+  const secondWorkspace = await makeWorkspace("composer-landing-second");
+  await seedAgentDir(agentDir);
+  let harness = await launchDesktop(userDataDir, {
+    agentDir,
+    initialWorkspaces: [firstWorkspace, secondWorkspace],
+    testMode: "background",
+  });
+  try {
+    let window = await harness.firstWindow();
+    const composer = window.getByTestId("new-thread-composer");
+    await expect(composer).toBeVisible();
+    await expect(window.getByText("Create a thread for this folder", { exact: false })).toHaveCount(
+      0,
+    );
+    await window
+      .locator(".sidebar")
+      .getByRole("button", { name: basename(secondWorkspace), exact: true })
+      .click();
+    await expect(
+      window.getByRole("button", { name: `Workspace: ${basename(secondWorkspace)}`, exact: true }),
+    ).toBeVisible();
+    await expect(composer).toBeVisible();
+    const geometry = await window.locator(".new-thread__composer").boundingBox();
+    const canvas = await window.locator(".canvas--new-thread").boundingBox();
+    expect(geometry).not.toBeNull();
+    expect(canvas).not.toBeNull();
+    expect(
+      Math.abs(geometry!.y + geometry!.height / 2 - (canvas!.y + canvas!.height / 2)),
+    ).toBeLessThan(4);
+    await window.screenshot({ path: test.info().outputPath("empty-project-composer.png") });
+    await harness.close();
+    harness = await launchDesktop(userDataDir, { agentDir, testMode: "background" });
+    window = await harness.firstWindow();
+    await expect(window.getByTestId("new-thread-composer")).toBeVisible();
+    await expect(
+      window.getByRole("button", { name: `Workspace: ${basename(secondWorkspace)}`, exact: true }),
+    ).toBeVisible();
+  } finally {
+    await harness.close();
+  }
+});
 
 test("new thread reuses composer behaviors for slash commands, image previews, and project selection", async () => {
   test.setTimeout(60_000);
