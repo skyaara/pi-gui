@@ -238,9 +238,9 @@ async function expectSameDesign(window: Page): Promise<void> {
     [".main", "background-color", "var(--main)"],
     [".sidebar", "background-color", "var(--sidebar)"],
     [".topbar", "background-color", "var(--main)"],
-    [".sidebar__new", "background-color", "var(--surface)"],
-    [".session-row--active", "background-color", "var(--surface)"],
-    [".composer__surface", "background-color", "var(--surface)"],
+    [".sidebar__new", "background-color", "transparent"],
+    [".session-row--active", "background-color", "var(--sidebar-row-active)"],
+    [".composer__surface", "background-color", "var(--composer-surface)"],
     [".message__content pre", "background-color", "var(--code-block-bg)"],
   ];
   for (const [selector, property, token] of surfaces) {

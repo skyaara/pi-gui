@@ -1004,6 +1004,7 @@ export default function App() {
               workspaceId ?? selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id,
             )
           }
+          onSearchThreads={() => commands.setPaletteMode("commands")}
           onSetActiveView={setActiveView}
           onOpenSkills={openSkills}
           onOpenExtensions={openExtensions}
@@ -1027,6 +1028,7 @@ export default function App() {
           selectedWorkspace={selectedWorkspace}
           selectedWorktree={selectedWorktree}
           api={api}
+          tools={sidePanelAvailable ? workbench : undefined}
           panelAvailable={sidePanelAvailable}
           panelVisible={sidePanelVisible}
           onTogglePanel={commands.toggleSidePanel}

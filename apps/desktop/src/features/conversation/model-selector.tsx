@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { ChevronDownIcon } from "../../ui/icons";
+import { CheckIcon, ChevronDownIcon, ModelIcon, SearchIcon } from "../../ui/icons";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
   buildModelOptions,
@@ -7,6 +7,8 @@ import {
   THINKING_OPTIONS,
   type ComposerModelOption,
 } from "./composer-commands";
+
+import { ProviderIcon } from "../../ui/provider-icon";
 
 interface ModelSelectorProps {
   readonly runtime: RuntimeSnapshot | undefined;
@@ -43,6 +45,8 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const [open, setOpen] = useState<OpenDropdown>("none");
   const [modelFilter, setModelFilter] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string | undefined>();
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -59,13 +63,27 @@ export function ModelSelector({
     );
   }, [modelOptions, modelFilter]);
 
-  const groupedModels = useMemo(() => groupByProvider(filteredModels), [filteredModels]);
+  const providers = useMemo(() => groupByProvider(modelOptions), [modelOptions]);
+  const groupedModels = useMemo(
+    () =>
+      groupByProvider(
+        filteredModels.filter(
+          (option) => !selectedProvider || option.providerId === selectedProvider,
+        ),
+      ),
+    [filteredModels, selectedProvider],
+  );
+  const activeModel = runtime?.models.find(
+    (model) => model.providerId === provider && model.modelId === modelId,
+  );
+  const providerLabel = (id: string) =>
+    runtime?.providers.find((entry) => entry.id === id)?.name ?? id;
   const hasAvailableModelOptions = modelOptions.length > 0;
   const hasModelControl = Boolean(provider && modelId) || hasAvailableModelOptions;
   const shouldRenderModelControl = hasModelControl || showEmptyModelControl;
   const modelBadgeLabel =
     provider && modelId
-      ? `${provider}:${modelId}`
+      ? (activeModel?.label ?? modelId)
       : hasAvailableModelOptions
         ? unselectedModelLabel
         : emptyModelLabel;
@@ -75,6 +93,7 @@ export function ModelSelector({
   useEffect(() => {
     if (open === "none") {
       setModelFilter("");
+      setSelectedProvider(undefined);
       return undefined;
     }
 
@@ -110,7 +129,7 @@ export function ModelSelector({
         dropdownPlacement === "below"
           ? below >= 220 || below > above
           : above < 220 && below > above;
-      const width = Math.min(360, window.innerWidth - 24);
+      const width = Math.min(open === "model" ? 380 : 300, window.innerWidth - 24);
       setDropdownStyle({
         position: "fixed",
         width,
@@ -118,7 +137,7 @@ export function ModelSelector({
         left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
         top: placeBelow ? rect.bottom + 6 : undefined,
         bottom: placeBelow ? "auto" : window.innerHeight - rect.top + 6,
-        maxHeight: Math.max(80, Math.min(360, placeBelow ? below : above)),
+        maxHeight: Math.max(80, Math.min(380, placeBelow ? below : above)),
         margin: 0,
         zIndex: 200,
       });
@@ -171,14 +190,17 @@ export function ModelSelector({
             className="model-selector__badge"
             type="button"
             disabled={disabled}
+            aria-label={provider && modelId ? `${provider}:${modelId}` : modelBadgeLabel}
             aria-expanded={open === "model"}
             aria-haspopup="dialog"
+            title={provider && modelId ? `${provider}:${modelId}` : undefined}
             onClick={(event) => {
               triggerRef.current = event.currentTarget;
               setOpen(open === "model" ? "none" : "model");
             }}
           >
-            {modelBadgeLabel}
+            <ProviderIcon provider={provider} />
+            <span className="model-selector__current-label">{modelBadgeLabel}</span>
             <ChevronDownIcon />
           </button>
           {open === "model" ? (
@@ -189,53 +211,102 @@ export function ModelSelector({
               style={dropdownStyle}
               onWheel={(event) => event.stopPropagation()}
             >
-              {selectionHint ? <div className="model-selector__empty">{selectionHint}</div> : null}
-              <div className="model-selector__filter">
-                <input
-                  className="model-selector__filter-input"
-                  placeholder="Filter models..."
-                  value={modelFilter}
-                  onChange={(e) => setModelFilter(e.target.value)}
-                  autoFocus
-                />
-              </div>
-              {groupedModels.map((group) => (
-                <div key={group.provider}>
-                  <div className="model-selector__group-title">{group.provider}</div>
-                  {group.items.map((option) => {
-                    const isActive = option.providerId === provider && option.modelId === modelId;
-                    return (
-                      <button
-                        className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
-                        key={`${option.providerId}:${option.modelId}`}
-                        type="button"
-                        onClick={() => {
-                          if (!isActive) {
-                            onSetModel(option.providerId, option.modelId);
-                          }
-                          setOpen("none");
-                          triggerRef.current?.focus();
-                        }}
-                      >
-                        <span className="model-selector__item-label">{option.label}</span>
-                        {isActive ? (
-                          <span className="model-selector__item-meta">active</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-              {groupedModels.length === 0 ? (
-                <>
-                  <div className="model-selector__group-title">
-                    {noMatchingModels ? "No matching models" : emptyModelTitle}
+              <div className="model-selector__layout">
+                <nav className="model-selector__providers" aria-label="Model providers">
+                  <button
+                    type="button"
+                    className="model-selector__provider"
+                    aria-label="All providers"
+                    aria-pressed={!selectedProvider}
+                    title="All providers"
+                    onClick={() => {
+                      setSelectedProvider(undefined);
+                      searchRef.current?.focus();
+                    }}
+                  >
+                    <ModelIcon />
+                  </button>
+                  {providers.map((group) => (
+                    <button
+                      key={group.provider}
+                      type="button"
+                      className="model-selector__provider"
+                      aria-label={providerLabel(group.provider)}
+                      aria-pressed={selectedProvider === group.provider}
+                      title={providerLabel(group.provider)}
+                      onClick={() => {
+                        setSelectedProvider(group.provider);
+                        searchRef.current?.focus();
+                      }}
+                    >
+                      <ProviderIcon provider={group.provider} />
+                    </button>
+                  ))}
+                </nav>
+                <div className="model-selector__content">
+                  <div className="model-selector__filter">
+                    <SearchIcon />
+                    <input
+                      ref={searchRef}
+                      className="model-selector__filter-input"
+                      aria-label="Search models"
+                      placeholder="Search models..."
+                      value={modelFilter}
+                      onChange={(event) => setModelFilter(event.target.value)}
+                      autoFocus
+                    />
                   </div>
-                  {noMatchingModels ? (
-                    <div className="model-selector__empty">Try a different filter.</div>
-                  ) : null}
-                </>
-              ) : null}
+                  <div className="model-selector__results">
+                    {groupedModels.map((group) => (
+                      <div key={group.provider}>
+                        <div className="model-selector__group-title">
+                          {providerLabel(group.provider)}
+                        </div>
+                        {group.items.map((option) => {
+                          const isActive =
+                            option.providerId === provider && option.modelId === modelId;
+                          const model = runtime?.models.find(
+                            (entry) =>
+                              entry.providerId === option.providerId &&
+                              entry.modelId === option.modelId,
+                          );
+                          return (
+                            <button
+                              className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
+                              key={`${option.providerId}:${option.modelId}`}
+                              type="button"
+                              aria-pressed={isActive}
+                              onClick={() => {
+                                if (!isActive) onSetModel(option.providerId, option.modelId);
+                                setOpen("none");
+                                triggerRef.current?.focus();
+                              }}
+                            >
+                              <span className="model-selector__item-copy">
+                                <span className="model-selector__item-label">
+                                  {model?.label ?? option.modelId}
+                                </span>
+                                <span className="model-selector__item-meta">{option.modelId}</span>
+                              </span>
+                              {isActive ? <CheckIcon /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ))}
+                    {groupedModels.length === 0 ? (
+                      <div className="model-selector__empty">
+                        {noMatchingModels
+                          ? "No matching models. Try a different search or provider."
+                          : emptyModelTitle}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="model-selector__help">
+                    {selectionHint ?? "↑ ↓ navigate · Enter select · Esc close"}
+                  </div>
+                </div>
+              </div>
             </div>
           ) : null}
         </span>
@@ -253,6 +324,7 @@ export function ModelSelector({
             }}
           >
             {thinkingLevel}
+            <ChevronDownIcon />
           </button>
           {open === "thinking" ? (
             <div
@@ -275,6 +347,7 @@ export function ModelSelector({
                         onSetThinking(option.value);
                       }
                       setOpen("none");
+                      triggerRef.current?.focus();
                     }}
                   >
                     <span className="model-selector__item-label">{option.label}</span>

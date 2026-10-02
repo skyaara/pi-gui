@@ -30,6 +30,7 @@ export function TerminalPanel({ workspace, sessionId, onHide }: TerminalPanelPro
   const terminalRef = useRef<Terminal | null>(null);
   const activeTerminalIdRef = useRef("");
   const mountedRef = useRef(false);
+  const startupFocusRef = useRef<Element | null>(null);
   const lastSizeRef = useRef<TerminalSize>({ cols: 80, rows: 24 });
   const [panel, setPanel] = useState<TerminalPanelSnapshot | null>(null);
   const [error, setError] = useState<string>("");
@@ -57,6 +58,7 @@ export function TerminalPanel({ workspace, sessionId, onHide }: TerminalPanelPro
       return;
     }
     try {
+      startupFocusRef.current = document.activeElement;
       const nextPanel = await api.ensureTerminalPanel(workspace.id, sessionId, lastSizeRef.current);
       setPanel(nextPanel);
       setError("");
@@ -300,7 +302,16 @@ export function TerminalPanel({ workspace, sessionId, onHide }: TerminalPanelPro
     if (activeSession.replay) {
       terminal.write(activeSession.replay);
     }
-    terminal.focus();
+    // Shell startup is asynchronous. Preserve a user's move into the composer
+    // (or another control) while the terminal was being prepared.
+    const focused = document.activeElement;
+    if (
+      focused === document.body ||
+      focused === startupFocusRef.current ||
+      panelRef.current?.contains(focused)
+    ) {
+      terminal.focus();
+    }
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
     window.requestAnimationFrame(fitAndResize);

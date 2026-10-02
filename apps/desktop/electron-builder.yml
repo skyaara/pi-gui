@@ -24,6 +24,8 @@ files:
       - "**/*"
 
 extraResources:
+  - from: ../../third-party/t3-code-LICENSE
+    to: licenses/t3-code-LICENSE
   - from: resources/icon.png
     to: icon.png
 

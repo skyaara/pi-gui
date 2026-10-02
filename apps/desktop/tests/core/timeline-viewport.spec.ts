@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { join } from "node:path";
 import {
   launchDesktop,
   emitTestSessionEvent,
@@ -11,7 +12,45 @@ import {
   scrollTimelineAwayFromBottom,
   getTimelineScrollMetrics,
   desktopShortcut,
+  seedAgentDir,
+  seedToolResultTreeSessionFixture,
+  selectSession,
+  waitForTimelineLayout,
 } from "../helpers/electron-app";
+
+test("expanded tool output leaves the following response below it in both themes", async ({}, testInfo) => {
+  const profile = await makeUserDataDir();
+  const agentDir = join(profile, "agent");
+  const workspace = await makeWorkspace("tool-layout");
+  await seedAgentDir(agentDir);
+  const fixture = await seedToolResultTreeSessionFixture(agentDir, workspace);
+  const h = await launchDesktop(profile, {
+    agentDir,
+    initialWorkspaces: [workspace],
+    testMode: "background",
+  });
+  try {
+    const p = await h.firstWindow();
+    await selectSession(p, fixture.title);
+    const tool = p.locator(".timeline-tool").first();
+    for (const theme of ["Dark", "Light"]) {
+      await p.getByRole("button", { name: "Settings", exact: true }).click();
+      await p.getByRole("button", { name: "Appearance", exact: true }).click();
+      await p.getByRole("radio", { name: theme, exact: true }).click();
+      await p.getByRole("button", { name: "Back to app", exact: true }).click();
+      await waitForTimelineLayout(p);
+      await tool.locator(".timeline-tool__header").click();
+      await expect(tool.locator(".timeline-tool__body")).toBeVisible();
+      await waitForTimelineLayout(p);
+      const body = await tool.boundingBox();
+      const response = await p.locator(".timeline-item--assistant").last().boundingBox();
+      expect(response!.y).toBeGreaterThanOrEqual(body!.y + body!.height);
+      await p.screenshot({ path: testInfo.outputPath(`tool-expanded-${theme.toLowerCase()}.png`) });
+    }
+  } finally {
+    await h.close();
+  }
+});
 
 test("long messages stay windowed and wheel scrolling preserves the visible row during streaming", async () => {
   test.setTimeout(90000);

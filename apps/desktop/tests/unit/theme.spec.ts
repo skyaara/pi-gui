@@ -44,23 +44,18 @@ test("every preset keeps text readable in both variants", () => {
   }
 });
 
-test("the Default seed reproduces the hand-tuned Default palette", () => {
+test("Default uses the T3 Code palette in both appearances", () => {
   const light = themeTokensFor("default", "light");
-  expect(light["--main"]).toBe("#ffffff");
+  expect(light["--main"]).toBe("#fcfcfc");
   expect(light["--surface"]).toBe("#ffffff");
-  expect(light["--text-strong"]).toBe("#282825");
-  expect(light["--button-primary-bg"]).toBe("#282825");
+  expect(light["--text-strong"]).toBe("#27272a");
+  expect(light["--button-primary-bg"]).toBe("#1b4ed8");
+  expect(light["--sidebar"]).toBe("#fafafa");
   const dark = themeTokensFor("default", "dark");
-  expect(dark["--main"]).toBe("#1d1d1c");
-  expect(dark["--text-strong"]).toBe("#eeeeea");
-  // Former hand-typed values, within a few steps per channel (the old lines
-  // carried a slight warm cast that a straight ink blend does not).
-  expectClose(light["--sidebar"]!, "#f6f6f4");
-  expectClose(light["--line"]!, "#e4e4df");
-  expectClose(light["--text"]!, "#41413d");
-  expectClose(dark["--sidebar"]!, "#181818");
-  expectClose(dark["--surface"]!, "#222221");
-  expectClose(dark["--line"]!, "#343432");
+  expect(dark["--main"]).toBe("#0a0a0a");
+  expect(dark["--text-strong"]).toBe("#f5f5f5");
+  expect(dark["--sidebar"]).toBe("#000000");
+  expect(dark["--surface"]).toBe("#111111");
 });
 
 test("presets derive every token, so no preset can inherit another's greys", () => {
@@ -132,14 +127,4 @@ function sourceFiles(dir: string): string[] {
         ? [join(dir, entry.name)]
         : [],
   );
-}
-
-function expectClose(actual: string, expected: string): void {
-  const channels = (hex: string) =>
-    [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16));
-  const a = channels(actual);
-  const b = channels(expected);
-  for (const index of [0, 1, 2]) {
-    expect(Math.abs(a[index]! - b[index]!), `${actual} vs ${expected}`).toBeLessThanOrEqual(6);
-  }
 }

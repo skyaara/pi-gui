@@ -49,6 +49,8 @@ import {
   CustomizeSidebarIcon,
   ExtensionIcon,
   FolderIcon,
+  SearchIcon,
+  PencilIcon,
   PinIcon,
   PlusIcon,
   RestoreIcon,
@@ -96,6 +98,7 @@ interface SidebarProps {
     setSnapshot: Dispatch<SetStateAction<DesktopAppState | null>>,
     action: () => Promise<DesktopAppState>,
   ) => Promise<DesktopAppState>;
+  readonly onSearchThreads: () => void;
   readonly onNewThread: (workspaceId?: string) => void;
   readonly onSetActiveView: (view: AppView) => void;
   readonly onOpenSkills: (workspaceId?: string) => void;
@@ -149,6 +152,7 @@ export function Sidebar(props: SidebarProps) {
     setSnapshot,
     updateSnapshot,
     onNewThread,
+    onSearchThreads,
     onSetActiveView,
     onOpenSkills,
     onOpenExtensions,
@@ -411,52 +415,20 @@ export function Sidebar(props: SidebarProps) {
         onReset={() => setSidebarWidth(undefined)}
       />
       <div className="sidebar__top">
-        <button className="sidebar__new" type="button" onClick={() => onNewThread()}>
-          <PlusIcon />
-          <span>New thread</span>
-        </button>
-
-        <div className="sidebar__nav">
-          <button
-            className={`sidebar__nav-item ${activeView === "threads" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "threads" ? "page" : undefined}
-            type="button"
-            onClick={() => onSetActiveView("threads")}
-          >
-            <FolderIcon />
-            <span>Threads</span>
+        <div className="sidebar__brand">piui</div>
+        <div className="sidebar__toolbar">
+          <button className="sidebar__search" type="button" onClick={onSearchThreads}>
+            <SearchIcon />
+            <span>Search</span>
           </button>
           <button
-            className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "scheduled" ? "page" : undefined}
+            className="sidebar__new"
             type="button"
-            data-testid="sidebar-scheduled"
-            onClick={() => onSetActiveView("scheduled")}
+            aria-label="New thread"
+            title="New thread"
+            onClick={() => onNewThread()}
           >
-            <ClockIcon />
-            <span>Scheduled</span>
-          </button>
-          <button
-            className={`sidebar__nav-item ${activeView === "skills" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "skills" ? "page" : undefined}
-            type="button"
-            onClick={() =>
-              onOpenSkills(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
-            }
-          >
-            <SkillIcon />
-            <span>Skills</span>
-          </button>
-          <button
-            className={`sidebar__nav-item ${activeView === "extensions" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "extensions" ? "page" : undefined}
-            type="button"
-            onClick={() =>
-              onOpenExtensions(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
-            }
-          >
-            <ExtensionIcon />
-            <span>Extensions</span>
+            <PencilIcon />
           </button>
         </div>
       </div>
@@ -661,6 +633,7 @@ export function Sidebar(props: SidebarProps) {
       ) : null}
       <div className="sidebar__footer">
         <button
+          title="Settings"
           className="sidebar__nav-item"
           type="button"
           onClick={() =>
@@ -670,6 +643,53 @@ export function Sidebar(props: SidebarProps) {
           <SettingsIcon />
           <span>Settings</span>
         </button>
+        <div className="sidebar__nav">
+          <button
+            title="Threads"
+            className={`sidebar__nav-item ${activeView === "threads" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "threads" ? "page" : undefined}
+            type="button"
+            onClick={() => onSetActiveView("threads")}
+          >
+            <FolderIcon />
+            <span>Threads</span>
+          </button>
+          <button
+            title="Scheduled"
+            className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "scheduled" ? "page" : undefined}
+            type="button"
+            data-testid="sidebar-scheduled"
+            onClick={() => onSetActiveView("scheduled")}
+          >
+            <ClockIcon />
+            <span>Scheduled</span>
+          </button>
+          <button
+            title="Skills"
+            className={`sidebar__nav-item ${activeView === "skills" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "skills" ? "page" : undefined}
+            type="button"
+            onClick={() =>
+              onOpenSkills(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
+            }
+          >
+            <SkillIcon />
+            <span>Skills</span>
+          </button>
+          <button
+            title="Extensions"
+            className={`sidebar__nav-item ${activeView === "extensions" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "extensions" ? "page" : undefined}
+            type="button"
+            onClick={() =>
+              onOpenExtensions(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
+            }
+          >
+            <ExtensionIcon />
+            <span>Extensions</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

@@ -1766,7 +1766,7 @@ export async function openNewThread(window: Page): Promise<void> {
     return;
   }
   const button = window
-    .locator(".sidebar")
+    .locator(".sidebar__toolbar")
     .getByRole("button", { name: "New thread", exact: true });
   await expect(button).toBeVisible({ timeout: 15_000 });
   await expect(button).toBeEnabled({ timeout: 15_000 });
@@ -1798,11 +1798,9 @@ export async function startThreadFromSurface(
       .filter({ has: window.getByText(workspaceName, { exact: true }) })
       .click();
   }
-  if (environment === "worktree") {
-    await window.getByRole("button", { name: "Worktree", exact: true }).click();
-  } else {
-    await window.getByRole("button", { name: "Local", exact: true }).click();
-  }
+  await window
+    .getByRole("combobox", { name: "Workspace mode", exact: true })
+    .selectOption(environment);
   const startButton = window.getByRole("button", { name: "Start thread" });
   if (prompt) {
     await window.getByLabel("New thread prompt").fill(prompt);

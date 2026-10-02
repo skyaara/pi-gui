@@ -1,3 +1,4 @@
+import { t3ThemeTokens } from "./t3-theme";
 import type { ThemePresetId } from "./desktop-state";
 
 /*
@@ -60,14 +61,14 @@ export const themePresets: readonly ThemePreset[] = [
   {
     id: "default",
     name: "Default",
-    description: "The pi-gui palette.",
+    description: "T3 Code’s neutral desktop palette.",
     variants: {
       light: {
-        seed: seed("#ffffff", "#282825", "#526795", "#2ea043", "#c45666", "#d97706"),
+        seed: seed("#fcfcfc", "#27272a", "#1b4ed8", "#2ea043", "#c45666", "#d97706"),
         syntaxTheme: "github-light-default",
       },
       dark: {
-        seed: seed("#1d1d1c", "#eeeeea", "#9aaed8", "#40c977", "#e05467", "#d97706"),
+        seed: seed("#0a0a0a", "#f5f5f5", "#346bf1", "#40c977", "#e05467", "#d97706"),
         syntaxTheme: "github-dark-default",
       },
     },
@@ -227,6 +228,9 @@ export function deriveThemeTokens(seedValue: ThemeSeed, variant: ResolvedTheme):
     "--sidebar": sidebar,
     "--sidebar-glass": alpha(sidebar, 0.7),
     "--main": main,
+    "--sidebar-row-active": surfaceMuted,
+    "--sidebar-row-hover": elevated,
+    "--composer-surface": elevated,
     "--main-glass": alpha(main, 0.6),
     "--surface": elevated,
     "--surface-glass": alpha(elevated, 0.8),
@@ -288,7 +292,8 @@ export function deriveThemeTokens(seedValue: ThemeSeed, variant: ResolvedTheme):
 }
 
 export function themeTokensFor(presetId: ThemePresetId, variant: ResolvedTheme): ThemeTokens {
-  return deriveThemeTokens(themePreset(presetId).variants[variant].seed, variant);
+  const tokens = deriveThemeTokens(themePreset(presetId).variants[variant].seed, variant);
+  return presetId === "default" ? { ...tokens, ...t3ThemeTokens[variant] } : tokens;
 }
 
 /** The colour behind the whole window, for the native window background. */

@@ -15,7 +15,7 @@ export function WorkspacePicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const root = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const matches = workspaces.filter((entry) =>
     `${entry.name} ${entry.path}`.toLowerCase().includes(query.toLowerCase()),
@@ -39,7 +39,7 @@ export function WorkspacePicker({
     return () => document.removeEventListener("mousedown", outside);
   }, [open]);
   return (
-    <div
+    <span
       className="new-thread__workspace-picker"
       ref={root}
       onKeyDown={(event) => {
@@ -133,6 +133,6 @@ export function WorkspacePicker({
           </div>
         </div>
       ) : null}
-    </div>
+    </span>
   );
 }

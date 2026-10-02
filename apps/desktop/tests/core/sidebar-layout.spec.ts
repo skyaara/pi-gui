@@ -19,7 +19,7 @@ test("folder rows start a new thread in that folder", async () => {
     await waitForWorkspaceByPath(window, workspaceA);
     await waitForWorkspaceByPath(window, workspaceB);
 
-    const workspacePicker = window.getByRole("combobox", { name: "Workspace" });
+    const workspacePicker = window.getByRole("button", { name: /^Workspace:/ });
     // Start each time from the other folder's page, so the "+" target is never the
     // folder that is already selected when New thread opens.
     for (const [path, other] of [
@@ -33,7 +33,7 @@ test("folder rows start a new thread in that folder", async () => {
       );
       await window.getByRole("button", { name: `New thread in ${basename(path)}` }).click();
       await expect(window.getByTestId("new-thread-composer")).toBeVisible();
-      await expect(workspacePicker.locator("option:checked")).toHaveText(basename(path));
+      await expect(workspacePicker).toHaveText(basename(path));
       await expect(window.getByTestId("topbar").locator(".topbar__workspace")).toHaveText(
         basename(path),
       );

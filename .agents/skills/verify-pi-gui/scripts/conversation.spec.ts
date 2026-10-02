@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   launchDesktop,
+  waitForTimelineLayout,
   type DesktopHarness,
 } from "../../../../apps/desktop/tests/helpers/electron-app";
 
@@ -307,6 +308,7 @@ test("real conversation: stream, switch, tool, stop, archive, restart", async ()
       if ((await header.getAttribute("aria-expanded")) !== "true") await header.click();
       await expect(page.locator(".timeline-tool__body").first()).toBeVisible();
       await expect(page.locator(".timeline-tool__body").first()).toContainText("BRAVO_TOOL_OK");
+      await waitForTimelineLayout(page);
       await checkpoint("bravo-tool-complete");
       await header.click();
       await expect(header).toHaveAttribute("aria-expanded", "false");

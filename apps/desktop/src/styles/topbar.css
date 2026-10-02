@@ -5,14 +5,14 @@
 
 .topbar {
   -webkit-app-region: drag;
-  height: 48px;
+  height: 52px;
   min-width: 0;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border-light);
   background: var(--main);
 }
 
@@ -162,6 +162,39 @@
 
 @media (max-width: 1200px) {
   .topbar .chat-header__status {
+    display: none;
+  }
+}
+
+.topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.topbar__tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.topbar__tool svg {
+  width: 13px;
+  height: 13px;
+}
+.topbar__tool:hover,
+.topbar__tool[aria-pressed="true"] {
+  background: var(--surface-muted);
+  color: var(--text-strong);
+}
+@media (max-width: 1100px) {
+  .topbar__tool span {
     display: none;
   }
 }

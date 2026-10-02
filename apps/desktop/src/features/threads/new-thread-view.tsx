@@ -15,7 +15,7 @@ import type {
   WorkspaceRecord,
 } from "../../../contracts/desktop-state";
 import type { MentionOption } from "../conversation/hooks/use-mention-menu";
-import { ArrowUpIcon, PiLogoMark, PlusIcon } from "../../ui/icons";
+import { ArrowUpIcon, WorktreeIcon, PlusIcon } from "../../ui/icons";
 import {
   MODEL_OPTIONS_EMPTY_TITLE,
   type ComposerSlashCommand,
@@ -162,16 +162,28 @@ export function NewThreadView({
     <section className="canvas canvas--new-thread">
       <div className="new-thread">
         <div className="new-thread__hero">
-          <div className="new-thread__logo" data-testid="new-thread-logo">
-            <PiLogoMark />
-          </div>
-          <h1 className="new-thread__title">New thread</h1>
-          <WorkspacePicker
-            workspace={workspace}
-            workspaces={workspaces}
-            onSelect={onSelectWorkspace}
-            onSelectStandalone={onSelectStandalone}
-          />
+          <h1 className="new-thread__title">
+            {workspace.isStandalone ? "What should we work on?" : "What should we build in "}
+            {!workspace.isStandalone ? (
+              <>
+                <WorkspacePicker
+                  workspace={workspace}
+                  workspaces={workspaces}
+                  onSelect={onSelectWorkspace}
+                  onSelectStandalone={onSelectStandalone}
+                />
+                ?
+              </>
+            ) : null}
+          </h1>
+          {workspace.isStandalone ? (
+            <WorkspacePicker
+              workspace={workspace}
+              workspaces={workspaces}
+              onSelect={onSelectWorkspace}
+              onSelectStandalone={onSelectStandalone}
+            />
+          ) : null}
           {workspace.isStandalone ? (
             <p className="new-thread__storage">Files saved in {workspace.path}</p>
           ) : null}
@@ -220,19 +232,16 @@ export function NewThreadView({
               textareaLabel="New thread prompt"
               textareaTestId="new-thread-composer"
               textareaClassName="new-thread__textarea"
-              textareaPlaceholder="Ask pi anything, use / for commands and skills"
+              textareaPlaceholder="Ask anything, @mention files, or / for commands and skills"
               footer={
                 <NewThreadComposerFooter
-                  isStandalone={workspace.isStandalone}
                   runtime={runtime}
-                  environment={environment}
                   provider={provider}
                   modelId={modelId}
                   thinkingLevel={thinkingLevel}
                   modelOnboarding={modelOnboarding}
                   hasContent={Boolean(prompt.trim() || attachments.length > 0)}
                   fileInputRef={fileInputRef}
-                  onSelectEnvironment={onSelectEnvironment}
                   onSetModel={onSetModel}
                   onSetThinking={onSetThinking}
                   extensionFlags={extensionFlags}
@@ -243,6 +252,28 @@ export function NewThreadView({
               }
             />
           </div>
+          <div className="new-thread__context-strip">
+            {!workspace.isStandalone ? (
+              <label className="new-thread__checkout">
+                <WorktreeIcon />
+                <select
+                  aria-label="Workspace mode"
+                  value={environment}
+                  onChange={(event) =>
+                    onSelectEnvironment(event.target.value === "worktree" ? "worktree" : "local")
+                  }
+                >
+                  <option value="local">Current checkout</option>
+                  <option value="worktree">New worktree</option>
+                </select>
+              </label>
+            ) : (
+              <span>No project</span>
+            )}
+            <span className="new-thread__branch" title={workspace.path}>
+              {workspace.branchName ?? workspace.name}
+            </span>
+          </div>
         </div>
       </div>
     </section>
@@ -250,16 +281,13 @@ export function NewThreadView({
 }
 
 interface NewThreadComposerFooterProps {
-  readonly isStandalone?: boolean;
   readonly runtime?: RuntimeSnapshot;
-  readonly environment: NewThreadEnvironment;
   readonly provider: string | undefined;
   readonly modelId: string | undefined;
   readonly thinkingLevel: string | undefined;
   readonly modelOnboarding: ModelOnboardingState;
   readonly hasContent: boolean;
   readonly fileInputRef: RefObject<HTMLInputElement | null>;
-  readonly onSelectEnvironment: (environment: NewThreadEnvironment) => void;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
   readonly extensionFlags: ExtensionFlagValues;
@@ -269,16 +297,13 @@ interface NewThreadComposerFooterProps {
 }
 
 function NewThreadComposerFooter({
-  isStandalone,
   runtime,
-  environment,
   provider,
   modelId,
   thinkingLevel,
   modelOnboarding,
   hasContent,
   fileInputRef,
-  onSelectEnvironment,
   onSetModel,
   onSetThinking,
   extensionFlags,
@@ -291,27 +316,6 @@ function NewThreadComposerFooter({
       <div className="composer__footer">
         <div className="composer__footer-row">
           <div className="composer__hint new-thread__hint">
-            {!isStandalone ? (
-              <>
-                <div className="new-thread__environment-group">
-                  <button
-                    className={`new-thread__environment ${environment === "local" ? "new-thread__environment--active" : ""}`}
-                    type="button"
-                    onClick={() => onSelectEnvironment("local")}
-                  >
-                    <span>Local</span>
-                  </button>
-                  <button
-                    className={`new-thread__environment ${environment === "worktree" ? "new-thread__environment--active" : ""}`}
-                    type="button"
-                    onClick={() => onSelectEnvironment("worktree")}
-                  >
-                    <span>Worktree</span>
-                  </button>
-                </div>
-                <span className="new-thread__hint-separator">·</span>
-              </>
-            ) : null}
             <ModelSelector
               runtime={runtime}
               provider={provider}

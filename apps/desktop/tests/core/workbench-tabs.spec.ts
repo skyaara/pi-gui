@@ -126,9 +126,14 @@ test("adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser
     const window = await harness.firstWindow();
     await selectSession(window, TASK_A);
     await expect(window.getByTestId("workbench")).toHaveCount(0);
-    await openWorkbench(window);
+    const header = window.getByTestId("topbar");
+    await header.getByRole("button", { name: "Show Review", exact: true }).click();
     await expectActiveTool(window, "Review");
-    await addTool(window, "Files");
+    await header.getByRole("button", { name: "Show Files", exact: true }).click();
+    await expectActiveTool(window, "Files");
+    await header.getByRole("button", { name: "Hide Files", exact: true }).click();
+    await expect(window.getByTestId("workbench")).toHaveCount(0);
+    await header.getByRole("button", { name: "Show Files", exact: true }).click();
     await expect(window.getByTestId("file-workbench")).toBeVisible();
     await window.locator('.file-workbench__tree-row--file[data-file-path="alpha.txt"]').click();
     await expect(window.getByTestId("file-workbench-preview")).toContainText("Alpha target line");
@@ -208,6 +213,8 @@ test("restores each task's tabs and draft through Settings, switching, and resta
     await expect(window.getByRole("tab", { name: "Files", exact: true })).toHaveCount(0);
     await addTool(window, "Terminal");
     await window.getByTestId("composer").fill("Draft for task B");
+    await expect(window.getByTestId("integrated-terminal").locator(".xterm")).toBeVisible();
+    await expect(window.getByTestId("composer")).toBeFocused();
     await window.keyboard.press(desktopShortcut(","));
     await expect(window.getByTestId("settings-surface")).toBeVisible();
     await window.getByRole("button", { name: "Back to app", exact: true }).click();
@@ -521,7 +528,8 @@ test("shows and selects GPT-6 Sol from the upgraded Pi model catalog", async ({}
     await expect(dropdown).toContainText("GPT-6 Sol");
     await expect(dropdown).toContainText("GPT-6 Luna");
     await dropdown.getByRole("button", { name: /GPT-6 Sol/ }).click();
-    await expect(badge).toHaveText("openai:gpt-6-sol");
+    await expect(badge).toHaveText("GPT-6 Sol");
+    await expect(badge).toHaveAttribute("aria-label", "openai:gpt-6-sol");
     await expect(
       window.locator(".composer").getByRole("button", { name: "medium", exact: true }),
     ).toBeVisible();

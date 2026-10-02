@@ -230,8 +230,9 @@ test("maintenance: skills, pin, thread list, worktree, queued follow-ups", async
       // A thread still waiting for its title is also named "New thread" in Projects grouping.
       await page.locator(".sidebar__new").click();
       await expect(page.getByTestId("new-thread-composer")).toBeVisible();
-      await expect(page.getByRole("button", { name: "Local", exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Worktree", exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("combobox", { name: "Workspace mode", exact: true }),
+      ).toBeVisible();
       await checkpoint("worktree");
     });
     await close();

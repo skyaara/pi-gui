@@ -13,7 +13,7 @@ import {
   seedAgentDir,
 } from "../helpers/electron-app";
 
-test("new thread reuses composer behaviors for slash commands, image previews, and branding", async () => {
+test("new thread reuses composer behaviors for slash commands, image previews, and project selection", async () => {
   test.setTimeout(60_000);
   const userDataDir = await makeUserDataDir();
   const agentDir = join(userDataDir, "agent");
@@ -30,12 +30,11 @@ test("new thread reuses composer behaviors for slash commands, image previews, a
     await openNewThread(window);
 
     const composer = window.getByTestId("new-thread-composer");
-    await expect(window.getByTestId("new-thread-logo")).toBeVisible();
-    await expect(window.getByRole("heading", { name: "New thread" })).toBeVisible();
+    await expect(window.getByRole("heading", { name: /^What should we build in/ })).toBeVisible();
     await expect(composer).toBeFocused();
     await expect(composer).toHaveAttribute(
       "placeholder",
-      "Ask pi anything, use / for commands and skills",
+      "Ask anything, @mention files, or / for commands and skills",
     );
 
     const modelBadge = window.locator(".new-thread__hint .model-selector__badge").first();
@@ -126,6 +125,14 @@ test("new thread can choose and remember its first model without visiting settin
     await expect(dropdown).toContainText("GPT-4o");
     const modelFilter = dropdown.locator(".model-selector__filter-input");
     await expect(modelFilter).toBeFocused();
+    const providers = dropdown.getByRole("navigation", { name: "Model providers" });
+    await providers.getByRole("button", { name: "OpenAI", exact: true }).click();
+    await expect(providers.getByRole("button", { name: "OpenAI", exact: true })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(modelFilter).toBeFocused();
+    await providers.getByRole("button", { name: "All providers" }).click();
     const bounds = await dropdown.boundingBox();
     const viewport = await window.evaluate(() => ({ width: innerWidth, height: innerHeight }));
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -143,7 +150,7 @@ test("new thread can choose and remember its first model without visiting settin
     await expect(dropdown.getByRole("button", { name: /GPT-4o/ })).toBeFocused();
     await window.keyboard.press("Enter");
 
-    await expect(modelBadge).toHaveText("openai:gpt-4o");
+    await expect(modelBadge).toHaveText("GPT-4o");
     await expect
       .poll(async () => {
         const state = await getDesktopState(window);
@@ -168,7 +175,7 @@ test("new thread can choose and remember its first model without visiting settin
     const reopened = await harness.firstWindow();
     await openNewThread(reopened);
     await expect(reopened.locator(".new-thread__hint .model-selector__badge").first()).toHaveText(
-      "openai:gpt-4o",
+      "GPT-4o",
     );
     await expect(reopened.getByTestId("model-onboarding-notice")).toHaveCount(0);
   } finally {
@@ -390,7 +397,9 @@ test("workspace picker searches folders and supports keyboard selection and dism
     const search = page.getByRole("textbox", { name: "Find workspace" });
     await expect(search).toBeFocused();
     await search.fill("picker-second");
-    const option = page.getByRole("option");
+    const option = page
+      .getByRole("listbox", { name: "Workspaces", exact: true })
+      .getByRole("option");
     await expect(option).toHaveCount(1);
     await search.press("ArrowDown");
     await expect(option).toBeFocused();

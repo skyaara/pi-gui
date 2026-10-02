@@ -14,7 +14,7 @@
   width: 100%;
   /* Constrained measure so prose lines stay readable instead of floating on a
    * too-wide canvas. Column is centered; rows keep their own inner caps. */
-  max-width: var(--transcript-measure, 768px);
+  max-width: var(--transcript-measure, var(--chat-max-width));
   margin-inline: auto;
 }
 
@@ -218,10 +218,11 @@
 }
 
 .timeline-item__bubble {
-  width: min(620px, 100%);
+  width: fit-content;
+  max-width: min(680px, 90%);
   min-width: 0;
   padding: 12px 16px;
-  border-radius: var(--radius-xl);
+  border-radius: 20px;
   border: 1px solid transparent;
   background: var(--surface-muted);
 }

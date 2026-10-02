@@ -72,7 +72,9 @@ test("projectless chats get separate working folders and survive restart", async
     await setDeferredThreadTitleMode(harness);
     for (const title of ["First personal chat", "Second personal chat"]) {
       await expect(page.getByRole("button", { name: "Workspace: No project" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Worktree", exact: true })).toHaveCount(0);
+      await expect(page.getByRole("combobox", { name: "Workspace mode", exact: true })).toHaveCount(
+        0,
+      );
       await page.getByTestId("new-thread-composer").fill(title);
       await page.getByRole("button", { name: "Start thread", exact: true }).click();
       await expect(page.getByTestId("transcript")).toContainText("Chat ready in");
@@ -158,7 +160,9 @@ test("a project can switch to No project and storage failures remain recoverable
     await page.getByRole("option", { name: /No project/ }).click();
     await expect(page.getByRole("button", { name: "Workspace: No project" })).toBeVisible();
     await expect(page.getByTestId("new-thread-composer")).toHaveValue("Keep my draft");
-    await expect(page.getByRole("button", { name: "Worktree", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("combobox", { name: "Workspace mode", exact: true })).toHaveCount(
+      0,
+    );
     await rename(storage, join(profile, "saved-chat-storage"));
     await writeFile(storage, "Another blocking file");
     await page.getByRole("button", { name: "Start thread", exact: true }).click();
@@ -168,7 +172,7 @@ test("a project can switch to No project and storage failures remain recoverable
     await rename(join(profile, "saved-chat-storage"), storage);
     await page.getByRole("button", { name: "Workspace: No project" }).click();
     await page.getByRole("option", { name: /standalone-project-switch/ }).click();
-    await expect(page.getByRole("button", { name: "Worktree", exact: true })).toBeVisible();
+    await expect(page.getByRole("combobox", { name: "Workspace mode", exact: true })).toBeVisible();
   } finally {
     await harness.close();
   }

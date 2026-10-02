@@ -53,12 +53,12 @@
   /* The transcript scroller spans the full canvas so its scrollbar sits on the
    * panel edge; fixed chrome keeps the centered column via --thread-column. */
   --thread-gutter: 24px;
-  --thread-column: min(920px, 100% - 2 * var(--thread-gutter));
+  --thread-column: min(var(--chat-max-width), 100% - 2 * var(--thread-gutter));
   padding-inline: 0;
 }
 
 .conversation {
-  width: min(920px, 100%);
+  width: min(var(--chat-max-width), 100%);
   margin: 0 auto;
 }
 
@@ -790,18 +790,18 @@
 }
 
 .composer {
-  padding: 16px 24px 20px;
+  padding: 16px 24px 24px;
   background: var(--main);
 }
 
 .composer__surface {
   position: relative;
   border-radius: var(--radius-composer);
-  padding: 12px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  padding: 18px 16px 14px;
+  border: 1px solid var(--border-default);
+  background: var(--composer-surface);
   width: 100%;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-composer);
   overflow: visible;
   transition:
     border-color var(--motion-base) var(--ease-out),
@@ -810,8 +810,8 @@
 }
 
 .composer__surface:focus-within {
-  border-color: var(--focus-ring-border);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--border-heavy);
+  box-shadow: var(--shadow-composer);
 }
 
 .composer__surface--drag-active {
@@ -1070,7 +1070,7 @@
   min-width: 32px;
   height: 32px;
   min-height: 32px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-round);
 }
 
 .composer__attachments {
@@ -1358,7 +1358,7 @@
   min-height: 0;
   height: 100vh;
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   background: var(--window);
 }
 
@@ -1942,9 +1942,9 @@
 
 /* Codex-style settings page: a centred column of titled sections over grouped cards. */
 .settings-view {
-  width: min(760px, 100%);
+  width: min(848px, 100%);
   margin: 0 auto;
-  padding: var(--space-8) 0 var(--space-8);
+  padding: var(--space-6) 0 var(--space-8);
 }
 
 .settings-view .view-header {
@@ -1970,9 +1970,10 @@
 
 .settings-section__title {
   margin: 0;
-  color: var(--text-strong);
   font-size: 13px;
-  font-weight: var(--font-medium);
+  color: var(--muted);
+  font-weight: var(--font-normal);
+  padding-inline: 16px;
 }
 
 .settings-section__description {
@@ -2008,8 +2009,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  min-height: 48px;
-  padding: 12px 18px;
+  min-height: 56px;
+  padding: 14px 16px;
 }
 
 /* Row actions read as quiet pills, like Codex's "Change". */
