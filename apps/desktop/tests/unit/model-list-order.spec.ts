@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
-import { buildModelOptions } from "../../src/features/conversation/composer-commands";
+import {
+  buildModelOptions,
+  searchModelOptions,
+  buildThinkingOptions,
+} from "../../src/features/conversation/composer-commands";
 
 const runtime: RuntimeSnapshot = {
   workspace: { workspaceId: "order", path: "/order" },
@@ -51,4 +55,29 @@ test("Pi scoped order wins over current/default and alphabetical labels", () => 
   expect(options.map((model) => `${model.providerId}/${model.modelId}`)).toEqual(
     enabledModelPatterns,
   );
+});
+
+test("Pi search supports non-contiguous provider/model tokens and default promotion", () => {
+  const options = buildModelOptions(runtime, { providerId: "beta", modelId: "oldest" });
+  expect(searchModelOptions(options, "bta/nwst", runtime).map((model) => model.modelId)).toEqual([
+    "newest",
+  ]);
+  expect(searchModelOptions(options, "def", runtime)[0]?.modelId).toBe("default");
+  expect(searchModelOptions(options, "  ", runtime)).toEqual(options);
+  expect(searchModelOptions(options, "no-such-model", runtime)).toEqual([]);
+});
+
+test("thinking menu only offers levels discovered by Pi", () => {
+  const model = runtime.models[0]!;
+  expect(
+    buildThinkingOptions({ ...model, supportedThinkingLevels: ["off"] }).map(
+      (option) => option.value,
+    ),
+  ).toEqual(["off"]);
+  expect(
+    buildThinkingOptions({ ...model, supportedThinkingLevels: ["minimal", "high", "max"] }).map(
+      (option) => option.value,
+    ),
+  ).toEqual(["minimal", "high", "max"]);
+  expect(buildThinkingOptions(model)).toEqual([]);
 });

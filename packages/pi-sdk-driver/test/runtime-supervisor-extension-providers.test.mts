@@ -317,3 +317,56 @@ await test("extension providers survive a runtime refresh", async () => {
     "extension-registered provider should still be listed after refreshRuntime",
   );
 });
+
+await test("model capabilities and defaults come from Pi, including disabled and extended effort levels", async () => {
+  const { agentDir, workspacePath } = await createAgentDir();
+  await writeFile(
+    join(agentDir, "settings.json"),
+    JSON.stringify({
+      packages: [],
+      defaultThinkingLevel: "medium",
+      modelThinkingLevels: { [`${JSON_PROVIDER}/extended`]: "max" },
+    }),
+  );
+  await writeFile(
+    join(agentDir, "models.json"),
+    JSON.stringify({
+      providers: {
+        [JSON_PROVIDER]: {
+          baseUrl: "http://localhost:9/v1",
+          api: "openai-completions",
+          apiKey: "test-key",
+          models: [
+            { id: "plain", reasoning: false, input: ["text"] },
+            {
+              id: "extended",
+              reasoning: true,
+              input: ["text"],
+              thinkingLevelMap: {
+                off: null,
+                minimal: null,
+                medium: null,
+                xhigh: "xhigh",
+                max: "max",
+              },
+            },
+          ],
+        },
+      },
+    }),
+  );
+  const snapshot = await new RuntimeSupervisor({ agentDir }).getRuntimeSnapshot({
+    workspaceId: "thinking",
+    path: workspacePath,
+  });
+  const plain = snapshot.models.find(
+    (model) => model.providerId === JSON_PROVIDER && model.modelId === "plain",
+  );
+  const extended = snapshot.models.find(
+    (model) => model.providerId === JSON_PROVIDER && model.modelId === "extended",
+  );
+  assert.deepEqual(plain?.supportedThinkingLevels, ["off"]);
+  assert.equal(plain?.defaultThinkingLevel, "off");
+  assert.deepEqual(extended?.supportedThinkingLevels, ["low", "high", "xhigh", "max"]);
+  assert.equal(extended?.defaultThinkingLevel, "max");
+});

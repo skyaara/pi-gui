@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AgentSessionRuntime } from "@earendil-works/pi-coding-agent";
@@ -249,4 +249,41 @@ await test("an override-only registration keeps the models the first registratio
   assert.ok(model, "the merged provider must stay resolvable for sessions");
   assert.equal(model.baseUrl, ENDPOINT_B, "the override-only registration must re-point the model");
   await driver.closeSession(snapshot.ref);
+});
+
+await test("Pi owns effort clamping, per-model defaults, and session persistence without changing global defaults", async () => {
+  const { root, agentDir } = await makeAgentDir();
+  const settings = {
+    packages: [],
+    defaultThinkingLevel: "high",
+    modelThinkingLevels: { "effort/reasoning": "minimal" },
+  };
+  await writeFile(join(agentDir, "settings.json"), JSON.stringify(settings));
+  const source = providerExtensionSource("effort", "plain", ENDPOINT_A, KEY_A).replace(
+    `models: [${modelDefinition("plain")}]`,
+    `models: [${modelDefinition("plain")}, ${modelDefinition("reasoning").replace("reasoning: false", "reasoning: true")}]`,
+  );
+  const path = await makeWorkspaceDir(root, "effort-workspace", source);
+  const { driver } = makeDriver(root, agentDir);
+  const { workspace } = await driver.syncWorkspace(path);
+  const snapshot = await driver.createSession(workspace, {
+    initialModel: { provider: "effort", modelId: "reasoning" },
+  });
+  try {
+    assert.equal(snapshot.config?.thinkingLevel, "minimal");
+    await driver.setSessionThinkingLevel(snapshot.ref, "max");
+    assert.equal((await driver.openSession(snapshot.ref)).config?.thinkingLevel, "high");
+    await driver.setSessionThinkingLevel(snapshot.ref, "off");
+    await driver.closeSession(snapshot.ref);
+    assert.equal((await driver.openSession(snapshot.ref)).config?.thinkingLevel, "off");
+    await driver.setSessionModel(snapshot.ref, { provider: "effort", modelId: "plain" });
+    assert.equal((await driver.openSession(snapshot.ref)).config?.thinkingLevel, "off");
+    await driver.setSessionModel(snapshot.ref, { provider: "effort", modelId: "reasoning" });
+    assert.equal((await driver.openSession(snapshot.ref)).config?.thinkingLevel, "minimal");
+    await driver.closeSession(snapshot.ref);
+    assert.equal((await driver.openSession(snapshot.ref)).config?.thinkingLevel, "minimal");
+    assert.deepEqual(JSON.parse(await readFile(join(agentDir, "settings.json"), "utf8")), settings);
+  } finally {
+    await driver.closeSession(snapshot.ref);
+  }
 });

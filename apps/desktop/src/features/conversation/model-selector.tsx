@@ -4,7 +4,9 @@ import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
   buildModelOptions,
   MODEL_OPTIONS_EMPTY_TITLE,
-  THINKING_OPTIONS,
+  buildThinkingOptions,
+  resolveThinkingLevel,
+  searchModelOptions,
   type ComposerModelOption,
 } from "./composer-commands";
 
@@ -55,16 +57,10 @@ export function ModelSelector({
     () => buildModelOptions(runtime, { providerId: provider, modelId }),
     [runtime, provider, modelId],
   );
-  const filteredModels = useMemo(() => {
-    if (!modelFilter) return modelOptions;
-    const q = modelFilter.toLowerCase();
-    return modelOptions.filter(
-      (opt) =>
-        opt.label.toLowerCase().includes(q) ||
-        opt.description.toLowerCase().includes(q) ||
-        opt.providerId.toLowerCase().includes(q),
-    );
-  }, [modelOptions, modelFilter]);
+  const filteredModels = useMemo(
+    () => searchModelOptions(modelOptions, modelFilter, runtime),
+    [modelOptions, modelFilter, runtime],
+  );
 
   const providers = useMemo(
     () => [...new Set(modelOptions.map((option) => option.providerId))],
@@ -82,6 +78,8 @@ export function ModelSelector({
   const activeModel = runtime?.models.find(
     (model) => model.providerId === provider && model.modelId === modelId,
   );
+  const thinkingOptions = buildThinkingOptions(activeModel);
+  const effectiveThinkingLevel = resolveThinkingLevel(activeModel, thinkingLevel);
   const providerLabel = (id: string) =>
     runtime?.providers.find((entry) => entry.id === id)?.name ?? id;
   const hasAvailableModelOptions = modelOptions.length > 0;
@@ -157,7 +155,7 @@ export function ModelSelector({
     };
   }, [open, dropdownPlacement]);
 
-  if (!shouldRenderModelControl && !thinkingLevel) {
+  if (!shouldRenderModelControl && !effectiveThinkingLevel) {
     return null;
   }
 
@@ -317,7 +315,7 @@ export function ModelSelector({
           ) : null}
         </span>
       ) : null}
-      {thinkingLevel ? (
+      {effectiveThinkingLevel ? (
         <span className="model-selector__anchor">
           <button
             className="model-selector__badge"
@@ -329,7 +327,7 @@ export function ModelSelector({
               setOpen(open === "thinking" ? "none" : "thinking");
             }}
           >
-            {thinkingLevel}
+            {effectiveThinkingLevel}
             <ChevronDownIcon />
           </button>
           {open === "thinking" ? (
@@ -341,8 +339,8 @@ export function ModelSelector({
               onWheel={(event) => event.stopPropagation()}
             >
               <div className="model-selector__group-title">Thinking Level</div>
-              {THINKING_OPTIONS.map((option) => {
-                const isActive = option.value === thinkingLevel;
+              {thinkingOptions.map((option) => {
+                const isActive = option.value === effectiveThinkingLevel;
                 return (
                   <button
                     className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
@@ -356,8 +354,11 @@ export function ModelSelector({
                       triggerRef.current?.focus();
                     }}
                   >
-                    <span className="model-selector__item-label">{option.label}</span>
-                    <span className="model-selector__item-meta">{option.description}</span>
+                    <span className="model-selector__item-copy" title={option.description}>
+                      <span className="model-selector__item-label">{option.label}</span>
+                      <span className="model-selector__item-meta">{option.description}</span>
+                    </span>
+                    {isActive ? <CheckIcon /> : null}
                   </button>
                 );
               })}

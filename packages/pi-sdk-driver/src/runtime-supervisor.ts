@@ -1,3 +1,4 @@
+import { clampThinkingLevel, getSupportedThinkingLevels } from "@earendil-works/pi-ai/models";
 import { toAuthInteraction } from "./login-interaction.js";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
@@ -819,6 +820,13 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
         authType: provider?.authType ?? "none",
         reasoning: Boolean(model.reasoning),
         supportsImages: model.input.includes("image"),
+        supportedThinkingLevels: getSupportedThinkingLevels(model),
+        defaultThinkingLevel: clampThinkingLevel(
+          model,
+          context.settingsManager.getModelThinkingLevel(model.provider, model.id) ??
+            context.settingsManager.getDefaultThinkingLevel() ??
+            "medium",
+        ),
       };
     });
   }

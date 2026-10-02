@@ -66,6 +66,7 @@ interface UseSlashMenuParams {
   readonly commandCompatibility: readonly ExtensionCommandCompatibilityRecord[];
   readonly selectedSessionKey: string;
   readonly selectedSession: SessionRecord | undefined;
+  readonly selectedModel?: { providerId: string | undefined; modelId: string | undefined };
   readonly selectedWorkspace: WorkspaceRecord | undefined;
   readonly isRunning: boolean;
   readonly api: PiDesktopApi | undefined;
@@ -164,10 +165,18 @@ export function useSlashMenu(params: UseSlashMenuParams): SlashMenuState {
   const selectedSlashCommand = showSlashMenu
     ? slashSuggestions[slashIndex % slashSuggestions.length]
     : undefined;
+  const currentModel = params.selectedModel ?? {
+    providerId: selectedSession?.config?.provider ?? selectedModelRuntime?.settings.defaultProvider,
+    modelId: selectedSession?.config?.modelId ?? selectedModelRuntime?.settings.defaultModelId,
+  };
+  const thinkingModel = selectedModelRuntime?.models.find(
+    (model) =>
+      model.providerId === currentModel.providerId && model.modelId === currentModel.modelId,
+  );
   const slashOptions =
     activeSlashOptionCommand?.kind === "model"
-      ? buildModelOptions(selectedModelRuntime)
-      : slashOptionsForCommand(activeSlashOptionCommand, selectedRuntime);
+      ? buildModelOptions(selectedModelRuntime, currentModel)
+      : slashOptionsForCommand(activeSlashOptionCommand, selectedRuntime, thinkingModel);
   const activeSlashOptionEmptyState = slashOptionEmptyState(
     activeSlashOptionCommand,
     activeSlashOptionCommand?.kind === "model" ? undefined : selectedRuntime,

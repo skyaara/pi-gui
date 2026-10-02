@@ -33,6 +33,9 @@ export interface RuntimeModelRecord {
   readonly authType: RuntimeAuthType;
   readonly reasoning: boolean;
   readonly supportsImages: boolean;
+  /** Absent only in snapshots cached before capability discovery was added. */
+  readonly supportedThinkingLevels?: readonly string[];
+  readonly defaultThinkingLevel?: string;
 }
 
 export interface RuntimeSkillRecord {

@@ -27,7 +27,11 @@ import {
   handleClipboardImageShortcut,
   readComposerAttachmentsFromFiles,
 } from "../../conversation/composer-attachments";
-import { buildModelOptions, parseTreeComposerCommand } from "../../conversation/composer-commands";
+import {
+  buildModelOptions,
+  parseTreeComposerCommand,
+  resolveThinkingLevel,
+} from "../../conversation/composer-commands";
 import type { PiDesktopApi } from "../../../../contracts/ipc";
 import { deriveModelOnboardingState } from "../../settings/model-onboarding";
 import { getEffectiveModelRuntime } from "../../settings/model-settings";
@@ -90,7 +94,10 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     provider ?? (defaultEnabled ? runtime?.settings.defaultProvider : undefined);
   const resolvedModelId =
     modelId ?? (defaultEnabled ? runtime?.settings.defaultModelId : undefined);
-  const resolvedThinkingLevel = thinkingLevel ?? runtime?.settings.defaultThinkingLevel;
+  const activeModel = runtime?.models.find(
+    (model) => model.providerId === resolvedProvider && model.modelId === resolvedModelId,
+  );
+  const resolvedThinkingLevel = resolveThinkingLevel(activeModel, thinkingLevel);
   const workspaceFlagDefaults = workspace
     ? snapshot?.extensionFlagsByWorkspace[workspace.id]
     : undefined;
@@ -256,6 +263,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     (nextProvider: string, nextModelId: string) => {
       setProvider(nextProvider);
       setModelId(nextModelId);
+      setThinkingLevel(undefined);
       if (api && workspace && !runtime?.settings.defaultModelId) {
         void updateSnapshot(setSnapshot, () =>
           api.setDefaultModel(workspace.id, nextProvider, nextModelId),
@@ -276,6 +284,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     commandCompatibility: [],
     selectedSessionKey: `new-thread:${workspace?.id ?? ""}`,
     selectedSession: undefined,
+    selectedModel: { providerId: resolvedProvider, modelId: resolvedModelId },
     selectedWorkspace: workspace,
     isRunning: false,
     api,

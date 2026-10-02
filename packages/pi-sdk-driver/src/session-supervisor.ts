@@ -1375,15 +1375,7 @@ export class SessionSupervisor {
       throw new Error(auth.error);
     }
 
-    const previousModel = session.model;
-    const previousThinkingLevel = session.supportsThinking()
-      ? session.thinkingLevel
-      : (session.settingsManager.getDefaultThinkingLevel() ?? DEFAULT_SESSION_THINKING_LEVEL);
-
-    session.agent.state.model = model;
-    session.sessionManager.appendModelChange(model.provider, model.id);
-    this.applySessionThinkingLevel(session, previousThinkingLevel);
-    await this.emitModelSelection(session, model, previousModel);
+    await session.setModel(model);
     forcePersistPiSession(session.sessionManager);
     record.config = deriveSessionConfig(session.sessionManager);
     this.refreshUsage(record);
@@ -1394,7 +1386,7 @@ export class SessionSupervisor {
   async setSessionThinkingLevel(sessionRef: SessionRef, thinkingLevel: string): Promise<void> {
     const record = await this.ensureRecord(sessionRef);
     const session = this.requireSession(record);
-    this.applySessionThinkingLevel(session, thinkingLevel);
+    session.setThinkingLevel(thinkingLevel as AgentSession["thinkingLevel"]);
     forcePersistPiSession(session.sessionManager);
     record.config = deriveSessionConfig(session.sessionManager);
     await this.persistSnapshot(record);
@@ -1638,13 +1630,25 @@ export class SessionSupervisor {
 
     let runtime: AgentSessionRuntime;
     try {
-      runtime = await this.createAgentSessionRuntimeImpl(
-        this.baseCreateOptions(
+      const sessionManager = SessionManager.open(sessionFile);
+      const context = sessionManager.buildSessionContext();
+      // Pi restores selections only once a conversation has messages. Desktop
+      // threads also persist model/effort choices before their first message.
+      const emptyThreadModel = context.messages.length === 0 ? context.model : null;
+      runtime = await this.createAgentSessionRuntimeImpl({
+        ...this.baseCreateOptions(
           workspace,
-          SessionManager.open(sessionFile),
+          sessionManager,
           this.extensionFlagValuesForSession?.(sessionRef),
         ),
-      );
+        ...(emptyThreadModel
+          ? {
+              resolveInitialModel: (modelRuntime: ModelRuntime) =>
+                modelRuntime.getModel(emptyThreadModel.provider, emptyThreadModel.modelId),
+              thinkingLevel: context.thinkingLevel as AgentSession["thinkingLevel"],
+            }
+          : {}),
+      });
     } catch (error) {
       await this.releaseLeasePath(leasePath);
       throw error;
@@ -2289,40 +2293,6 @@ export class SessionSupervisor {
       return;
     }
     await session.followUp(text, images ? [...images] : undefined);
-  }
-
-  private applySessionThinkingLevel(session: AgentSession, thinkingLevel: string): void {
-    const availableLevels = session.getAvailableThinkingLevels();
-    const effectiveLevel = clampThinkingLevel(
-      thinkingLevel,
-      availableLevels,
-    ) as AgentSession["thinkingLevel"];
-    if (effectiveLevel !== session.agent.state.thinkingLevel) {
-      session.agent.state.thinkingLevel = effectiveLevel;
-      session.sessionManager.appendThinkingLevelChange(effectiveLevel);
-      return;
-    }
-    session.agent.state.thinkingLevel = effectiveLevel;
-  }
-
-  private async emitModelSelection(
-    session: AgentSession,
-    model: PiModelInfo,
-    previousModel: AgentSession["model"],
-  ): Promise<void> {
-    const emitModelSelect = (
-      session as unknown as {
-        _emitModelSelect?: (
-          nextModel: unknown,
-          previousModel: unknown,
-          source: string,
-        ) => Promise<void>;
-      }
-    )._emitModelSelect;
-    if (!emitModelSelect) {
-      return;
-    }
-    await emitModelSelect.call(session, model, previousModel, "set");
   }
 
   private emitHostUiRequest(
@@ -3110,8 +3080,6 @@ function resolvedCatalogSessionTitle(existingTitle: string | undefined, infoTitl
   return trimmedExisting;
 }
 
-const DEFAULT_SESSION_THINKING_LEVEL = "medium";
-const THINKING_LEVEL_ORDER = ["off", "low", "medium", "high", "xhigh", "max"] as const;
 type SessionTreeNodeRecord = ReturnType<SessionManager["getTree"]>[number];
 type SessionBranchEntry = ReturnType<SessionManager["getBranch"]>[number];
 type SessionMessageBranchEntry = Extract<SessionBranchEntry, { type: "message" }>;
@@ -3215,29 +3183,6 @@ async function removeIntermediateForkSession(
       throw error;
     }
   }
-}
-
-function clampThinkingLevel(level: string, availableLevels: readonly string[]): string {
-  const available = new Set(availableLevels);
-  const requestedIndex = THINKING_LEVEL_ORDER.indexOf(
-    level as (typeof THINKING_LEVEL_ORDER)[number],
-  );
-  if (requestedIndex === -1) {
-    return availableLevels[0] ?? "off";
-  }
-  for (let index = requestedIndex; index < THINKING_LEVEL_ORDER.length; index += 1) {
-    const candidate = THINKING_LEVEL_ORDER[index];
-    if (candidate && available.has(candidate)) {
-      return candidate;
-    }
-  }
-  for (let index = requestedIndex - 1; index >= 0; index -= 1) {
-    const candidate = THINKING_LEVEL_ORDER[index];
-    if (candidate && available.has(candidate)) {
-      return candidate;
-    }
-  }
-  return availableLevels[0] ?? "off";
 }
 
 async function createCanonicalWorkspaceRef(

@@ -97,6 +97,9 @@ importers:
       '@earendil-works/pi-coding-agent':
         specifier: ^1.0.0
         version: 1.0.0(@aws-sdk/credential-provider-node@3.972.61)(@smithy/signature-v4@5.6.1)(ws@8.21.3)(zod@4.3.6)
+      '@earendil-works/pi-tui':
+        specifier: 1.0.0
+        version: 1.0.0
       '@google/genai':
         specifier: 2.21.0
         version: 2.21.0
@@ -388,6 +391,9 @@ importers:
 
   packages/pi-sdk-driver:
     dependencies:
+      '@earendil-works/pi-ai':
+        specifier: ^1.0.0
+        version: 1.0.0(@aws-sdk/credential-provider-node@3.972.83)(@smithy/signature-v4@5.7.3)(undici@8.10.2)(ws@8.21.3)(zod@4.3.6)
       '@earendil-works/pi-coding-agent':
         specifier: ^1.0.0
         version: 1.0.0(@aws-sdk/credential-provider-node@3.972.83)(@smithy/signature-v4@5.7.3)(ws@8.21.3)(zod@4.3.6)
@@ -400,10 +406,6 @@ importers:
       '@pi-gui/session-driver':
         specifier: workspace:*
         version: link:../session-driver
-    devDependencies:
-      '@earendil-works/pi-ai':
-        specifier: ^1.0.0
-        version: 1.0.0(@aws-sdk/credential-provider-node@3.972.83)(@smithy/signature-v4@5.7.3)(undici@8.10.2)(ws@8.21.3)(zod@4.3.6)
 
   packages/session-driver: {}
 

@@ -86,9 +86,7 @@ export function deriveSessionConfig(sessionManager: {
   const context = sessionManager.buildSessionContext();
   const config: SessionConfig = {
     ...(context.model ? { provider: context.model.provider, modelId: context.model.modelId } : {}),
-    ...(context.thinkingLevel && context.thinkingLevel !== "off"
-      ? { thinkingLevel: context.thinkingLevel }
-      : {}),
+    ...(context.thinkingLevel ? { thinkingLevel: context.thinkingLevel } : {}),
   };
   return Object.keys(config).length > 0 ? config : undefined;
 }

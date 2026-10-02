@@ -1,6 +1,9 @@
+// Import only Pi's pure search helper; the terminal entrypoint is Node-only.
+import { fuzzyFilter } from "@earendil-works/pi-tui/dist/fuzzy.js";
 import { resolveRuntimeCommands } from "../../../contracts/composer-commands";
 import type {
   RuntimeCommandRecord,
+  RuntimeModelRecord,
   RuntimeProviderRecord,
   RuntimeSettingsSnapshot,
   RuntimeSnapshot,
@@ -191,32 +194,72 @@ const HOST_ACTION_SLASH_COMMANDS: readonly ComposerSlashCommand[] = [
 ] as const;
 
 export const THINKING_OPTIONS: readonly ComposerSlashOption[] = [
+  { value: "off", label: "Off", description: "No reasoning" },
+  { value: "minimal", label: "Minimal", description: "Very brief reasoning" },
   {
     value: "low",
     label: "Low",
-    description: "Fast responses with lighter reasoning",
+    description: "Light reasoning",
   },
   {
     value: "medium",
     label: "Medium",
-    description: "Balances speed and reasoning depth for everyday tasks",
+    description: "Moderate reasoning",
   },
   {
     value: "high",
     label: "High",
-    description: "Greater reasoning depth for complex problems",
+    description: "Deep reasoning",
   },
   {
     value: "xhigh",
     label: "Extra High",
-    description: "Extra high reasoning depth for complex problems",
+    description: "Extra-high reasoning",
   },
   {
     value: "max",
     label: "Max",
-    description: "Maximum reasoning depth for supported models",
+    description: "Maximum reasoning",
   },
 ] as const;
+
+export function buildThinkingOptions(
+  model: RuntimeModelRecord | undefined,
+): readonly ComposerSlashOption[] {
+  return THINKING_OPTIONS.filter((option) =>
+    model?.supportedThinkingLevels?.includes(option.value),
+  );
+}
+
+export function resolveThinkingLevel(
+  model: RuntimeModelRecord | undefined,
+  requested?: string,
+): string | undefined {
+  return requested && model?.supportedThinkingLevels?.includes(requested)
+    ? requested
+    : model?.defaultThinkingLevel;
+}
+
+export function searchModelOptions(
+  options: readonly ComposerModelOption[],
+  query: string,
+  runtime?: RuntimeSnapshot,
+): readonly ComposerModelOption[] {
+  const isDefault = (option: ComposerModelOption) =>
+    option.providerId === runtime?.settings.defaultProvider &&
+    option.modelId === runtime?.settings.defaultModelId;
+  const filtered = fuzzyFilter([...options], query, (option) => {
+    const name = runtime?.models.find(
+      (model) => model.providerId === option.providerId && model.modelId === option.modelId,
+    )?.label;
+    // Match Pi's model-selector search text, including provider/id and the default keyword.
+    return `${option.providerId} ${option.providerId}/${option.modelId} ${option.providerId} ${option.modelId}${name ? ` ${name}` : ""}${isDefault(option) ? " default" : ""}`;
+  });
+  const normalized = query.trim().toLowerCase();
+  return normalized && "default".startsWith(normalized)
+    ? [...options.filter(isDefault), ...filtered.filter((option) => !isDefault(option))]
+    : filtered;
+}
 
 export function buildSlashCommandSections(
   query: string,
@@ -353,13 +396,14 @@ export function buildModelOptions(
 export function slashOptionsForCommand(
   command: ComposerSlashCommand | undefined,
   runtime?: RuntimeSnapshot,
+  model?: RuntimeModelRecord,
 ): readonly ComposerSlashOption[] {
   if (!command) {
     return [];
   }
 
   if (command.kind === "thinking") {
-    return THINKING_OPTIONS;
+    return buildThinkingOptions(model);
   }
   if (command.kind === "model") {
     return buildModelOptions(runtime);

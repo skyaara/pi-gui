@@ -45,14 +45,15 @@ test("changing model or thinking from the composer footer keeps the typed prompt
     await expect(attachment).toHaveCount(1);
 
     const thinkingBadge = footer.locator(".model-selector__badge").nth(1);
-    const initialThinking = (await thinkingBadge.textContent())?.trim();
-    const nextThinking = initialThinking === "high" ? "Low" : "High";
+    await expect(thinkingBadge).toHaveText("off");
     await thinkingBadge.click();
-    await footer.getByRole("button", { name: new RegExp(`^${nextThinking}`) }).click();
-    await expect(thinkingBadge).toHaveText(nextThinking.toLowerCase());
+    await expect(
+      footer.getByRole("dialog", { name: "Thinking level" }).locator(".model-selector__item-label"),
+    ).toHaveText(["Off"]);
+    await window.keyboard.press("Escape");
+    await expect(thinkingBadge).toBeFocused();
     await expect(composer).toHaveValue(prompt);
     await expect(attachment).toHaveCount(1);
-    await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
 
     // Picking from the /model menu consumes only the command text; the saved "/model" must not
     // return, and the attachment stays.
@@ -68,6 +69,22 @@ test("changing model or thinking from the composer footer keeps the typed prompt
     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe("");
     await expect(composer).toHaveValue("");
     await expect(attachment).toHaveCount(1);
+    await expect(thinkingBadge).toHaveText("medium");
+    await composer.fill(prompt);
+    await thinkingBadge.click();
+    const thinkingMenu = footer.getByRole("dialog", { name: "Thinking level" });
+    await expect(thinkingMenu.locator(".model-selector__item-label")).toHaveText([
+      "Minimal",
+      "Low",
+      "Medium",
+      "High",
+    ]);
+    await thinkingMenu.getByRole("button", { name: /^Minimal/ }).click();
+    await expect(thinkingBadge).toHaveText("minimal");
+    await expect(composer).toHaveValue(prompt);
+    await expect(attachment).toHaveCount(1);
+    await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
+    await window.screenshot({ path: test.info().outputPath("pi-thinking-minimal.png") });
   } finally {
     await harness.close();
   }
