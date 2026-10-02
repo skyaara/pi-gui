@@ -1111,8 +1111,21 @@ app
               windowOwner.activate(mainWindow);
             }
           },
-          promptForText: (message: string, placeholder?: string, allowEmpty?: boolean) =>
-            promptForText(mainWindow, message, placeholder ?? "", allowEmpty ?? false),
+          promptForText: (
+            message: string,
+            placeholder?: string,
+            allowEmpty?: boolean,
+            signal?: AbortSignal,
+            manualCode?: boolean,
+          ) =>
+            promptForText(
+              mainWindow,
+              message,
+              placeholder ?? "",
+              allowEmpty ?? false,
+              signal,
+              manualCode,
+            ),
           runOrchestrationRuntimeTool: (input: OrchestrationRuntimeToolTestInput) =>
             runOrchestrationRuntimeToolForTest(orchestrationRuntimeBridge, input),
           runScheduledTaskRuntimeTool: (input: ScheduledTaskRuntimeToolTestInput) =>
@@ -1476,12 +1489,14 @@ function createRuntimeLoginCallbacks(window?: BrowserWindow | null) {
     onAuth: async ({
       url,
       instructions,
+      userCode,
     }: {
       readonly url: string;
+      readonly userCode?: string;
       readonly instructions?: string;
     }) => {
       await shell.openExternal(url);
-      if (instructions?.trim()) {
+      if (userCode && instructions?.trim()) {
         await showLoginInstructions(window, instructions.trim());
       }
     },
@@ -1489,11 +1504,15 @@ function createRuntimeLoginCallbacks(window?: BrowserWindow | null) {
       message,
       placeholder,
       allowEmpty,
+      signal,
+      manualCode,
     }: {
+      readonly signal?: AbortSignal;
+      readonly manualCode?: boolean;
       readonly message: string;
       readonly placeholder?: string;
       readonly allowEmpty?: boolean;
-    }) => promptForText(window, message, placeholder, allowEmpty ?? false),
+    }) => promptForText(window, message, placeholder, allowEmpty ?? false, signal, manualCode),
   };
 }
 
@@ -1517,20 +1536,25 @@ async function promptForText(
   message: string,
   placeholder = "",
   allowEmpty = false,
+  signal?: AbortSignal,
+  manualCode = false,
 ): Promise<string> {
   const parent = resolveDialogWindow(parentWindow);
   if (!parent) {
     throw new Error("Main window is not available for login.");
   }
-  parent.show();
-  parent.focus();
+  if (signal?.aborted) throw new Error("Login cancelled.");
+  if (!manualCode) {
+    parent.show();
+    parent.focus();
+  }
 
   const modal = new BrowserWindow({
     parent,
     modal: true,
     show: false,
     width: 460,
-    height: 220,
+    height: manualCode ? 310 : 220,
     resizable: false,
     minimizable: false,
     maximizable: false,
@@ -1540,10 +1564,19 @@ async function promptForText(
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
 
+  const onAbort = () => {
+    if (!modal.isDestroyed()) modal.destroy();
+  };
+  signal?.addEventListener("abort", onAbort, { once: true });
   try {
-    await modal.loadURL(promptDataUrl(message, placeholder));
-    modal.show();
-    modal.focus();
+    if (signal?.aborted) throw new Error("Login cancelled.");
+    await modal.loadURL(promptDataUrl(message, placeholder, manualCode));
+    if (signal?.aborted || modal.isDestroyed()) throw new Error("Login cancelled.");
+    if (manualCode) modal.showInactive();
+    else {
+      modal.show();
+      modal.focus();
+    }
 
     const result = await new Promise<string | null>((resolve) => {
       let settled = false;
@@ -1572,13 +1605,14 @@ async function promptForText(
     }
     return trimmedResult;
   } finally {
+    signal?.removeEventListener("abort", onAbort);
     if (!modal.isDestroyed()) {
       modal.destroy();
     }
   }
 }
 
-function promptDataUrl(message: string, placeholder: string): string {
+function promptDataUrl(message: string, placeholder: string, manualCode = false): string {
   const html = `<!doctype html><html><head><meta charset="utf-8" />
 <style>
   :root { color-scheme: light dark; }
@@ -1596,11 +1630,13 @@ function promptDataUrl(message: string, placeholder: string): string {
   #pi-prompt-ok { background: #2f6ae0; color: #fff; }
 </style></head>
 <body>
-  <div class="msg">${escapeHtml(message)}</div>
-  <input id="pi-prompt-input" type="text" placeholder="${escapeHtml(placeholder)}" autofocus />
+  <div class="msg">${manualCode ? "Finish signing in in your browser. This window will close automatically when the browser returns." : escapeHtml(message)}</div>
+  ${manualCode ? '<details id="manual-fallback"><summary>Browser didn’t connect? Paste the callback URL</summary><p>Use this only if the browser cannot complete the return to piui.</p>' : ""}
+  <input id="pi-prompt-input" type="text" placeholder="${escapeHtml(placeholder)}" ${manualCode ? "" : "autofocus"} />
+  ${manualCode ? "</details>" : ""}
   <div class="row">
     <button id="pi-prompt-cancel" type="button">Cancel</button>
-    <button id="pi-prompt-ok" type="button">OK</button>
+    <button id="pi-prompt-ok" type="button" ${manualCode ? "hidden" : ""}>${manualCode ? "Complete sign-in" : "OK"}</button>
   </div>
   <script>
     (function () {
@@ -1613,11 +1649,14 @@ function promptDataUrl(message: string, placeholder: string): string {
         if (!input || !ok || !cancel) { resolveResult(null); return; }
         ok.addEventListener('click', function () { resolveResult(input.value); });
         cancel.addEventListener('click', function () { resolveResult(null); });
+        document.addEventListener('keydown', function (event) { if (event.key === 'Escape') { event.preventDefault(); resolveResult(null); } });
         input.addEventListener('keydown', function (event) {
           if (event.key === 'Enter') { event.preventDefault(); resolveResult(input.value); }
           else if (event.key === 'Escape') { event.preventDefault(); resolveResult(null); }
         });
-        input.focus();
+        var fallback = document.getElementById("manual-fallback");
+        if (fallback) { fallback.addEventListener("toggle", function () { ok.hidden = !fallback.open; if (fallback.open) input.focus(); }); }
+        else input.focus();
         document.body.dataset.piReady = '1';
       }
       if (document.readyState === 'loading') {

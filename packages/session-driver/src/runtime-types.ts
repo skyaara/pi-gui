@@ -132,11 +132,15 @@ export interface RuntimeSnapshot {
 }
 
 export interface RuntimeLoginAuthInfo {
+  readonly userCode?: string;
   readonly url: string;
   readonly instructions?: string;
 }
 
 export interface RuntimeLoginPrompt {
+  /** Cancel fallback input when the browser callback completes. */
+  readonly signal?: AbortSignal;
+  readonly manualCode?: boolean;
   readonly message: string;
   readonly placeholder?: string;
   readonly allowEmpty?: boolean;
@@ -146,7 +150,7 @@ export interface RuntimeLoginCallbacks {
   readonly onAuth: (info: RuntimeLoginAuthInfo) => void | Promise<void>;
   readonly onPrompt: (prompt: RuntimeLoginPrompt) => Promise<string>;
   readonly onProgress?: (message: string) => void | Promise<void>;
-  readonly onManualCodeInput?: () => Promise<string>;
+  readonly onManualCodeInput?: (signal?: AbortSignal) => Promise<string>;
   readonly signal?: AbortSignal;
 }
 

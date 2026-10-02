@@ -127,3 +127,57 @@ test("rejects the login prompt when cancelled", async () => {
     await harness.close();
   }
 });
+
+test("browser callback dismisses the fallback without requiring pasted input", async () => {
+  const harness = await launchDesktop(await makeUserDataDir(), { testMode: "background" });
+  try {
+    await harness.firstWindow();
+    const created = harness.electronApp.waitForEvent("window");
+    // A deterministic stand-in for Pi receiving its HTTP callback. No OAuth token is used.
+    await harness.electronApp.evaluate(() => {
+      const state = globalThis as typeof globalThis & {
+        __fallbackAbort?: AbortController;
+        __fallbackOutcome?: Promise<boolean>;
+        __PI_APP_TEST_HOOKS?: {
+          promptForText: (
+            message: string,
+            placeholder: string,
+            allowEmpty: boolean,
+            signal: AbortSignal,
+            manual: boolean,
+          ) => Promise<string>;
+        };
+      };
+      state.__fallbackAbort = new AbortController();
+      state.__fallbackOutcome = state
+        .__PI_APP_TEST_HOOKS!.promptForText(
+          "Paste callback",
+          "http://localhost/callback",
+          false,
+          state.__fallbackAbort.signal,
+          true,
+        )
+        .then(
+          () => false,
+          () => true,
+        );
+    });
+    const modal = await created;
+    await expect(modal.locator(".msg")).toContainText("close automatically");
+    await expect(modal.locator("#pi-prompt-input")).toBeHidden();
+    await modal.locator("summary").click();
+    await expect(modal.locator("#pi-prompt-input")).toBeVisible();
+    const closed = modal.waitForEvent("close");
+    await harness.electronApp.evaluate(() => {
+      (globalThis as { __fallbackAbort?: AbortController }).__fallbackAbort!.abort();
+    });
+    await closed;
+    expect(
+      await harness.electronApp.evaluate(
+        () => (globalThis as { __fallbackOutcome?: Promise<boolean> }).__fallbackOutcome,
+      ),
+    ).toBe(true);
+  } finally {
+    await harness.close();
+  }
+});
