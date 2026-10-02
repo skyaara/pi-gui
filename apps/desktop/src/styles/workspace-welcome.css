@@ -1,6 +1,6 @@
 .canvas--welcome {
   display: grid;
-  align-content: center;
+  place-content: center;
   padding: 40px 28px;
 }
 
@@ -9,6 +9,7 @@
   margin: 0 auto;
   display: grid;
   gap: 24px;
+  text-align: center;
 }
 
 .workspace-welcome__intro h1 {
@@ -39,7 +40,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--surface);
-  text-align: left;
+  text-align: center;
   transition:
     background var(--motion-fast),
     border-color var(--motion-fast);
@@ -91,6 +92,7 @@
 .workspace-welcome__clone {
   display: grid;
   gap: 12px;
+  text-align: left;
 }
 
 .workspace-welcome__clone label {
