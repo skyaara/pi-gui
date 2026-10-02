@@ -3456,3 +3456,60 @@ mark.thread-find-active {
   border-radius: var(--radius-xl);
   background: var(--surface);
 }
+
+.shortcut-settings__intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.shortcut-settings__intro p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.shortcut-settings__intro > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.shortcut-settings__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.shortcut-settings__binding {
+  min-width: 70px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
+}
+.shortcut-recorder {
+  padding: 24px;
+  display: grid;
+  gap: 18px;
+}
+.shortcut-recorder h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-medium);
+}
+.shortcut-recorder p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.shortcut-recorder input {
+  padding: 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-strong);
+  text-align: center;
+}
+.shortcut-recorder__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}

@@ -1,3 +1,5 @@
+import type { KeyboardShortcutOverrides } from "../../../contracts/keyboard-shortcuts";
+import type { PiDesktopApi } from "../../../contracts/ipc";
 import type { ReactNode } from "react";
 import type {
   RuntimeSettingsSnapshot,
@@ -36,6 +38,9 @@ interface SettingsViewProps {
   readonly notificationPermissionStatus: DesktopNotificationPermissionStatus;
   readonly notificationPermissionPending: boolean;
   readonly modelSettingsScopeMode: ModelSettingsScopeMode;
+  readonly keyboardShortcuts: KeyboardShortcutOverrides;
+  readonly onSaveKeyboardShortcuts: (bindings: KeyboardShortcutOverrides) => Promise<void>;
+  readonly onSetShortcutRecording: PiDesktopApi["setShortcutRecording"];
   readonly integratedTerminalShell: string;
   readonly themeMode: "system" | "light" | "dark";
   readonly themePresetId: ThemePresetId;
@@ -74,6 +79,9 @@ export function SettingsView({
   notificationPermissionStatus,
   notificationPermissionPending,
   modelSettingsScopeMode,
+  keyboardShortcuts,
+  onSaveKeyboardShortcuts,
+  onSetShortcutRecording,
   integratedTerminalShell,
   themeMode,
   themePresetId,
@@ -159,7 +167,14 @@ export function SettingsView({
             />
           ) : null}
 
-          {section === "shortcuts" ? <SettingsShortcutsSection platform={platform} /> : null}
+          {section === "shortcuts" ? (
+            <SettingsShortcutsSection
+              platform={platform}
+              overrides={keyboardShortcuts}
+              onSave={onSaveKeyboardShortcuts}
+              onSetRecording={onSetShortcutRecording}
+            />
+          ) : null}
 
           {section === "providers" ? (
             <SettingsProvidersSection

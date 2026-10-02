@@ -1,3 +1,7 @@
+import {
+  validateKeyboardShortcuts,
+  type KeyboardShortcutOverrides,
+} from "../../contracts/keyboard-shortcuts";
 import { JsonCatalogStore } from "@pi-gui/catalogs/node";
 import { sessionKey } from "@pi-gui/session-driver";
 import type { ExtensionFlagValues, SessionSchemaInfo } from "@pi-gui/session-driver";
@@ -1386,6 +1390,19 @@ export class DesktopAppStore {
     return this.emit();
   }
 
+  async setKeyboardShortcuts(overrides: KeyboardShortcutOverrides): Promise<DesktopAppState> {
+    await this.initialize();
+    const keyboardShortcuts = validateKeyboardShortcuts(overrides);
+    this.state = {
+      ...this.state,
+      keyboardShortcuts,
+      revision: this.state.revision + 1,
+      lastError: undefined,
+    };
+    await this.persistUiState();
+    return this.emit();
+  }
+
   async setIntegratedTerminalShell(integratedTerminalShell: string): Promise<DesktopAppState> {
     await this.initialize();
     const normalizedShell = integratedTerminalShell.trim();
@@ -2219,6 +2236,7 @@ export class DesktopAppStore {
         ...this.state.notificationPreferences,
         ...persisted.notificationPreferences,
       },
+      keyboardShortcuts: persisted.keyboardShortcuts ?? {},
       integratedTerminalShell:
         persisted.integratedTerminalShell ?? this.state.integratedTerminalShell,
       lastViewedAtBySession: persisted.lastViewedAtBySession ?? {},
@@ -3986,6 +4004,7 @@ export class DesktopAppStore {
         this.disabledBuiltinExtensions.size > 0
           ? [...this.disabledBuiltinExtensions].sort()
           : undefined,
+      keyboardShortcuts: this.state.keyboardShortcuts,
       integratedTerminalShell: this.state.integratedTerminalShell || undefined,
       lastViewedAtBySession: mapToRecord(this.sessionState.lastViewedAtBySession),
       lastInteractedAtBySession: mapToRecord(this.sessionState.lastInteractedAtBySession),

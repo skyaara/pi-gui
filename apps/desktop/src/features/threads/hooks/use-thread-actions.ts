@@ -1,3 +1,4 @@
+import type { KeyboardShortcutOverrides } from "../../../../contracts/keyboard-shortcuts";
 import {
   useEffect,
   useRef,
@@ -21,6 +22,7 @@ import {
 } from "../thread-actions";
 
 interface UseThreadActionsParams {
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly api: PiDesktopApi | undefined;
   readonly setSnapshot: Dispatch<SetStateAction<DesktopAppState | null>>;
   readonly updateSnapshot: (
@@ -39,6 +41,7 @@ type OpenThreadMenu =
   { readonly surface: "sidebar"; readonly sessionId: string } | { readonly surface: "header" };
 
 export interface ThreadMenuState {
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly platform: NodeJS.Platform;
   readonly openMenu: OpenThreadMenu | null;
   readonly renameSessionId: string | null;
@@ -61,6 +64,7 @@ export interface ThreadMenuState {
 }
 
 export function useThreadActions({
+  keyboardShortcuts,
   api,
   setSnapshot,
   updateSnapshot,
@@ -120,6 +124,7 @@ export function useThreadActions({
 
   const platform = api?.platform ?? "linux";
   const handlers: ThreadActionHandlers = {
+    keyboardShortcuts,
     platform,
     hasScheduledTask: (subject) =>
       Boolean(nonCompletedBindingForSession(scheduledTasks, subject.session.id)),
@@ -158,6 +163,7 @@ export function useThreadActions({
   };
 
   return {
+    keyboardShortcuts,
     platform,
     openMenu,
     renameSessionId,

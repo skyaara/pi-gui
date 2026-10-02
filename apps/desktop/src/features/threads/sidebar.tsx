@@ -1,4 +1,9 @@
 import {
+  commandShortcutLabel,
+  commandShortcutAriaLabel,
+  type KeyboardShortcutOverrides,
+} from "../../../contracts/keyboard-shortcuts";
+import {
   createContext,
   forwardRef,
   useContext,
@@ -52,11 +57,7 @@ import {
   ClockIcon,
   WorktreeIcon,
 } from "../../ui/icons";
-import {
-  getDesktopShortcutLabel,
-  THREAD_SHORTCUT_SLOT_COUNT,
-  type PiDesktopApi,
-} from "../../../contracts/ipc";
+import { THREAD_SHORTCUT_SLOT_COUNT, type PiDesktopApi } from "../../../contracts/ipc";
 import { formatRelativeTime } from "../../lib/string-utils";
 import { PaneResizeHandle, type PaneWidthBounds } from "../../ui/pane-resize-handle";
 import { usePersistedPaneWidth } from "../../ui/use-persisted-pane-width";
@@ -80,6 +81,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { DesktopAppState } from "../../../contracts/desktop-state";
 
 interface SidebarProps {
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly activeView: AppView;
   readonly selectedWorkspace: WorkspaceRecord | undefined;
   readonly selectedSession: SessionRecord | undefined;
@@ -125,6 +127,7 @@ const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.userAge
 interface ThreadShortcutBadge {
   readonly slot: number;
   readonly label: string;
+  readonly ariaLabel?: string;
 }
 
 const ThreadShortcutContext = createContext<ReadonlyMap<string, ThreadShortcutBadge> | undefined>(
@@ -133,6 +136,7 @@ const ThreadShortcutContext = createContext<ReadonlyMap<string, ThreadShortcutBa
 
 export function Sidebar(props: SidebarProps) {
   const {
+    keyboardShortcuts,
     activeView,
     selectedWorkspace,
     selectedSession,
@@ -190,7 +194,20 @@ export function Sidebar(props: SidebarProps) {
           const slot = index + 1;
           return [
             sessionThreadKey(thread),
-            { slot, label: getDesktopShortcutLabel(api.platform, String(slot)) },
+            {
+              slot,
+              ariaLabel: commandShortcutAriaLabel(
+                `select-recent-thread-${slot}` as import("../../../contracts/ipc").PiDesktopCommand,
+                api.platform,
+                keyboardShortcuts,
+              ),
+              label:
+                commandShortcutLabel(
+                  `select-recent-thread-${slot}` as import("../../../contracts/ipc").PiDesktopCommand,
+                  api.platform,
+                  keyboardShortcuts,
+                ) ?? "",
+            },
           ] as const;
         }),
       )
@@ -1543,7 +1560,7 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
     const pinned = Boolean(thread.session.pinnedAt);
     const actionContext = showContext ? ` in ${thread.contextLabel}` : "";
     const shortcut = useContext(ThreadShortcutContext)?.get(sessionThreadKey(thread));
-    const shortcutBadge = overlay ? undefined : shortcut;
+    const shortcutBadge = overlay || !shortcut?.label ? undefined : shortcut;
     const menuOpen =
       !overlay &&
       threadMenu?.openMenu?.surface === "sidebar" &&
@@ -1568,9 +1585,7 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
           data-session-pinned={pinned ? "true" : "false"}
           data-session-id={thread.session.id}
           data-thread-shortcut={shortcutBadge ? String(shortcutBadge.slot) : undefined}
-          aria-keyshortcuts={
-            shortcutBadge ? `${IS_MAC ? "Meta" : "Control"}+${shortcutBadge.slot}` : undefined
-          }
+          aria-keyshortcuts={shortcutBadge?.ariaLabel}
           onClick={() => {
             if (!dragging) onSelect();
           }}
@@ -1656,7 +1671,11 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
                 {threadMenu && !overlay && !menuOpen ? (
                   <span className="shortcut-tooltip session-row__tooltip" role="tooltip">
                     <span>{archived ? "Restore thread" : "Archive thread"}</span>
-                    {archived ? null : <kbd>{archiveThreadShortcut(threadMenu.platform)}</kbd>}
+                    {archived ? null : (
+                      <kbd>
+                        {archiveThreadShortcut(threadMenu.platform, threadMenu.keyboardShortcuts)}
+                      </kbd>
+                    )}
                   </span>
                 ) : null}
               </span>

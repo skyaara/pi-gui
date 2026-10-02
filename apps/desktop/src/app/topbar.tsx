@@ -1,9 +1,14 @@
+import {
+  commandShortcutLabel,
+  type KeyboardShortcutOverrides,
+} from "../../contracts/keyboard-shortcuts";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import type { AppView, WorkspaceRecord, WorktreeRecord } from "../../contracts/desktop-state";
-import { getSidePanelToggleShortcutLabel, type PiDesktopApi } from "../../contracts/ipc";
+import { type PiDesktopApi } from "../../contracts/ipc";
 import { SidePanelIcon } from "../ui/icons";
 
 interface TopbarProps {
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly activeView: AppView;
   readonly sessionTitle?: string;
   readonly children?: ReactNode;
@@ -17,6 +22,7 @@ interface TopbarProps {
 }
 
 export function Topbar({
+  keyboardShortcuts,
   activeView,
   sessionTitle,
   children,
@@ -94,7 +100,9 @@ export function Topbar({
             </button>
             <span className="shortcut-tooltip topbar__tooltip" role="tooltip">
               <span>{panelVisible ? "Hide side panel" : "Show side panel"}</span>
-              <kbd>{getSidePanelToggleShortcutLabel(api.platform)}</kbd>
+              <kbd>
+                {commandShortcutLabel("toggle-side-panel", api.platform, keyboardShortcuts)}
+              </kbd>
             </span>
           </div>
         ) : null}

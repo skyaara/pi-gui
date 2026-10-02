@@ -1,3 +1,4 @@
+import { overriddenShortcutCommand, type KeyboardShortcutOverrides } from "./keyboard-shortcuts";
 import type {
   ExtensionViewOpenFile,
   DesktopExtensionViewInfo,
@@ -180,6 +181,8 @@ export const desktopIpc = {
   setCodemodeAlwaysOn: "pi-gui:set-codemode-always-on",
   respondToHostUiRequest: "pi-gui:respond-to-host-ui-request",
   setNotificationPreferences: "pi-gui:set-notification-preferences",
+  setKeyboardShortcuts: "piui:set-keyboard-shortcuts",
+  setShortcutRecording: "piui:set-shortcut-recording",
   setIntegratedTerminalShell: "pi-gui:set-integrated-terminal-shell",
   setEnableTransparency: "pi-gui:set-enable-transparency",
   terminalEnsurePanel: "pi-gui:terminal-ensure-panel",
@@ -574,6 +577,16 @@ export const earlyModifierChords = createEarlyModifierChordBuffer();
 
 export function getDesktopCommandFromShortcut(
   input: DesktopShortcutInput,
+  overrides: KeyboardShortcutOverrides = {},
+): PiDesktopCommand | undefined {
+  const custom = overriddenShortcutCommand(input, overrides);
+  if (custom) return custom;
+  const fallback = getDefaultDesktopCommandFromShortcut(input);
+  return fallback && Object.hasOwn(overrides, fallback) ? undefined : fallback;
+}
+
+function getDefaultDesktopCommandFromShortcut(
+  input: DesktopShortcutInput,
 ): PiDesktopCommand | undefined {
   if (!input.modifier) {
     return undefined;
@@ -804,6 +817,8 @@ export interface PiDesktopApi {
   setNotificationPreferences(
     preferences: Partial<NotificationPreferences>,
   ): Promise<DesktopAppState>;
+  setKeyboardShortcuts(overrides: KeyboardShortcutOverrides): Promise<DesktopAppState>;
+  setShortcutRecording(recording: boolean): Promise<void>;
   setIntegratedTerminalShell(shell: string): Promise<DesktopAppState>;
   setEnableTransparency(enabled: boolean): Promise<DesktopAppState>;
   setThemePresetId(presetId: ThemePresetId): Promise<DesktopAppState>;

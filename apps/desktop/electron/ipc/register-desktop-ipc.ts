@@ -1,3 +1,4 @@
+import { validateKeyboardShortcuts } from "../../contracts/keyboard-shortcuts";
 import { ipcMain, shell, type BrowserWindow, type IpcMainInvokeEvent } from "electron";
 import path from "node:path";
 import type { SessionRef } from "@pi-gui/session-driver";
@@ -161,6 +162,7 @@ type SettingsOwner = Pick<
   | "setMcpServerEnabled"
   | "setCodemodeAlwaysOn"
   | "setNotificationPreferences"
+  | "setKeyboardShortcuts"
   | "setIntegratedTerminalShell"
   | "setEnableTransparency"
   | "getSkillFilePath"
@@ -195,6 +197,7 @@ export interface DesktopIpcCapabilities {
   readonly notificationPermission: () => NotificationPermissionService | undefined;
   readonly terminal: () => TerminalService;
   readonly optionalTerminal: () => TerminalService | undefined;
+  readonly setShortcutRecording: (window: BrowserWindow, recording: boolean) => void;
   readonly setTerminalFocused: (webContentsId: number, focused: boolean) => void;
   readonly setSidePanelFocused: (webContentsId: number, focused: boolean) => void;
   readonly setTransparency: (enabled: boolean) => void;
@@ -648,6 +651,15 @@ export function registerDesktopIpc({
   ipcMain.handle(desktopIpc.setNotificationPreferences, (event, rawPreferences: unknown) =>
     run(event, () =>
       owners.settings.setNotificationPreferences(expectNotificationPreferences(rawPreferences)),
+    ),
+  );
+  ipcMain.handle(desktopIpc.setKeyboardShortcuts, (event, raw: unknown) =>
+    run(event, () => owners.settings.setKeyboardShortcuts(validateKeyboardShortcuts(raw))),
+  );
+  ipcMain.handle(desktopIpc.setShortcutRecording, (event, raw: unknown) =>
+    capabilities.setShortcutRecording(
+      senderWindow(windows, event),
+      expectBoolean(raw, "recording"),
     ),
   );
   ipcMain.handle(desktopIpc.setIntegratedTerminalShell, (event, rawShellPath: unknown) =>

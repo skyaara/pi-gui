@@ -452,6 +452,11 @@ export function SecondarySurfaces({
         notificationPermissionStatus={notificationPermissionStatus}
         notificationPermissionPending={notificationPermissionPending}
         modelSettingsScopeMode={snapshot.modelSettingsScopeMode}
+        keyboardShortcuts={snapshot.keyboardShortcuts}
+        onSaveKeyboardShortcuts={async (bindings) => {
+          await updateSnapshot(setSnapshot, () => api.setKeyboardShortcuts(bindings));
+        }}
+        onSetShortcutRecording={api.setShortcutRecording}
         integratedTerminalShell={snapshot.integratedTerminalShell}
         themeMode={snapshot.themeMode}
         themePresetId={snapshot.themePresetId}

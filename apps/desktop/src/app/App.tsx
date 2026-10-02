@@ -40,7 +40,6 @@ import { renderBuiltinToolPanel } from "../features/workbench/builtin-tools";
 import { useWorkbenchWidth } from "../features/workbench/use-workbench-width";
 import type { WorkspaceFileLine } from "../features/conversation/workspace-file-line";
 import { buildModelOptions } from "../features/conversation/composer-commands";
-import { getDesktopShortcutLabel } from "../../contracts/ipc";
 import { CommandPaletteSurface } from "../features/command-palette/command-palette-surface";
 import { deriveModelOnboardingState } from "../features/settings/model-onboarding";
 import type { SettingsSection } from "../features/settings/settings-view";
@@ -551,6 +550,7 @@ export default function App() {
     updateSnapshot,
   });
   const threadMenu = useThreadActions({
+    keyboardShortcuts: snapshot?.keyboardShortcuts,
     api,
     setSnapshot,
     updateSnapshot,
@@ -655,9 +655,6 @@ export default function App() {
         : rootWorkspaceOptions[0]?.id || "",
     );
   }, [rootWorkspaceOptions]);
-
-  const primarySidebarToggleVisible = canTogglePrimarySidebar(snapshot?.activeView);
-  const sidebarToggleShortcutLabel = api ? getDesktopShortcutLabel(api.platform, "B") : "";
 
   const setActiveView = (view: AppView) => {
     if (!api) return;
@@ -976,15 +973,17 @@ export default function App() {
 
   return (
     <div className={shellClassName}>
-      {primarySidebarToggleVisible ? (
+      {canTogglePrimarySidebar(snapshot.activeView) ? (
         <SidebarToggleButton
           collapsed={snapshot.sidebarCollapsed}
-          shortcutLabel={sidebarToggleShortcutLabel}
+          platform={api.platform}
+          keyboardShortcuts={snapshot.keyboardShortcuts}
           onToggle={commands.togglePrimarySidebar}
         />
       ) : null}
       {!snapshot.sidebarCollapsed ? (
         <Sidebar
+          keyboardShortcuts={snapshot.keyboardShortcuts}
           activeView={snapshot.activeView}
           selectedWorkspace={selectedWorkspace}
           selectedSession={selectedSession}
@@ -1017,6 +1016,7 @@ export default function App() {
 
       <main className={mainClassName} style={workbenchWidth.style}>
         <Topbar
+          keyboardShortcuts={snapshot.keyboardShortcuts}
           activeView={snapshot.activeView}
           rootWorkspace={
             snapshot.activeView === "new-thread"
@@ -1342,6 +1342,7 @@ export default function App() {
         </>
         {sidePanelVisible && selectedWorkspace && selectedSession ? (
           <Workbench
+            keyboardShortcuts={snapshot.keyboardShortcuts}
             view={workbench.view}
             platform={api?.platform ?? "linux"}
             tabHintsVisible={sidePanelTabHintsVisible}

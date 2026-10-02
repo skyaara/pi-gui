@@ -1,16 +1,23 @@
+import {
+  commandShortcutLabel,
+  type KeyboardShortcutOverrides,
+} from "../../../contracts/keyboard-shortcuts";
 import { SidebarToggleIcon } from "../../ui/icons";
 
 interface SidebarToggleButtonProps {
   readonly collapsed: boolean;
-  readonly shortcutLabel: string;
+  readonly platform: NodeJS.Platform;
+  readonly keyboardShortcuts: KeyboardShortcutOverrides;
   readonly onToggle: () => void;
 }
 
 export function SidebarToggleButton({
   collapsed,
-  shortcutLabel,
+  platform,
+  keyboardShortcuts,
   onToggle,
 }: SidebarToggleButtonProps) {
+  const shortcut = commandShortcutLabel("toggle-sidebar", platform, keyboardShortcuts);
   return (
     <div className="shortcut-tooltip-wrap sidebar-toggle">
       <button
@@ -25,7 +32,7 @@ export function SidebarToggleButton({
       </button>
       <span className="shortcut-tooltip sidebar-toggle__tooltip" role="tooltip">
         <span>Toggle sidebar</span>
-        <kbd>{shortcutLabel}</kbd>
+        {shortcut ? <kbd>{shortcut}</kbd> : null}
       </span>
     </div>
   );

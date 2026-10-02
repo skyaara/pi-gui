@@ -1,6 +1,10 @@
+import {
+  commandShortcutLabel,
+  commandShortcutAriaLabel,
+  type KeyboardShortcutOverrides,
+} from "../../../contracts/keyboard-shortcuts";
 import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
 import {
-  formatShortcut,
   getSidePanelTabShortcutLabel,
   SIDE_PANEL_TAB_SHORTCUT_SLOT_COUNT,
 } from "../../../contracts/ipc";
@@ -12,6 +16,7 @@ import { WorkbenchResizeHandle } from "./workbench-resize-handle";
 import { activeWorkbenchTool } from "./workbench-state";
 
 interface WorkbenchProps {
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly view: TaskWorkbenchTemplate;
   readonly platform: NodeJS.Platform;
   /** Whether the side panel tab modifier is held, so tabs show their numbers. */
@@ -43,6 +48,7 @@ function ToolIcon({ tool }: { readonly tool: ToolRef }) {
 }
 
 export function Workbench({
+  keyboardShortcuts,
   view,
   platform,
   tabHintsVisible,
@@ -248,33 +254,34 @@ export function Workbench({
           <div className="workbench__chooser" data-testid="workbench-chooser">
             <h2>Open a tool</h2>
             <p>Keep the tools you need alongside your conversation.</p>
-            {BUILTIN_TOOL_ENTRIES.map(({ kind, label, description, Icon, shortcutKey }) => (
-              <button
-                aria-keyshortcuts={
-                  shortcutKey
-                    ? `${platform === "darwin" ? "Meta" : "Control"}+${shortcutKey}`
-                    : undefined
-                }
-                aria-label={label}
-                className="workbench__choice"
-                key={kind}
-                onClick={() => onOpenTool({ kind })}
-                type="button"
-              >
-                <span className="workbench__choice-icon">
-                  <Icon />
-                </span>
-                <span className="workbench__choice-copy">
-                  <strong>{label}</strong>
-                  <span>{description}</span>
-                </span>
-                {shortcutKey ? (
-                  <kbd className="workbench__choice-shortcut">
-                    {formatShortcut(platform, shortcutKey)}
-                  </kbd>
-                ) : null}
-              </button>
-            ))}
+            {BUILTIN_TOOL_ENTRIES.map(({ kind, label, description, Icon, shortcutCommand }) => {
+              const shortcut = shortcutCommand
+                ? commandShortcutLabel(shortcutCommand, platform, keyboardShortcuts)
+                : undefined;
+              return (
+                <button
+                  aria-keyshortcuts={
+                    shortcutCommand
+                      ? commandShortcutAriaLabel(shortcutCommand, platform, keyboardShortcuts)
+                      : undefined
+                  }
+                  aria-label={label}
+                  className="workbench__choice"
+                  key={kind}
+                  onClick={() => onOpenTool({ kind })}
+                  type="button"
+                >
+                  <span className="workbench__choice-icon">
+                    <Icon />
+                  </span>
+                  <span className="workbench__choice-copy">
+                    <strong>{label}</strong>
+                    <span>{description}</span>
+                  </span>
+                  {shortcut ? <kbd className="workbench__choice-shortcut">{shortcut}</kbd> : null}
+                </button>
+              );
+            })}
             <h3 className="workbench__extension-heading">Extension views</h3>
             {extensionViewsLoading ? <p role="status">Loading extension views…</p> : null}
             {extensionViewsError ? (

@@ -1,3 +1,7 @@
+import {
+  validateKeyboardShortcuts,
+  type KeyboardShortcutOverrides,
+} from "../../contracts/keyboard-shortcuts";
 import type {
   AppView,
   ExtensionCommandCompatibilityRecord,
@@ -40,6 +44,7 @@ export interface PersistedUiState {
   readonly notificationPreferences?: Partial<NotificationPreferences>;
   /** Names of pi-gui built-in extensions the user switched off. */
   readonly disabledBuiltinExtensions?: readonly string[];
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly integratedTerminalShell?: string;
   readonly lastViewedAtBySession?: Record<string, string>;
   readonly lastInteractedAtBySession?: Record<string, string>;
@@ -106,6 +111,10 @@ export function decodePersistedUiState(parsed: unknown): LegacyPersistedUiState 
     extensionFlagsBySession: toExtensionFlagRecords(candidate.extensionFlagsBySession),
     notificationPreferences: toNotificationPreferences(candidate.notificationPreferences),
     disabledBuiltinExtensions: toStringArray(candidate.disabledBuiltinExtensions),
+    keyboardShortcuts:
+      candidate.keyboardShortcuts === undefined
+        ? undefined
+        : validateKeyboardShortcuts(candidate.keyboardShortcuts),
     integratedTerminalShell:
       typeof candidate.integratedTerminalShell === "string"
         ? candidate.integratedTerminalShell
@@ -212,6 +221,7 @@ function validateUiState(value: unknown): Record<string, unknown> {
       "extensionFlagsBySession",
       "notificationPreferences",
       "disabledBuiltinExtensions",
+      "keyboardShortcuts",
       "integratedTerminalShell",
       "lastViewedAtBySession",
       "lastInteractedAtBySession",
@@ -248,6 +258,14 @@ function validateUiState(value: unknown): Record<string, unknown> {
     const r = objectRecord(v);
     return !!r && Object.values(r).every(string);
   };
+  optional(root, "keyboardShortcuts", (value) => {
+    try {
+      validateKeyboardShortcuts(value);
+      return true;
+    } catch {
+      return false;
+    }
+  });
   optional(root, "version", (v) => toPersistedVersion(v) !== undefined);
   if (
     root.taskWorkbenchTemplatesBySession !== undefined &&

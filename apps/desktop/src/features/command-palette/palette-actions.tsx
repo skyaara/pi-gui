@@ -1,3 +1,7 @@
+import {
+  commandShortcutLabel,
+  type KeyboardShortcutOverrides,
+} from "../../../contracts/keyboard-shortcuts";
 import type { ReactNode } from "react";
 import { formatShortcut } from "../../../contracts/ipc";
 import type { BuiltinToolKind } from "../../../contracts/workbench";
@@ -44,6 +48,7 @@ const SETTINGS_SECTIONS: readonly SettingsSection[] = [
 /** What the app can do right now; an action is listed only when it would work. */
 export interface PaletteActionContext {
   readonly platform: NodeJS.Platform;
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly hasWorkspace: boolean;
   /** A thread is open in the main pane, with the actions its menus show. */
   readonly thread?: {
@@ -79,7 +84,7 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
       id: "new-thread",
       title: "New thread",
       icon: <PlusIcon />,
-      hint: formatShortcut(platform, "N"),
+      hint: commandShortcutLabel("open-new-thread", platform, context.keyboardShortcuts),
       run: context.newThread,
     });
   }
@@ -95,7 +100,7 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
         id: "go-to-file",
         title: "Go to file…",
         icon: <FileIcon />,
-        hint: formatShortcut(platform, "P"),
+        hint: commandShortcutLabel("open-file-palette", platform, context.keyboardShortcuts),
         keepsOpen: true,
         run: () => context.openPaletteMode("files"),
       },
@@ -116,12 +121,14 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
         run: () => context.openPaletteMode("models"),
       });
     }
-    for (const { kind, label, Icon, shortcutKey } of BUILTIN_TOOL_ENTRIES) {
+    for (const { kind, label, Icon, shortcutCommand } of BUILTIN_TOOL_ENTRIES) {
       actions.push({
         id: `toggle-${kind}`,
         title: `Toggle ${label.toLowerCase()}`,
         icon: <Icon />,
-        hint: shortcutKey ? formatShortcut(platform, shortcutKey) : undefined,
+        hint: shortcutCommand
+          ? commandShortcutLabel(shortcutCommand, platform, context.keyboardShortcuts)
+          : undefined,
         run: () => context.toggleTool(kind),
       });
     }
@@ -129,7 +136,7 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
       id: "toggle-side-panel",
       title: "Toggle side panel",
       icon: <SidePanelIcon />,
-      hint: formatShortcut(platform, "B", { alt: true }),
+      hint: commandShortcutLabel("toggle-side-panel", platform, context.keyboardShortcuts),
       run: context.toggleSidePanel,
     });
     for (const view of context.extensionViews) {
@@ -147,7 +154,7 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
       id: "toggle-sidebar",
       title: "Toggle sidebar",
       icon: <SidebarToggleIcon />,
-      hint: formatShortcut(platform, "B"),
+      hint: commandShortcutLabel("toggle-sidebar", platform, context.keyboardShortcuts),
       run: context.toggleSidebar,
     });
   }
@@ -172,7 +179,7 @@ export function buildPaletteActions(context: PaletteActionContext): readonly Pal
     id: "settings",
     title: "Settings",
     icon: <SettingsIcon />,
-    hint: formatShortcut(platform, ","),
+    hint: commandShortcutLabel("open-settings", platform, context.keyboardShortcuts),
     run: () => context.openSettings("general"),
   });
   for (const section of SETTINGS_SECTIONS) {

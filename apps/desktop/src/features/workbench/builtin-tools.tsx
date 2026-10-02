@@ -1,3 +1,4 @@
+import type { PiDesktopCommand } from "../../../contracts/ipc";
 import type { ComponentType, ReactNode } from "react";
 import { BUILTIN_TOOL_KINDS, type BuiltinToolKind } from "../../../contracts/workbench";
 import { DiffIcon, FileIcon, TerminalIcon } from "../../ui/icons";
@@ -7,8 +8,8 @@ interface BuiltinToolDefinition {
   /** Shown in the tool chooser. */
   readonly description: string;
   readonly Icon: ComponentType;
-  /** Key that toggles the tool with the platform modifier, when it has one. */
-  readonly shortcutKey?: string;
+  /** Command that toggles the tool, when it has one. */
+  readonly shortcutCommand?: PiDesktopCommand;
 }
 
 /** Presentation for every built-in tool; a missing kind fails the build. */
@@ -18,13 +19,13 @@ export const BUILTIN_TOOLS = {
     label: "Review",
     description: "Review uncommitted, branch or turn changes",
     Icon: DiffIcon,
-    shortcutKey: "R",
+    shortcutCommand: "toggle-review",
   },
   terminal: {
     label: "Terminal",
     description: "Run commands in this task's checkout",
     Icon: TerminalIcon,
-    shortcutKey: "J",
+    shortcutCommand: "toggle-terminal",
   },
 } as const satisfies Record<BuiltinToolKind, BuiltinToolDefinition>;
 

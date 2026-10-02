@@ -424,6 +424,10 @@ contextBridge.exposeInMainWorld("piApp", {
       desktopIpc.setNotificationPreferences,
       preferences,
     ) as Promise<DesktopAppState>,
+  setKeyboardShortcuts: (overrides) =>
+    ipcRenderer.invoke(desktopIpc.setKeyboardShortcuts, overrides) as Promise<DesktopAppState>,
+  setShortcutRecording: (recording) =>
+    ipcRenderer.invoke(desktopIpc.setShortcutRecording, recording) as Promise<void>,
   setIntegratedTerminalShell: (shellPath: string) =>
     ipcRenderer.invoke(
       desktopIpc.setIntegratedTerminalShell,

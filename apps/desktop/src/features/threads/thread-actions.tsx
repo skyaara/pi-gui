@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 import type { SessionRecord } from "../../../contracts/desktop-state";
-import { formatShortcut } from "../../../contracts/ipc";
+import {
+  commandShortcutLabel,
+  type KeyboardShortcutOverrides,
+} from "../../../contracts/keyboard-shortcuts";
 import {
   ArchiveIcon,
   CheckIcon,
@@ -41,6 +44,7 @@ export interface ThreadActionSubject {
 
 export interface ThreadActionHandlers {
   readonly platform: NodeJS.Platform;
+  readonly keyboardShortcuts?: KeyboardShortcutOverrides;
   readonly hasScheduledTask: (subject: ThreadActionSubject) => boolean;
   readonly startRename: (subject: ThreadActionSubject) => void;
   readonly setPinned: (subject: ThreadActionSubject, pinned: boolean) => void;
@@ -51,12 +55,18 @@ export interface ThreadActionHandlers {
   readonly copySessionId: (subject: ThreadActionSubject) => void;
 }
 
-export function renameThreadShortcut(platform: NodeJS.Platform): string {
-  return formatShortcut(platform, "R", { shift: true });
+export function renameThreadShortcut(
+  platform: NodeJS.Platform,
+  overrides?: KeyboardShortcutOverrides,
+): string {
+  return commandShortcutLabel("rename-thread", platform, overrides) ?? "";
 }
 
-export function archiveThreadShortcut(platform: NodeJS.Platform): string {
-  return formatShortcut(platform, "A", { shift: true });
+export function archiveThreadShortcut(
+  platform: NodeJS.Platform,
+  overrides?: KeyboardShortcutOverrides,
+): string {
+  return commandShortcutLabel("archive-thread", platform, overrides) ?? "";
 }
 
 export function buildThreadActions(
@@ -71,7 +81,7 @@ export function buildThreadActions(
       id: "rename-thread",
       title: "Rename thread",
       icon: <PencilIcon />,
-      hint: renameThreadShortcut(handlers.platform),
+      hint: renameThreadShortcut(handlers.platform, handlers.keyboardShortcuts),
       run: () => handlers.startRename(subject),
     },
   ];
@@ -94,7 +104,7 @@ export function buildThreadActions(
         id: "archive-thread",
         title: "Archive thread",
         icon: <ArchiveIcon />,
-        hint: archiveThreadShortcut(handlers.platform),
+        hint: archiveThreadShortcut(handlers.platform, handlers.keyboardShortcuts),
         run: () => handlers.archive(subject),
       },
     );

@@ -247,6 +247,7 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
     else threadSearch.open();
   };
   handleRendererKeyDownRef.current = (event: globalThis.KeyboardEvent) => {
+    if (event.defaultPrevented || document.querySelector("[data-shortcut-recorder]")) return;
     const closeSurfaceShortcut = isCloseFocusedSurfaceShortcut({
       meta: event.metaKey,
       control: event.ctrlKey,
@@ -276,13 +277,19 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
       return;
     }
     if (isEventInsideTerminal(event)) {
-      const command = getDesktopCommandFromShortcut({
-        modifier: event.metaKey || event.ctrlKey,
-        alt: event.altKey,
-        shift: event.shiftKey,
-        key: event.key,
-        code: event.code,
-      });
+      const command = getDesktopCommandFromShortcut(
+        {
+          modifier: platformShortcutModifier(api?.platform ?? "linux", {
+            meta: event.metaKey,
+            control: event.ctrlKey,
+          }),
+          alt: event.altKey,
+          shift: event.shiftKey,
+          key: event.key,
+          code: event.code,
+        },
+        snapshot?.keyboardShortcuts,
+      );
       if (
         command === desktopCommands.toggleTerminal ||
         command === desktopCommands.toggleSidePanel
@@ -295,6 +302,7 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
     if (
       (event.metaKey || event.ctrlKey) &&
       !event.shiftKey &&
+      !event.altKey &&
       !event.repeat &&
       (event.key.toLowerCase() === "f" || event.code === "KeyF")
     ) {
@@ -302,13 +310,19 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
       toggleThreadSearchRef.current();
       return;
     }
-    const command = getDesktopCommandFromShortcut({
-      modifier: event.metaKey || event.ctrlKey,
-      alt: event.altKey,
-      shift: event.shiftKey,
-      key: event.key,
-      code: event.code,
-    });
+    const command = getDesktopCommandFromShortcut(
+      {
+        modifier: platformShortcutModifier(api?.platform ?? "linux", {
+          meta: event.metaKey,
+          control: event.ctrlKey,
+        }),
+        alt: event.altKey,
+        shift: event.shiftKey,
+        key: event.key,
+        code: event.code,
+      },
+      snapshot?.keyboardShortcuts,
+    );
     // macOS Control+N moves the caret down a line in text fields.
     if (
       command === desktopCommands.openNewThread &&
@@ -358,12 +372,15 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
         toggleThreadSearchRef.current();
         continue;
       }
-      const command = getDesktopCommandFromShortcut({
-        modifier: true,
-        shift: false,
-        key: chord.key,
-        code: chord.code,
-      });
+      const command = getDesktopCommandFromShortcut(
+        {
+          modifier: true,
+          shift: false,
+          key: chord.key,
+          code: chord.code,
+        },
+        input.snapshot?.keyboardShortcuts,
+      );
       if (command) dispatch(command, "renderer");
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -408,6 +425,7 @@ export function useDesktopCommands(input: DesktopCommandsInput) {
     paletteMode && threadSidebarModel && api
       ? buildPaletteActions({
           platform: api.platform,
+          keyboardShortcuts: snapshot?.keyboardShortcuts,
           hasWorkspace: input.hasWorkspace,
           thread: selectedThread,
           canToggleSidebar: canTogglePrimarySidebar(snapshot?.activeView),

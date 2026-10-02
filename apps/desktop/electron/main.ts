@@ -1,3 +1,4 @@
+import { effectiveShortcut, shortcutAccelerator } from "../contracts/keyboard-shortcuts";
 import {
   app,
   BrowserWindow,
@@ -182,6 +183,12 @@ const SUPPORTED_IMAGE_TYPES = SUPPORTED_COMPOSER_IMAGE_TYPES;
 const SUPPORTED_IMAGE_MIME_TYPES = new Set<string>(
   SUPPORTED_IMAGE_TYPES.map((type) => type.mimeType),
 );
+const shortcutRecordingWindows = new Set<number>();
+function newThreadAccelerator(): string | undefined {
+  const binding = effectiveShortcut("open-new-thread", store.snapshot().keyboardShortcuts);
+  return shortcutAccelerator(binding);
+}
+const NEW_THREAD_MENU_ITEM_ID = "file.new-thread";
 const NEW_WINDOW_MENU_ITEM_ID = "file.new-window";
 
 function createStoreBackedOrchestrationRuntimeBridge(): OrchestrationRuntimeBridge {
@@ -552,6 +559,7 @@ function createWindow(): BrowserWindow {
     }
   });
   window.webContents.on("before-input-event", (event, input) => {
+    if (shortcutRecordingWindows.has(window.webContents.id)) return;
     if (input.type !== "keyDown") {
       return;
     }
@@ -569,13 +577,16 @@ function createWindow(): BrowserWindow {
 
     const lowerKey = input.key.toLowerCase();
     const platformModifier = platformShortcutModifier(process.platform, input);
-    const command = getDesktopCommandFromShortcut({
-      modifier: platformModifier,
-      alt: input.alt,
-      shift: input.shift,
-      key: input.key,
-      code: input.code,
-    });
+    const command = getDesktopCommandFromShortcut(
+      {
+        modifier: platformModifier,
+        alt: input.alt,
+        shift: input.shift,
+        key: input.key,
+        code: input.code,
+      },
+      store.snapshot().keyboardShortcuts,
+    );
     const webContentsId = window.webContents.id;
     const terminalFocused = terminalFocusedWebContentsIds.has(webContentsId);
     const closeFocusedSurface =
@@ -595,7 +606,10 @@ function createWindow(): BrowserWindow {
       if (process.platform === "darwin" && isSinglePressCommand(command)) {
         event.preventDefault();
         if (!input.isAutoRepeat) window.webContents.send(desktopIpc.appCommand, command);
-      } else if (command === desktopCommands.toggleSidePanel) {
+      } else if (
+        command === desktopCommands.toggleSidePanel ||
+        command === desktopCommands.toggleTerminal
+      ) {
         event.preventDefault();
         window.webContents.send(desktopIpc.appCommand, command);
       } else if (closeFocusedSurface) {
@@ -607,13 +621,13 @@ function createWindow(): BrowserWindow {
       dispatchCloseFocusedSurface(window, event);
       return;
     }
-    if (platformModifier && input.shift && lowerKey === "n") {
+    if (platformModifier && !input.alt && input.shift && lowerKey === "n") {
       event.preventDefault();
       createAppWindow(windowOwner.viewForWindow(window));
       return;
     }
 
-    if (platformModifier && !input.shift && lowerKey === "o") {
+    if (platformModifier && !input.alt && !input.shift && lowerKey === "o") {
       event.preventDefault();
       void pickWorkspaceViaDialog(window).catch((error: unknown) => {
         console.error("[main] pickWorkspaceViaDialog failed", error);
@@ -621,7 +635,7 @@ function createWindow(): BrowserWindow {
       return;
     }
 
-    if (platformModifier && !input.shift && lowerKey === "v") {
+    if (platformModifier && !input.alt && !input.shift && lowerKey === "v") {
       const clipboardImage = readClipboardImageAttachment();
       if (clipboardImage.ok || clipboardImage.message) {
         event.preventDefault();
@@ -669,6 +683,7 @@ function createAppWindow(sourceView?: DesktopAppViewState): BrowserWindow {
 
   window.once("closed", () => {
     windowOwner.remove(window);
+    shortcutRecordingWindows.delete(webContentsId);
     terminalFocusedWebContentsIds.delete(webContentsId);
     sidePanelFocusedWebContentsIds.delete(webContentsId);
     surfaceCloseShortcutIds.delete(webContentsId);
@@ -866,8 +881,9 @@ function installApplicationMenu(): void {
       label: "File",
       submenu: [
         {
+          id: NEW_THREAD_MENU_ITEM_ID,
           label: "New Thread",
-          accelerator: "CommandOrControl+N",
+          accelerator: newThreadAccelerator(),
           click: () => {
             const window = BrowserWindow.getFocusedWindow() ?? mainWindow;
             window?.webContents.send(desktopIpc.appCommand, desktopCommands.openNewThread);
@@ -1066,8 +1082,14 @@ app
     integratedTerminalShell = (await store.getState()).integratedTerminalShell;
     nativeTheme.on("updated", refreshWindowBackgrounds);
     let windowBackgroundPresetId = store.snapshot().themePresetId;
+    let shortcutSignature = JSON.stringify(store.snapshot().keyboardShortcuts);
     stopPruningTerminals = store.subscribe((state) => {
       integratedTerminalShell = state.integratedTerminalShell;
+      const nextShortcutSignature = JSON.stringify(state.keyboardShortcuts);
+      if (nextShortcutSignature !== shortcutSignature) {
+        shortcutSignature = nextShortcutSignature;
+        installApplicationMenu();
+      }
       if (state.themePresetId !== windowBackgroundPresetId) {
         windowBackgroundPresetId = state.themePresetId;
         refreshWindowBackgrounds();
@@ -1187,6 +1209,11 @@ app
         notificationPermission: () => notificationPermissionService,
         terminal: getTerminalService,
         optionalTerminal: () => terminalService,
+        setShortcutRecording: (window, recording) => {
+          if (recording) shortcutRecordingWindows.add(window.webContents.id);
+          else shortcutRecordingWindows.delete(window.webContents.id);
+          window.webContents.setIgnoreMenuShortcuts(recording);
+        },
         setTerminalFocused: (webContentsId, focused) => {
           if (focused) {
             terminalFocusedWebContentsIds.add(webContentsId);

@@ -1,3 +1,4 @@
+import type { KeyboardShortcutOverrides } from "./keyboard-shortcuts";
 import type {
   ExtensionFlagValues,
   HostUiRequest,
@@ -364,6 +365,7 @@ export interface DesktopAppState {
   readonly orchestrationChildren: readonly OrchestrationChildThread[];
   readonly scheduledTasks: readonly ScheduledTaskRecord[];
   readonly notificationPreferences: NotificationPreferences;
+  readonly keyboardShortcuts: KeyboardShortcutOverrides;
   readonly integratedTerminalShell: string;
   readonly lastViewedAtBySession: Readonly<Record<string, string>>;
   readonly lastInteractedAtBySession: Readonly<Record<string, string>>;
@@ -420,6 +422,7 @@ export function createEmptyDesktopAppState(): DesktopAppState {
       backgroundFailure: true,
       attentionNeeded: true,
     },
+    keyboardShortcuts: {},
     integratedTerminalShell: "",
     lastViewedAtBySession: {},
     lastInteractedAtBySession: {},
