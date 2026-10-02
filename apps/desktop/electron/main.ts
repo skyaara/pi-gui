@@ -1062,6 +1062,9 @@ app
     };
     store = new DesktopAppStore({
       userDataDir: configuredUserDataDir,
+      standaloneRoot: process.env.PI_APP_USER_DATA_DIR
+        ? path.join(configuredUserDataDir, "threads")
+        : path.join(app.getPath("documents"), "piui", "threads"),
       initialWorkspacePaths: resolveInitialWorkspacePaths(),
       getWindow: () => mainWindow,
       shouldKeepSessionDialogs: (sessionRef) =>

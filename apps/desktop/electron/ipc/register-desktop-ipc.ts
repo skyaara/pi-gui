@@ -83,6 +83,7 @@ type StateOwner = Pick<
 
 type WorkspaceOwner = Pick<
   DesktopAppStore,
+  | "prepareStandaloneWorkspace"
   | "addWorkspace"
   | "selectWorkspace"
   | "renameWorkspace"
@@ -694,6 +695,9 @@ export function registerDesktopIpc({
 
   ipcMain.handle(desktopIpc.createSession, (event, rawInput: unknown) =>
     run(event, () => owners.conversation.createSession(expectCreateSessionInput(rawInput))),
+  );
+  ipcMain.handle(desktopIpc.prepareStandaloneWorkspace, (event) =>
+    run(event, () => owners.workspace.prepareStandaloneWorkspace()),
   );
   ipcMain.handle(desktopIpc.startThread, (event, rawInput: unknown) => {
     const input = expectStartThreadInput(rawInput);

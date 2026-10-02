@@ -19,7 +19,7 @@ test("welcome actions replace the sidebar card and support errors, cancellation,
   const harness = await launchDesktop(profile, { testMode: "background" });
   try {
     const page = await harness.firstWindow();
-    await expect(page.getByRole("heading", { name: "Start a project" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Start a thread" })).toBeVisible();
     await expect(page.getByRole("complementary").getByTestId("empty-state")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Open folder", exact: true })).toBeVisible();
     await stubNextOpenDialog(harness, []);

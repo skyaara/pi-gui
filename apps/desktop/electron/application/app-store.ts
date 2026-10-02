@@ -7,7 +7,7 @@ import { sessionKey } from "@pi-gui/session-driver";
 import type { ExtensionFlagValues, SessionSchemaInfo } from "@pi-gui/session-driver";
 import type { BrowserWindow } from "electron";
 import { randomUUID } from "node:crypto";
-import { readFile, stat } from "node:fs/promises";
+import { readFile, realpath, stat } from "node:fs/promises";
 import { homedir, hostname } from "node:os";
 import { join, resolve, sep } from "node:path";
 import {
@@ -180,6 +180,7 @@ type ExtensionUiDialogRequest = Extract<
 };
 export interface DesktopAppStoreOptions {
   readonly userDataDir: string;
+  readonly standaloneRoot?: string;
   readonly initialWorkspacePaths: readonly string[];
   readonly getWindow?: () => BrowserWindow | null;
   readonly shouldKeepSessionDialogs?: (sessionRef: SessionRef) => boolean;
@@ -247,6 +248,7 @@ export class DesktopAppStore {
   private readonly catalogStore: JsonCatalogStore;
   private readonly worktreeManager: GitWorktreeManager;
   private readonly worktreeRoot: string;
+  private readonly standaloneRoot: string;
   private readonly isAppWorktreePath: (path: string) => Promise<boolean>;
   private readonly uiStateFilePath: string;
   private readonly scheduledTasksFilePath: string;
@@ -305,6 +307,7 @@ export class DesktopAppStore {
 
     this.driver = new PiSdkDriver(driverOptions);
     this.worktreeRoot = join(options.userDataDir, "worktrees");
+    this.standaloneRoot = options.standaloneRoot ?? join(options.userDataDir, "threads");
     this.isAppWorktreePath = appWorktreeRootMatcher(this.worktreeRoot);
     this.worktreeManager = new GitWorktreeManager({
       catalogStorage: this.catalogStore,
@@ -420,6 +423,7 @@ export class DesktopAppStore {
       catalogStore: this.catalogStore,
       worktreeManager: this.worktreeManager,
       worktreeRoot: this.worktreeRoot,
+      standaloneRoot: this.standaloneRoot,
       isAppWorktreePath: this.isAppWorktreePath,
       setRuntimeSnapshot: (workspaceId, snapshot) => {
         this.runtimeByWorkspace.set(workspaceId, snapshot);
@@ -865,6 +869,10 @@ export class DesktopAppStore {
   }
 
   /* ── Workspace methods (delegated) ─────────────────────── */
+
+  async prepareStandaloneWorkspace(): Promise<DesktopAppState> {
+    return this.workspaceOwner.prepareStandaloneWorkspace();
+  }
 
   async addWorkspace(path: string): Promise<DesktopAppState> {
     return this.workspaceOwner.addWorkspace(path);
@@ -2423,6 +2431,7 @@ export class DesktopAppStore {
         this.sessionState.lastViewedAtBySession,
         this.sessionState.lastInteractedAtBySession,
         this.sessionState.pinnedAtBySession,
+        await realpath(this.standaloneRoot).catch(() => this.standaloneRoot),
       );
       const worktreesByWorkspace = buildWorktreeRecords(
         workspacesSnapshot.workspaces,

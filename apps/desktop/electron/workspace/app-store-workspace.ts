@@ -1,3 +1,4 @@
+import { mkdir } from "node:fs/promises";
 import { sessionKey } from "@pi-gui/session-driver";
 import type { PiSdkDriver } from "@pi-gui/pi-sdk-driver";
 import type { JsonCatalogStore } from "@pi-gui/catalogs/node";
@@ -53,6 +54,7 @@ export interface WorkspaceOwnerHost {
   readonly catalogStore: JsonCatalogStore;
   readonly worktreeManager: GitWorktreeManager;
   readonly worktreeRoot: string;
+  readonly standaloneRoot: string;
   readonly isAppWorktreePath: (path: string) => Promise<boolean>;
   setRuntimeSnapshot(workspaceId: string, snapshot: RuntimeSnapshot): void;
   refreshRuntime(workspace: WorkspaceRef): Promise<RuntimeSnapshot>;
@@ -102,6 +104,7 @@ export interface WorkspaceOwnerHost {
 }
 
 export interface WorkspaceOwner {
+  prepareStandaloneWorkspace(): Promise<DesktopAppState>;
   addWorkspace(path: string): Promise<DesktopAppState>;
   renameWorkspace(workspaceId: string, displayName: string): Promise<DesktopAppState>;
   removeWorkspace(workspaceId: string): Promise<DesktopAppState>;
@@ -124,6 +127,17 @@ export interface WorkspaceOwner {
 
 export function createWorkspaceOwner(store: WorkspaceOwnerHost): WorkspaceOwner {
   return {
+    prepareStandaloneWorkspace: async () => {
+      await store.initialize();
+      await mkdir(store.standaloneRoot, { recursive: true });
+      const { workspace } = await store.driver.syncWorkspace(store.standaloneRoot, "No project");
+      return store.refreshState({
+        selectedWorkspaceId: workspace.workspaceId,
+        selectedSessionId: "",
+        activeView: "new-thread",
+        clearLastError: true,
+      });
+    },
     addWorkspace: (path) => addWorkspace(store, path),
     renameWorkspace: (workspaceId, displayName) => renameWorkspace(store, workspaceId, displayName),
     removeWorkspace: (workspaceId) => removeWorkspace(store, workspaceId),
@@ -343,10 +357,7 @@ function selectionAfterArchiving(
     };
   }
 
-  const rootWorkspaceId =
-    targetWorkspace.kind === "worktree"
-      ? (targetWorkspace.rootWorkspaceId ?? targetWorkspace.id)
-      : targetWorkspace.id;
+  const rootWorkspaceId = targetWorkspace.rootWorkspaceId ?? targetWorkspace.id;
   const rankedCandidates = state.workspaces
     .filter((w) => w.id === rootWorkspaceId || w.rootWorkspaceId === rootWorkspaceId)
     .flatMap((w) =>

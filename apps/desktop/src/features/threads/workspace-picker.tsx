@@ -6,10 +6,12 @@ export function WorkspacePicker({
   workspace,
   workspaces,
   onSelect,
+  onSelectStandalone,
 }: {
   readonly workspace: WorkspaceRecord;
   readonly workspaces: readonly WorkspaceRecord[];
   readonly onSelect: (id: string) => void;
+  readonly onSelectStandalone: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -18,6 +20,8 @@ export function WorkspacePicker({
   const matches = workspaces.filter((entry) =>
     `${entry.name} ${entry.path}`.toLowerCase().includes(query.toLowerCase()),
   );
+  const showStandaloneOption =
+    !workspaces.some((entry) => entry.isStandalone) && "no project".includes(query.toLowerCase());
   const close = () => {
     setOpen(false);
     setQuery("");
@@ -89,6 +93,22 @@ export function WorkspacePicker({
             onChange={(event) => setQuery(event.target.value)}
           />
           <div role="listbox" aria-label="Workspaces">
+            {showStandaloneOption ? (
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                onClick={() => {
+                  onSelectStandalone();
+                  close();
+                }}
+              >
+                <span>
+                  <strong>No project</strong>
+                  <small>A separate folder for each chat</small>
+                </span>
+              </button>
+            ) : null}
             {matches.map((entry) => (
               <button
                 type="button"
@@ -102,12 +122,14 @@ export function WorkspacePicker({
               >
                 <span>
                   <strong>{entry.name}</strong>
-                  <small>{entry.path}</small>
+                  <small>
+                    {entry.isStandalone ? "A separate folder for each chat" : entry.path}
+                  </small>
                 </span>
                 {entry.id === workspace.id ? <CheckIcon /> : null}
               </button>
             ))}
-            {!matches.length ? <p>No matching folders</p> : null}
+            {!matches.length && !showStandaloneOption ? <p>No matching folders</p> : null}
           </div>
         </div>
       ) : null}

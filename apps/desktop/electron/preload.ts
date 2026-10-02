@@ -254,6 +254,8 @@ contextBridge.exposeInMainWorld("piApp", {
     ipcRenderer.invoke(desktopIpc.setSessionPinned, target, pinned) as Promise<DesktopAppState>,
   createSession: (input: CreateSessionInput) =>
     ipcRenderer.invoke(desktopIpc.createSession, input) as Promise<DesktopAppState>,
+  prepareStandaloneWorkspace: () =>
+    ipcRenderer.invoke(desktopIpc.prepareStandaloneWorkspace) as Promise<DesktopAppState>,
   startThread: (input: StartThreadInput) =>
     ipcRenderer.invoke(desktopIpc.startThread, input) as Promise<DesktopAppState>,
   forkThread: (input: ForkThreadInput) =>

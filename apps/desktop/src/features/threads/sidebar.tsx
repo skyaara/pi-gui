@@ -421,12 +421,7 @@ export function Sidebar(props: SidebarProps) {
         onReset={() => setSidebarWidth(undefined)}
       />
       <div className="sidebar__top">
-        <button
-          className="sidebar__new"
-          type="button"
-          disabled={!selectedWorkspace}
-          onClick={() => onNewThread()}
-        >
+        <button className="sidebar__new" type="button" onClick={() => onNewThread()}>
           <PlusIcon />
           <span>New thread</span>
         </button>
@@ -853,52 +848,58 @@ function WorkspaceFolderContent(
                 >
                   Open folder
                 </button>
-                {linkedWorktree ? (
-                  <button
-                    className="workspace-menu__item workspace-menu__item--danger"
-                    type="button"
-                    onClick={(event) =>
-                      wsMenu.runWorkspaceMenuAction(event, () =>
-                        wsMenu.removeWorktree(
-                          linkedWorktree.rootWorkspaceId || workspace.id,
-                          linkedWorktree,
-                        ),
-                      )
-                    }
-                  >
-                    Remove worktree
-                  </button>
-                ) : (
-                  <button
-                    className="workspace-menu__item"
-                    type="button"
-                    onClick={(event) =>
-                      wsMenu.runWorkspaceMenuAction(event, () =>
-                        wsMenu.createWorktree(workspace.id),
-                      )
-                    }
-                  >
-                    Create permanent worktree
-                  </button>
-                )}
-                <button
-                  className="workspace-menu__item"
-                  type="button"
-                  onClick={(event) =>
-                    wsMenu.runWorkspaceMenuAction(event, () => wsMenu.startRename(workspace))
-                  }
-                >
-                  Edit name
-                </button>
-                <button
-                  className="workspace-menu__item workspace-menu__item--danger"
-                  type="button"
-                  onClick={(event) =>
-                    wsMenu.runWorkspaceMenuAction(event, () => wsMenu.removeWorkspace(workspace))
-                  }
-                >
-                  Remove
-                </button>
+                {!workspace.isStandalone ? (
+                  <>
+                    {linkedWorktree ? (
+                      <button
+                        className="workspace-menu__item workspace-menu__item--danger"
+                        type="button"
+                        onClick={(event) =>
+                          wsMenu.runWorkspaceMenuAction(event, () =>
+                            wsMenu.removeWorktree(
+                              linkedWorktree.rootWorkspaceId || workspace.id,
+                              linkedWorktree,
+                            ),
+                          )
+                        }
+                      >
+                        Remove worktree
+                      </button>
+                    ) : (
+                      <button
+                        className="workspace-menu__item"
+                        type="button"
+                        onClick={(event) =>
+                          wsMenu.runWorkspaceMenuAction(event, () =>
+                            wsMenu.createWorktree(workspace.id),
+                          )
+                        }
+                      >
+                        Create permanent worktree
+                      </button>
+                    )}
+                    <button
+                      className="workspace-menu__item"
+                      type="button"
+                      onClick={(event) =>
+                        wsMenu.runWorkspaceMenuAction(event, () => wsMenu.startRename(workspace))
+                      }
+                    >
+                      Edit name
+                    </button>
+                    <button
+                      className="workspace-menu__item workspace-menu__item--danger"
+                      type="button"
+                      onClick={(event) =>
+                        wsMenu.runWorkspaceMenuAction(event, () =>
+                          wsMenu.removeWorkspace(workspace),
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : null}
               </div>
             ) : null}
           </span>

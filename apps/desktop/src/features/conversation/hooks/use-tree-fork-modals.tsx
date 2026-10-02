@@ -253,6 +253,6 @@ export function useTreeForkModals(params: UseTreeForkModalsParams) {
     closeForkModal,
     openForkModal,
     handleForkSubmit,
-    canUseWorktree: Boolean(rootWorkspace),
+    canUseWorktree: Boolean(rootWorkspace && !rootWorkspace.isStandalone),
   };
 }

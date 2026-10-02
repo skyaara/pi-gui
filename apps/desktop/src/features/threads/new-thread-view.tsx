@@ -60,6 +60,7 @@ interface NewThreadViewProps {
   readonly onChangePrompt: (prompt: string) => void;
   readonly onSelectEnvironment: (environment: NewThreadEnvironment) => void;
   readonly onSelectWorkspace: (workspaceId: string) => void;
+  readonly onSelectStandalone: () => void;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
   readonly extensionFlags: ExtensionFlagValues;
@@ -108,6 +109,7 @@ export function NewThreadView({
   onChangePrompt,
   onSelectEnvironment,
   onSelectWorkspace,
+  onSelectStandalone,
   onSetModel,
   onSetThinking,
   extensionFlags,
@@ -168,7 +170,11 @@ export function NewThreadView({
             workspace={workspace}
             workspaces={workspaces}
             onSelect={onSelectWorkspace}
+            onSelectStandalone={onSelectStandalone}
           />
+          {workspace.isStandalone ? (
+            <p className="new-thread__storage">Files saved in {workspace.path}</p>
+          ) : null}
         </div>
 
         <div className="new-thread__composer composer">
@@ -217,6 +223,7 @@ export function NewThreadView({
               textareaPlaceholder="Ask pi anything, use / for commands and skills"
               footer={
                 <NewThreadComposerFooter
+                  isStandalone={workspace.isStandalone}
                   runtime={runtime}
                   environment={environment}
                   provider={provider}
@@ -243,6 +250,7 @@ export function NewThreadView({
 }
 
 interface NewThreadComposerFooterProps {
+  readonly isStandalone?: boolean;
   readonly runtime?: RuntimeSnapshot;
   readonly environment: NewThreadEnvironment;
   readonly provider: string | undefined;
@@ -261,6 +269,7 @@ interface NewThreadComposerFooterProps {
 }
 
 function NewThreadComposerFooter({
+  isStandalone,
   runtime,
   environment,
   provider,
@@ -282,23 +291,27 @@ function NewThreadComposerFooter({
       <div className="composer__footer">
         <div className="composer__footer-row">
           <div className="composer__hint new-thread__hint">
-            <div className="new-thread__environment-group">
-              <button
-                className={`new-thread__environment ${environment === "local" ? "new-thread__environment--active" : ""}`}
-                type="button"
-                onClick={() => onSelectEnvironment("local")}
-              >
-                <span>Local</span>
-              </button>
-              <button
-                className={`new-thread__environment ${environment === "worktree" ? "new-thread__environment--active" : ""}`}
-                type="button"
-                onClick={() => onSelectEnvironment("worktree")}
-              >
-                <span>Worktree</span>
-              </button>
-            </div>
-            <span className="new-thread__hint-separator">·</span>
+            {!isStandalone ? (
+              <>
+                <div className="new-thread__environment-group">
+                  <button
+                    className={`new-thread__environment ${environment === "local" ? "new-thread__environment--active" : ""}`}
+                    type="button"
+                    onClick={() => onSelectEnvironment("local")}
+                  >
+                    <span>Local</span>
+                  </button>
+                  <button
+                    className={`new-thread__environment ${environment === "worktree" ? "new-thread__environment--active" : ""}`}
+                    type="button"
+                    onClick={() => onSelectEnvironment("worktree")}
+                  >
+                    <span>Worktree</span>
+                  </button>
+                </div>
+                <span className="new-thread__hint-separator">·</span>
+              </>
+            ) : null}
             <ModelSelector
               runtime={runtime}
               provider={provider}

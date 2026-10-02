@@ -20,7 +20,7 @@ import {
   type WorkspaceRecord,
 } from "../../../../contracts/desktop-state";
 import { acceptComposerAttachments } from "../../../../contracts/composer-attachments";
-import { updateSnapshot } from "../../../app/desktop-app-state";
+import { applySnapshotIfNewer, updateSnapshot } from "../../../app/desktop-app-state";
 import {
   extractFilesFromDataTransfer,
   extractImageFilesFromClipboardData,
@@ -186,8 +186,37 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     [rootWorkspace?.id, rootWorkspaceOptions, snapshot, visibleWorkspaces],
   );
 
+  const openStandalone = useCallback(
+    (preservePrompt = false) => {
+      if (!api) return;
+      flushComposerDraft();
+      resetSurface();
+      if (preservePrompt) setPrompt(prompt);
+      const generation = surfaceGenerationRef.current;
+      openedInAppRef.current = true;
+      void api
+        .prepareStandaloneWorkspace()
+        .then((next) => {
+          if (surfaceGenerationRef.current !== generation) return;
+          const standalone = next.workspaces.find(
+            (entry) => entry.isStandalone && !entry.rootWorkspaceId,
+          );
+          if (standalone) setRootWorkspaceId(standalone.id);
+          applySnapshotIfNewer(setSnapshot, next);
+        })
+        .catch((error: unknown) => {
+          setComposerError(error instanceof Error ? error.message : String(error));
+        });
+    },
+    [api, flushComposerDraft, resetSurface, setSnapshot, prompt],
+  );
+
   const openSurface = useCallback(
     (workspaceId?: string) => {
+      if (rootWorkspaceOptions.length === 0) {
+        openStandalone();
+        return;
+      }
       // Save the outgoing conversation before the new-thread flow can change its selection.
       flushComposerDraft();
       setPendingWorkspaceId("");
@@ -201,12 +230,20 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
         );
       }
     },
-    [api, flushComposerDraft, resetSurface, setSnapshot],
+    [
+      api,
+      flushComposerDraft,
+      resetSurface,
+      setSnapshot,
+      rootWorkspaceOptions.length,
+      openStandalone,
+    ],
   );
 
   const selectWorkspace = useCallback((workspaceId: string) => {
     setPendingWorkspaceId("");
     setRootWorkspaceId(workspaceId);
+    setEnvironment("local");
     setAttachments([]);
     setProvider(undefined);
     setModelId(undefined);
@@ -328,8 +365,12 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     };
     startingGenerationRef.current = generation;
     void updateSnapshot(setSnapshot, () => api.startThread(input))
-      .then(() => {
+      .then((next) => {
         if (surfaceGenerationRef.current !== generation) {
+          return;
+        }
+        if (next.lastError) {
+          setComposerError(next.lastError);
           return;
         }
         setPrompt("");
@@ -513,6 +554,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       handleComposerKeyDown,
       startThread,
       openSurface,
+      openStandalone,
       resetSurface,
       setComposerError,
     }),
@@ -542,6 +584,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       handleComposerKeyDown,
       startThread,
       openSurface,
+      openStandalone,
       resetSurface,
     ],
   );

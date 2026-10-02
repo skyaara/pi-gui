@@ -929,6 +929,7 @@ export default function App() {
       />
     ) : null;
 
+  const welcomeProps = { api, onState: setSnapshot, errorMessage: newThread.composerError };
   const openWorkspaceForView = async (view: AppView) => {
     const state = await api.pickWorkspace();
     if (state.selectedWorkspaceId) {
@@ -1131,6 +1132,7 @@ export default function App() {
                 onChangePrompt={newThread.setPrompt}
                 onSelectEnvironment={newThread.setEnvironment}
                 onSelectWorkspace={newThread.selectWorkspace}
+                onSelectStandalone={() => newThread.openStandalone(true)}
                 onSetModel={newThread.chooseModel}
                 onSetThinking={newThread.setThinkingLevel}
                 extensionFlags={newThread.extensionFlags}
@@ -1153,7 +1155,7 @@ export default function App() {
                 onSubmit={newThread.startThread}
               />
             ) : (
-              <WorkspaceWelcome api={api} onState={setSnapshot} />
+              <WorkspaceWelcome {...welcomeProps} />
             )
           ) : selectedWorkspace && selectedSession ? (
             <>
@@ -1334,7 +1336,7 @@ export default function App() {
               </div>
             </section>
           ) : (
-            <WorkspaceWelcome api={api} onState={setSnapshot} />
+            <WorkspaceWelcome {...welcomeProps} />
           )}
         </>
         {sidePanelVisible && selectedWorkspace && selectedSession ? (

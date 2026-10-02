@@ -4,6 +4,14 @@ Codex-style Electron shell for `pi`, with Playwright E2E coverage organized by t
 
 macOS is the primary desktop UI verification target. Pull-request CI runs the Core suite on Linux under Xvfb and pushes to `main` run it on macOS; Windows CI validates packaging only. The Linux run does not establish native macOS behavior.
 
+## Chats without a project
+
+Choose **No project** in the New thread folder picker, or **Chat without a project** on the welcome screen. New thread also works before any folder has been opened.
+
+Each new standalone chat gets a separate working folder under `Documents/piui/threads/<unique-id>` (using the OS Documents location). Files and terminal commands use that folder; the sidebar groups these chats under No project instead of listing storage directories as projects. Existing Pi session history stays in Pi's native agent storage and is restored normally. Archiving a chat does not delete its files. Forks in the same folder keep sharing their original chat's working files.
+
+Tests and launches with `PI_APP_USER_DATA_DIR` use `<userData>/threads` to keep their generated files isolated from Documents. Project-backed chats and worktrees keep using their selected folders.
+
 ## Setup
 
 Install workspace dependencies once:

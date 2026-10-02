@@ -6,9 +6,11 @@ import { ChevronRightIcon, FolderIcon, ForkIcon, PiLogoMark } from "../../ui/ico
 export function WorkspaceWelcome({
   api,
   onState,
+  errorMessage,
 }: {
   readonly api: PiDesktopApi;
   readonly onState: (state: DesktopAppState) => void;
+  readonly errorMessage?: string;
 }) {
   const [cloning, setCloning] = useState(false);
   const [repository, setRepository] = useState("");
@@ -60,8 +62,8 @@ export function WorkspaceWelcome({
           <div className="workspace-welcome__logo">
             <PiLogoMark />
           </div>
-          <h1>Start a project</h1>
-          <p>Open a local folder or bring in a repository.</p>
+          <h1>Start a thread</h1>
+          <p>Chat with pi, open a folder, or bring in a repository.</p>
         </div>
         {cloning ? (
           <form
@@ -158,10 +160,20 @@ export function WorkspaceWelcome({
             </button>
           </div>
         )}
-        {error ? (
+        {error || errorMessage ? (
           <p className="workspace-welcome__error" role="alert">
-            {error}
+            {error || errorMessage}
           </p>
+        ) : null}
+        {!cloning ? (
+          <button
+            type="button"
+            className="button button--ghost"
+            disabled={busy}
+            onClick={() => run(() => api.prepareStandaloneWorkspace())}
+          >
+            Chat without a project
+          </button>
         ) : null}
         <p className="workspace-welcome__footer">You can add more projects anytime.</p>
       </div>

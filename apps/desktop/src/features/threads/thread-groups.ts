@@ -156,7 +156,19 @@ function collectThreadEntries(state: DesktopAppState): ThreadListEntry[] {
         } => Boolean(entry.workspace),
       );
 
+    const standaloneWorkspaces = state.workspaces.filter(
+      (workspace) => workspace.kind === "standalone" && workspace.rootWorkspaceId === folder.id,
+    );
     return [
+      ...standaloneWorkspaces.flatMap((workspace) =>
+        workspace.sessions.map((session) => ({
+          folderId: folder.id,
+          workspaceId: workspace.id,
+          session,
+          environment: { kind: "local" as const, label: "Local" },
+          contextLabel: "No project",
+        })),
+      ),
       ...folder.sessions.map((session) => ({
         folderId: folder.id,
         workspaceId: folder.id,

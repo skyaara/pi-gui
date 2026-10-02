@@ -79,15 +79,13 @@ export interface PaletteActionContext {
 export function buildPaletteActions(context: PaletteActionContext): readonly PaletteAction[] {
   const { platform, thread } = context;
   const actions: PaletteAction[] = [];
-  if (context.hasWorkspace) {
-    actions.push({
-      id: "new-thread",
-      title: "New thread",
-      icon: <PlusIcon />,
-      hint: commandShortcutLabel("open-new-thread", platform, context.keyboardShortcuts),
-      run: context.newThread,
-    });
-  }
+  actions.push({
+    id: "new-thread",
+    title: "New thread",
+    icon: <PlusIcon />,
+    hint: commandShortcutLabel("open-new-thread", platform, context.keyboardShortcuts),
+    run: context.newThread,
+  });
   actions.push({
     id: "open-folder",
     title: "Open folder…",

@@ -1,3 +1,4 @@
+import { dirname } from "node:path";
 import { randomUUID } from "node:crypto";
 import type {
   SessionCatalogEntry,
@@ -37,18 +38,28 @@ export function buildWorkspaceRecords(
   lastViewedAtBySession: Map<string, string>,
   lastInteractedAtBySession: Map<string, string>,
   pinnedAtBySession: Map<string, string>,
+  standaloneRoot?: string,
 ): WorkspaceRecord[] {
   const workspaceRoots = resolveWorkspaceRoots(workspaces, worktrees);
 
   return workspaces.map((workspace) => {
-    const rootWorkspaceId = workspaceRoots.get(workspace.workspaceId);
+    const isStandalone = Boolean(
+      standaloneRoot &&
+      (workspace.path === standaloneRoot || dirname(workspace.path) === standaloneRoot),
+    );
+    const standaloneParent =
+      isStandalone && workspace.path !== standaloneRoot
+        ? workspaces.find((entry) => entry.path === standaloneRoot)?.workspaceId
+        : undefined;
+    const rootWorkspaceId = standaloneParent ?? workspaceRoots.get(workspace.workspaceId);
 
     return {
       id: workspace.workspaceId,
-      name: workspace.displayName,
+      name: isStandalone ? "No project" : workspace.displayName,
       path: workspace.path,
       lastOpenedAt: workspace.lastOpenedAt,
-      kind: rootWorkspaceId ? "worktree" : "primary",
+      kind: standaloneParent ? "standalone" : rootWorkspaceId ? "worktree" : "primary",
+      ...(isStandalone ? { isStandalone: true } : {}),
       ...(rootWorkspaceId
         ? {
             rootWorkspaceId,

@@ -27,7 +27,7 @@ export type {
 } from "./scheduled-tasks";
 
 export type AppView = "threads" | "new-thread" | "scheduled" | "skills" | "extensions" | "settings";
-export type WorkspaceKind = "primary" | "worktree";
+export type WorkspaceKind = "primary" | "worktree" | "standalone";
 export type WorktreeStatus = "ready" | "missing" | "error";
 export type NewThreadEnvironment = "local" | "worktree";
 export type ThemeMode = "system" | "light" | "dark";
@@ -282,6 +282,8 @@ export interface WorkspaceRecord {
   readonly path: string;
   readonly lastOpenedAt: string;
   readonly kind: WorkspaceKind;
+  /** App-managed working folders for chats without a project. */
+  readonly isStandalone?: boolean;
   readonly rootWorkspaceId?: string;
   readonly branchName?: string;
   readonly sessions: readonly SessionRecord[];

@@ -106,19 +106,21 @@ export function ForkModal({
               type="button"
               onClick={() => setEnvironment("local")}
             >
-              <span>Same worktree</span>
+              <span>Same folder</span>
             </button>
-            <button
-              aria-pressed={environment === "worktree"}
-              className={`new-thread__environment ${environment === "worktree" ? "new-thread__environment--active" : ""}`}
-              data-testid="fork-environment-worktree"
-              disabled={!canUseWorktree}
-              title={canUseWorktree ? undefined : "This workspace can't create worktrees."}
-              type="button"
-              onClick={() => setEnvironment("worktree")}
-            >
-              <span>New worktree</span>
-            </button>
+            {canUseWorktree ? (
+              <button
+                aria-pressed={environment === "worktree"}
+                className={`new-thread__environment ${environment === "worktree" ? "new-thread__environment--active" : ""}`}
+                data-testid="fork-environment-worktree"
+                disabled={!canUseWorktree}
+                title={canUseWorktree ? undefined : "This workspace can't create worktrees."}
+                type="button"
+                onClick={() => setEnvironment("worktree")}
+              >
+                <span>New worktree</span>
+              </button>
+            ) : null}
           </div>
 
           <div className="tree-modal__footer">

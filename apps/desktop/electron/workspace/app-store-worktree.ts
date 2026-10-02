@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { realpath } from "node:fs/promises";
+import { mkdir, realpath } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import type { WorktreeCatalogEntry } from "@pi-gui/catalogs";
 import type { WorkspaceRef } from "@pi-gui/session-driver";
@@ -24,6 +24,12 @@ export async function createWorktree(
   const rootWorkspace = store.workspaceRefFromState(input.workspaceId);
   if (!rootWorkspace) {
     return store.withError(`Unknown workspace: ${input.workspaceId}`);
+  }
+
+  if (
+    store.workspaceState().workspaces.find((entry) => entry.id === input.workspaceId)?.isStandalone
+  ) {
+    return store.withError("Choose a project to create a worktree.");
   }
 
   return store.withErrorHandling(async () => {
@@ -111,7 +117,18 @@ export async function startThread(
       input.rootWorkspaceId,
       input.extensionFlags,
     );
+    const isStandalone = store
+      .workspaceState()
+      .workspaces.find((entry) => entry.id === input.rootWorkspaceId)?.isStandalone;
+    if (isStandalone && input.environment === "worktree") {
+      throw new Error("Choose a project to create a worktree.");
+    }
     let targetWorkspace = rootWorkspace;
+    if (isStandalone) {
+      const folder = join(store.standaloneRoot, randomUUID());
+      await mkdir(folder, { recursive: true });
+      targetWorkspace = (await store.driver.syncWorkspace(folder, "No project")).workspace;
+    }
     let rollbackWorktree: (() => Promise<void>) | undefined;
     if (input.environment === "worktree") {
       const worktreeOptions = buildWorktreeOptions(
@@ -247,6 +264,12 @@ export async function forkThread(
     let targetWorkspace = sourceWorkspace;
     let rollbackWorktree: (() => Promise<void>) | undefined;
     if (input.environment === "worktree") {
+      if (
+        store.workspaceState().workspaces.find((entry) => entry.id === input.sourceWorkspaceId)
+          ?.isStandalone
+      ) {
+        throw new Error("Choose a project to create a worktree.");
+      }
       const rootWorkspace = store.workspaceRefFromState(input.rootWorkspaceId);
       if (!rootWorkspace) {
         return store.withError(`Unknown workspace: ${input.rootWorkspaceId}`);
