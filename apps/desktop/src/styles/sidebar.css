@@ -37,7 +37,8 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
-  background: var(--sidebar);
+  /* Keep navigation legible when native window vibrancy is enabled. */
+  background: var(--sidebar-navigation-surface);
   border-right: 1px solid var(--border-light);
 }
 
@@ -80,9 +81,15 @@
   height: 15px;
 }
 
-.sidebar__nav-item--active {
-  background: var(--overlay-hover);
-  border-color: transparent;
+.sidebar__nav-item:hover {
+  background: var(--sidebar-control-surface);
+  color: var(--text-strong);
+}
+
+.sidebar__nav-item--active,
+.sidebar__nav-item--active:hover {
+  background: var(--sidebar-row-active);
+  border-color: var(--line);
   color: var(--text-strong);
 }
 
@@ -125,7 +132,7 @@
 }
 .sidebar__search:hover,
 .sidebar__new:hover {
-  background: var(--overlay-hover);
+  background: var(--sidebar-control-surface);
   color: var(--text-strong);
 }
 .sidebar__footer {
@@ -276,7 +283,11 @@
 }
 
 .workspace-row:hover,
-.session-row:hover,
+.session-row:hover {
+  background: var(--sidebar-row-hover);
+  border-color: transparent;
+}
+
 .icon-button:hover:not(:disabled),
 .sidebar__settings:hover {
   background: var(--overlay-hover);

@@ -40,6 +40,29 @@ test("toggles and restores window transparency", async () => {
     await transparencyToggle.click();
     await expect.poll(async () => (await getDesktopState(window)).enableTransparency).toBe(true);
     await expect.poll(() => hasTransparencyClass(window)).toBe(true);
+    for (const variant of ["light", "dark"] as const) {
+      await window
+        .getByRole("radio", { name: variant === "light" ? "Light" : "Dark", exact: true })
+        .click();
+      await window.getByRole("button", { name: "Back to app" }).click();
+      await expect(window.locator(".sidebar")).toBeVisible();
+      const expected = themeTokensFor("default", variant);
+      await expect
+        .poll(() => elementCssProperty(window, ".sidebar", "background-color"))
+        .toBe(await resolveColor(window, expected["--sidebar-navigation-surface"]!));
+      const threads = window.getByRole("button", { name: "Threads", exact: true });
+      await threads.click();
+      await expect(threads).toHaveAttribute("aria-current", "page");
+      await expect
+        .poll(() => elementCssProperty(window, ".sidebar__nav-item--active", "background-color"))
+        .toBe(await resolveColor(window, expected["--sidebar-row-active"]!));
+      await window.getByRole("button", { name: "Scheduled", exact: true }).hover();
+      await expect
+        .poll(() => elementCssProperty(window, '[title="Scheduled"]', "background-color"))
+        .toBe(await resolveColor(window, expected["--sidebar-control-surface"]!));
+      await window.screenshot({ path: test.info().outputPath(`navigation-${variant}.png`) });
+      await openAppearance(window);
+    }
     await expect
       .poll(async () => {
         const persisted = JSON.parse(

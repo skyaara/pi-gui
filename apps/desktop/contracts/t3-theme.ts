@@ -1,5 +1,6 @@
 // Palette adapted from T3 Code (MIT), copyright 2026 T3 Tools Inc.
 // Source: packages/shared/src/themePalettes.ts at 54084ae1e6c32809db040e4fa571c80fdf2d8ae4.
+// Navigation controls follow apps/web/src/index.css at b4d3d51ac99d4306d754afb5c78c49845bfac3c1.
 // The full license is in third-party/t3-code-LICENSE.
 import type { ResolvedTheme, ThemeTokens } from "./theme";
 
@@ -7,6 +8,8 @@ export const t3ThemeTokens: Readonly<Record<ResolvedTheme, ThemeTokens>> = {
   light: {
     "--window": "#fcfcfc",
     "--sidebar": "#fafafa",
+    "--sidebar-navigation-surface": "#fafafa",
+    "--sidebar-control-surface": "#f4f4f5",
     "--main": "#fcfcfc",
     "--surface": "#ffffff",
     "--surface-muted": "#f4f4f5",
@@ -37,6 +40,8 @@ export const t3ThemeTokens: Readonly<Record<ResolvedTheme, ThemeTokens>> = {
   dark: {
     "--window": "#0a0a0a",
     "--sidebar": "#000000",
+    "--sidebar-navigation-surface": "#000000",
+    "--sidebar-control-surface": "#0a0a0a",
     "--main": "#0a0a0a",
     "--surface": "#111111",
     "--surface-muted": "#141414",

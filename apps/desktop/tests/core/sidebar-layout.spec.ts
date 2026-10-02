@@ -27,7 +27,8 @@ test("folder rows start a new thread in that folder", async () => {
       [workspaceA, workspaceB],
     ] as const) {
       await window.locator(".workspace-row__select", { hasText: basename(other) }).click();
-      await expect(window.getByTestId("new-thread-composer")).toHaveCount(0);
+      await expect(window.getByTestId("new-thread-composer")).toBeVisible();
+      await expect(workspacePicker).toHaveText(basename(other));
       await expect(window.getByTestId("topbar").locator(".topbar__workspace")).toHaveText(
         basename(other),
       );

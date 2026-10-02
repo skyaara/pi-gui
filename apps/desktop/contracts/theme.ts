@@ -226,6 +226,8 @@ export function deriveThemeTokens(seedValue: ThemeSeed, variant: ResolvedTheme):
     "--window": window,
     "--window-glass": alpha(window, 0.6),
     "--sidebar": sidebar,
+    "--sidebar-navigation-surface": sidebar,
+    "--sidebar-control-surface": surfaceMuted,
     "--sidebar-glass": alpha(sidebar, 0.7),
     "--main": main,
     "--sidebar-row-active": surfaceMuted,
