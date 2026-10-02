@@ -75,7 +75,7 @@ Use this skill when the user wants a short demo workflow.
   }
 });
 
-test("skills and extensions live inside settings as one tabbed page", async () => {
+test("skills and extensions keep the primary navigation when opened from settings", async () => {
   test.setTimeout(60_000);
   const userDataDir = await makeUserDataDir();
   const workspacePath = await makeWorkspace("skills-in-settings-workspace");
@@ -129,6 +129,7 @@ test("skills and extensions live inside settings as one tabbed page", async () =
     await expect(extensionsSurface.getByRole("tab", { name: /Extensions/ })).toBeFocused();
     await expect(extensionsSurface.getByLabel("Search extensions")).toHaveValue("");
 
+    await window.getByRole("button", { name: "Settings", exact: true }).click();
     await window.getByRole("button", { name: "General", exact: true }).click();
     await expect(window.getByTestId("settings-surface")).toBeVisible();
     await expect(window.locator(".view-header__title")).toHaveText("General");

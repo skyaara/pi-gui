@@ -11,6 +11,7 @@ Users browse workspace skills, inspect a skill, and insert its command into the 
 ## How to get to it (user POV)
 
 - Click Skills in the sidebar, or Settings → Skills and extensions, choose a skill row to open its detail page, then Try. Escape or "All skills" returns to the list.
+- Skills and Extensions retain the main sidebar and show the selected destination. Without a workspace, Open folder loads one and returns to the selected page.
 - The page has Skills and Extensions tabs with counts, Search, a workspace picker, Refresh, and New skill. The detail page also has Open folder. Try returns to Threads with the command in the composer.
 - Type `/skill` or a skill-name alias into the thread composer.
 

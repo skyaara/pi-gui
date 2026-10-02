@@ -35,6 +35,14 @@ export function Topbar({
       console.error("[renderer] toggleWindowMaximize failed", error);
     });
   };
+  const pageTitle =
+    activeView === "skills"
+      ? "Skills"
+      : activeView === "extensions"
+        ? "Extensions"
+        : activeView === "scheduled"
+          ? "Scheduled tasks"
+          : undefined;
   const checkoutLabel =
     selectedWorkspace?.kind === "worktree"
       ? (selectedWorktree?.name ?? selectedWorkspace.branchName ?? selectedWorkspace.name)
@@ -47,7 +55,7 @@ export function Topbar({
           className="topbar__workspace"
           title={checkoutLabel ? `${rootWorkspace?.name ?? ""} · ${checkoutLabel}` : undefined}
         >
-          {rootWorkspace ? rootWorkspace.name : "Open a folder to begin"}
+          {pageTitle ?? rootWorkspace?.name ?? "Get started"}
         </span>
         {sessionTitle ? (
           <>
@@ -70,7 +78,7 @@ export function Topbar({
       </div>
       <div className="topbar__actions">
         {children}
-        {!panelVisible ? (
+        {panelAvailable && !panelVisible ? (
           <div className="shortcut-tooltip-wrap topbar__tooltip-wrap">
             <button
               type="button"

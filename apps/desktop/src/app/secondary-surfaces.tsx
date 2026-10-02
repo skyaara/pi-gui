@@ -33,6 +33,7 @@ interface SecondarySurfacesProps {
   readonly extensionsWorkspaceId: string;
   readonly onSelectExtensionsWorkspace: (workspaceId: string) => void;
   readonly onBack: () => void;
+  readonly onOpenWorkspace: () => Promise<void>;
   /** Settings and the Skills and extensions page are separate app views. */
   readonly onSelectView: (view: Extract<AppView, "settings" | "skills" | "extensions">) => void;
   readonly onTrySkill: (command: string) => void;
@@ -53,6 +54,7 @@ export function SecondarySurfaces({
   extensionsWorkspaceId,
   onSelectExtensionsWorkspace,
   onBack,
+  onOpenWorkspace,
   onSelectView,
   onTrySkill,
 }: SecondarySurfacesProps) {
@@ -379,106 +381,108 @@ export function SecondarySurfaces({
       />
     ) : null;
 
+  if (customizeTab) {
+    return (
+      <CustomizePage
+        commandCompatibility={extensionsCommandCompatibility}
+        extensionsRuntime={extensionsRuntime}
+        skillsRuntime={skillsRuntime}
+        tab={customizeTab}
+        workspace={customizeWorkspace}
+        workspacePicker={
+          customizeTab === "extensions"
+            ? workspacePicker(extensionsWorkspace, onSelectExtensionsWorkspace)
+            : workspacePicker(skillsWorkspace, onSelectSkillsWorkspace)
+        }
+        onOpenExtensionFolder={handleOpenExtensionFolder}
+        onOpenSkillFolder={handleOpenSkillFolder}
+        onRefresh={() => {
+          if (!customizeWorkspace) return;
+          void updateSnapshot(setSnapshot, () => api.refreshRuntime(customizeWorkspace.id)).catch(
+            (error: unknown) => {
+              console.error("[renderer] refreshRuntime failed", error);
+            },
+          );
+        }}
+        onSelectTab={onSelectView}
+        onOpenWorkspace={onOpenWorkspace}
+        onToggleExtension={handleToggleExtension}
+        onToggleSkill={handleToggleSkill}
+        onTryCommand={onTrySkill}
+      />
+    );
+  }
+
   return (
     <SecondarySurface
-      activeNavId={customizeTab ? CUSTOMIZE_SECTION_ID : settingsSection}
+      activeNavId={settingsSection}
       navItems={SETTINGS_NAV_ITEMS}
       onBack={onBack}
       onSelectNav={(id) => {
         if (id === CUSTOMIZE_SECTION_ID) {
-          if (!customizeTab) onSelectView("skills");
+          onSelectView("skills");
           return;
         }
         const section = SETTINGS_SECTIONS.find((definition) => definition.id === id);
         if (!section) return;
         onSelectSettingsSection(section.id);
-        if (customizeTab) onSelectView("settings");
       }}
-      testId={customizeTab ? `${customizeTab}-surface` : "settings-surface"}
+      testId="settings-surface"
       title="Settings"
     >
-      {customizeTab ? (
-        <CustomizePage
-          commandCompatibility={extensionsCommandCompatibility}
-          extensionsRuntime={extensionsRuntime}
-          skillsRuntime={skillsRuntime}
-          tab={customizeTab}
-          workspace={customizeWorkspace}
-          workspacePicker={
-            customizeTab === "extensions"
-              ? workspacePicker(extensionsWorkspace, onSelectExtensionsWorkspace)
-              : workspacePicker(skillsWorkspace, onSelectSkillsWorkspace)
-          }
-          onOpenExtensionFolder={handleOpenExtensionFolder}
-          onOpenSkillFolder={handleOpenSkillFolder}
-          onRefresh={() => {
-            if (!customizeWorkspace) return;
-            void updateSnapshot(setSnapshot, () => api.refreshRuntime(customizeWorkspace.id)).catch(
-              (error: unknown) => {
-                console.error("[renderer] refreshRuntime failed", error);
-              },
-            );
-          }}
-          onSelectTab={onSelectView}
-          onToggleExtension={handleToggleExtension}
-          onToggleSkill={handleToggleSkill}
-          onTryCommand={onTrySkill}
-        />
-      ) : (
-        <SettingsView
-          workspace={settingsWorkspace}
-          runtime={
-            // Providers reads the default model to flag its provider, so it needs the same
-            // effective model settings as the Models page.
-            settingsSection === "models" || settingsSection === "providers"
-              ? settingsModelRuntime
-              : settingsRuntime
-          }
-          platform={api.platform}
-          headerAccessory={
-            settingsSection === "providers" ||
-            settingsSection === "mcp" ||
-            (settingsSection === "models" && snapshot.modelSettingsScopeMode === "per-repo")
-              ? workspacePicker(settingsWorkspace, onSelectSettingsWorkspace)
-              : undefined
-          }
-          section={settingsSection}
-          notificationPreferences={snapshot.notificationPreferences}
-          notificationPermissionStatus={notificationPermissionStatus}
-          notificationPermissionPending={notificationPermissionPending}
-          modelSettingsScopeMode={snapshot.modelSettingsScopeMode}
-          integratedTerminalShell={snapshot.integratedTerminalShell}
-          themeMode={snapshot.themeMode}
-          themePresetId={snapshot.themePresetId}
-          enableTransparency={snapshot.enableTransparency}
-          onLoginProvider={handleLoginProvider}
-          onSelectSection={onSelectSettingsSection}
-          onLogoutProvider={handleLogoutProvider}
-          onSetProviderApiKey={handleSetProviderApiKey}
-          onRemoveProviderApiKey={handleRemoveProviderApiKey}
-          onSaveCustomProvider={handleSaveCustomProvider}
-          onDeleteCustomProvider={handleDeleteCustomProvider}
-          onSetModelSettingsScopeMode={handleSetModelSettingsScopeMode}
-          onSetDefaultModel={handleSetDefaultModel}
-          onSetNotificationPreferences={handleSetNotificationPreferences}
-          onSetIntegratedTerminalShell={handleSetIntegratedTerminalShell}
-          onRequestNotificationPermission={handleRequestNotificationPermission}
-          onOpenSystemNotificationSettings={handleOpenSystemNotificationSettings}
-          onSetScopedModelPatterns={handleSetScopedModelPatterns}
-          onSetThemeMode={handleSetThemeMode}
-          onSetThemePresetId={handleSetThemePresetId}
-          onSetThinkingLevel={handleSetThinkingLevel}
-          onToggleSkillCommands={handleToggleSkillCommands}
-          mcpActions={mcpActions}
-          onSetEnableTransparency={(enabled) => {
-            void updateSnapshot(setSnapshot, () => api.setEnableTransparency(enabled)).catch(
-              (error: unknown) => {
-                console.error("[renderer] setEnableTransparency failed", error);
-              },
-            );
-          }}
-        />
-      )}
+      <SettingsView
+        workspace={settingsWorkspace}
+        runtime={
+          // Providers reads the default model to flag its provider, so it needs the same
+          // effective model settings as the Models page.
+          settingsSection === "models" || settingsSection === "providers"
+            ? settingsModelRuntime
+            : settingsRuntime
+        }
+        platform={api.platform}
+        headerAccessory={
+          settingsSection === "providers" ||
+          settingsSection === "mcp" ||
+          (settingsSection === "models" && snapshot.modelSettingsScopeMode === "per-repo")
+            ? workspacePicker(settingsWorkspace, onSelectSettingsWorkspace)
+            : undefined
+        }
+        section={settingsSection}
+        notificationPreferences={snapshot.notificationPreferences}
+        notificationPermissionStatus={notificationPermissionStatus}
+        notificationPermissionPending={notificationPermissionPending}
+        modelSettingsScopeMode={snapshot.modelSettingsScopeMode}
+        integratedTerminalShell={snapshot.integratedTerminalShell}
+        themeMode={snapshot.themeMode}
+        themePresetId={snapshot.themePresetId}
+        enableTransparency={snapshot.enableTransparency}
+        onLoginProvider={handleLoginProvider}
+        onSelectSection={onSelectSettingsSection}
+        onLogoutProvider={handleLogoutProvider}
+        onSetProviderApiKey={handleSetProviderApiKey}
+        onRemoveProviderApiKey={handleRemoveProviderApiKey}
+        onSaveCustomProvider={handleSaveCustomProvider}
+        onDeleteCustomProvider={handleDeleteCustomProvider}
+        onSetModelSettingsScopeMode={handleSetModelSettingsScopeMode}
+        onSetDefaultModel={handleSetDefaultModel}
+        onSetNotificationPreferences={handleSetNotificationPreferences}
+        onSetIntegratedTerminalShell={handleSetIntegratedTerminalShell}
+        onRequestNotificationPermission={handleRequestNotificationPermission}
+        onOpenSystemNotificationSettings={handleOpenSystemNotificationSettings}
+        onSetScopedModelPatterns={handleSetScopedModelPatterns}
+        onSetThemeMode={handleSetThemeMode}
+        onSetThemePresetId={handleSetThemePresetId}
+        onSetThinkingLevel={handleSetThinkingLevel}
+        onToggleSkillCommands={handleToggleSkillCommands}
+        mcpActions={mcpActions}
+        onSetEnableTransparency={(enabled) => {
+          void updateSnapshot(setSnapshot, () => api.setEnableTransparency(enabled)).catch(
+            (error: unknown) => {
+              console.error("[renderer] setEnableTransparency failed", error);
+            },
+          );
+        }}
+      />
     </SecondarySurface>
   );
 }

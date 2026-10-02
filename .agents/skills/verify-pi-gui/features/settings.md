@@ -2,7 +2,7 @@
 
 Users change app preferences in Settings and expect them to survive returning to the app and restarting it.
 
-Settings is one shell: a sidebar with Back to app, a Search box, and grouped pages. App: General (model settings scope, Enable skill slash commands, shell path), Appearance, Notifications, Keyboard shortcuts. Agent: Providers, Models (both get a workspace picker; Models only in Per repo scope). Customize: Skills and extensions, which keeps the Settings sidebar but renders `skills-surface` / `extensions-surface` instead of `settings-surface`. Escape leaves Settings unless a dialog is open or Search has text (the first Escape clears Search). Extensions has a "pi-gui tools" group with app-wide switches such as "Enable Scheduled tasks". Settings reopens on the last page visited in this session. A restart reopens the last view (Settings, Skills, Extensions or Scheduled), but the Settings page itself resets to General after a restart or in a new window.
+Settings is one shell: a sidebar with Back to app, a Search box, and grouped pages. App: General (model settings scope, Enable skill slash commands, shell path), Appearance, Notifications, Keyboard shortcuts. Agent: Providers, Models (both get a workspace picker; Models only in Per repo scope). Customize: Skills and extensions opens the corresponding page in the main app with the primary sidebar. Back to app returns to the page that opened Settings. Escape leaves Settings unless a dialog is open or Search has text (the first Escape clears Search). Extensions has a "pi-gui tools" group with app-wide switches such as "Enable Scheduled tasks". Settings reopens on the last page visited in this session. A restart reopens the last view (Settings, Skills, Extensions or Scheduled), but the Settings page itself resets to General after a restart or in a new window.
 
 ## Sub-features
 
@@ -13,7 +13,7 @@ Settings is one shell: a sidebar with Back to app, a Search box, and grouped pag
 ## How to get to it (user POV)
 
 - Click Settings in the sidebar; click Back to app to leave.
-- Cmd-K lists Settings and "Settings: <page>" entries; the sidebar Skills and Extensions buttons open Customize inside this shell.
+- Cmd-K lists Settings and "Settings: <page>" entries; the sidebar Skills and Extensions buttons open their pages in the main app, retaining the primary navigation.
 - Use the app's Settings shortcut (Meta+, on macOS; Control+, elsewhere), covered separately by `composer-controls.spec.ts`.
 
 ## Driving it with Playwright

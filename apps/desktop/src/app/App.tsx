@@ -101,6 +101,7 @@ export default function App() {
   const snapshot = desktop.snapshot;
   const setSnapshot = desktop.setSnapshot;
   const selectedTranscript = desktop.selectedTranscript;
+  const settingsReturnView = useRef<AppView>("threads");
   const [settingsSection, setSettingsSection] = useState<SettingsSection>("general");
   const [settingsWorkspaceId, setSettingsWorkspaceId] = useState("");
   const [skillsWorkspaceId, setSkillsWorkspaceId] = useState("");
@@ -457,6 +458,8 @@ export default function App() {
   }, []);
 
   const openSettings = (workspaceId?: string, section?: SettingsSection) => {
+    if (snapshot && snapshot.activeView !== "settings")
+      settingsReturnView.current = snapshot.activeView;
     if (!api) {
       return;
     }
@@ -639,17 +642,17 @@ export default function App() {
     setSettingsWorkspaceId((current) =>
       rootWorkspaceOptions.some((workspace) => workspace.id === current)
         ? current
-        : current || rootWorkspaceOptions[0]?.id || "",
+        : rootWorkspaceOptions[0]?.id || "",
     );
     setSkillsWorkspaceId((current) =>
       rootWorkspaceOptions.some((workspace) => workspace.id === current)
         ? current
-        : current || rootWorkspaceOptions[0]?.id || "",
+        : rootWorkspaceOptions[0]?.id || "",
     );
     setExtensionsWorkspaceId((current) =>
       rootWorkspaceOptions.some((workspace) => workspace.id === current)
         ? current
-        : current || rootWorkspaceOptions[0]?.id || "",
+        : rootWorkspaceOptions[0]?.id || "",
     );
   }, [rootWorkspaceOptions]);
 
@@ -929,27 +932,41 @@ export default function App() {
       />
     ) : null;
 
-  if (secondarySurfaceView) {
+  const openWorkspaceForView = async (view: AppView) => {
+    const state = await api.pickWorkspace();
+    if (state.selectedWorkspaceId) {
+      if (view === "skills") setSkillsWorkspaceId(state.selectedWorkspaceId);
+      if (view === "extensions") setExtensionsWorkspaceId(state.selectedWorkspaceId);
+    }
+    setSnapshot(state.activeView === view ? state : await api.setActiveView(view));
+  };
+
+  const secondarySurface = secondarySurfaceView ? (
+    <SecondarySurfaces
+      api={api}
+      snapshot={snapshot}
+      setSnapshot={setSnapshot}
+      activeView={secondarySurfaceView}
+      rootWorkspaceOptions={rootWorkspaceOptions}
+      settingsSection={settingsSection}
+      onSelectSettingsSection={setSettingsSection}
+      settingsWorkspaceId={settingsWorkspaceId}
+      onSelectSettingsWorkspace={setSettingsWorkspaceId}
+      skillsWorkspaceId={skillsWorkspaceId}
+      onSelectSkillsWorkspace={setSkillsWorkspaceId}
+      extensionsWorkspaceId={extensionsWorkspaceId}
+      onSelectExtensionsWorkspace={setExtensionsWorkspaceId}
+      onBack={() => setActiveView(settingsReturnView.current)}
+      onOpenWorkspace={() => openWorkspaceForView(secondarySurfaceView)}
+      onSelectView={setActiveView}
+      onTrySkill={handleTrySkill}
+    />
+  ) : null;
+
+  if (snapshot.activeView === "settings") {
     return (
       <>
-        <SecondarySurfaces
-          api={api}
-          snapshot={snapshot}
-          setSnapshot={setSnapshot}
-          activeView={secondarySurfaceView}
-          rootWorkspaceOptions={rootWorkspaceOptions}
-          settingsSection={settingsSection}
-          onSelectSettingsSection={setSettingsSection}
-          settingsWorkspaceId={settingsWorkspaceId}
-          onSelectSettingsWorkspace={setSettingsWorkspaceId}
-          skillsWorkspaceId={skillsWorkspaceId}
-          onSelectSkillsWorkspace={setSkillsWorkspaceId}
-          extensionsWorkspaceId={extensionsWorkspaceId}
-          onSelectExtensionsWorkspace={setExtensionsWorkspaceId}
-          onBack={() => setActiveView("threads")}
-          onSelectView={setActiveView}
-          onTrySkill={handleTrySkill}
-        />
+        {secondarySurface}
         {commandPalette}
       </>
     );
@@ -1067,8 +1084,12 @@ export default function App() {
         ) : null}
 
         <>
-          {snapshot.activeView === "scheduled" ? (
+          {secondarySurface ? (
+            secondarySurface
+          ) : snapshot.activeView === "scheduled" ? (
             <ScheduledTasksView
+              hasWorkspace={rootWorkspaceOptions.length > 0}
+              onOpenWorkspace={() => openWorkspaceForView("scheduled")}
               tasks={snapshot.scheduledTasks}
               lastError={snapshot.lastError}
               api={api}

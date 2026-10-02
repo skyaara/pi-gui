@@ -11,6 +11,7 @@ import type {
 import { RefreshIcon, SearchIcon } from "../../ui/icons";
 import { extensionScopeLabel } from "./extension-display";
 import { ExtensionsTab } from "./extensions-view";
+import { WorkspaceRequired } from "../threads/workspace-required";
 import { SkillsTab } from "./skills-view";
 
 export type CustomizeTab = "skills" | "extensions";
@@ -25,6 +26,7 @@ interface CustomizePageProps {
   readonly extensionsRuntime?: RuntimeSnapshot;
   readonly commandCompatibility: readonly ExtensionCommandCompatibilityRecord[];
   readonly onRefresh: () => void;
+  readonly onOpenWorkspace: () => Promise<void>;
   readonly onToggleSkill: (filePath: string, enabled: boolean) => void;
   readonly onOpenSkillFolder: (filePath: string) => void;
   readonly onTryCommand: (command: string) => void;
@@ -45,6 +47,7 @@ export function CustomizePage({
   extensionsRuntime,
   commandCompatibility,
   onRefresh,
+  onOpenWorkspace,
   onToggleSkill,
   onOpenSkillFolder,
   onTryCommand,
@@ -98,14 +101,15 @@ export function CustomizePage({
   };
 
   return (
-    <section className="canvas">
+    <section className="canvas customize-page" data-testid={`${tab}-surface`}>
       <div className="conversation settings-view">
         <header className="view-header">
           <div>
-            <h1 className="view-header__title">Skills and extensions</h1>
+            <h1 className="view-header__title">{tab === "skills" ? "Skills" : "Extensions"}</h1>
             <p className="view-header__body">
-              Reusable workflows and runtime add-ons pi loads for{" "}
-              {workspace?.name ?? "this workspace"}.
+              {tab === "skills"
+                ? "Reusable workflows for your projects."
+                : "Tools and add-ons that extend what pi can do."}
             </p>
           </div>
           <div className="view-header__actions">
@@ -116,6 +120,7 @@ export function CustomizePage({
               title="Refresh"
               type="button"
               onClick={onRefresh}
+              disabled={!workspace}
             >
               <RefreshIcon />
             </button>
@@ -160,6 +165,7 @@ export function CustomizePage({
               placeholder={`Search ${tab}`}
               spellCheck={false}
               type="search"
+              disabled={!workspace}
               value={query}
               onChange={(event) => {
                 setQuery(event.currentTarget.value);
@@ -177,12 +183,14 @@ export function CustomizePage({
           role="tabpanel"
         >
           {!workspace ? (
-            <div className="settings-group resource-empty">
-              <div className="resource-empty__title">Open a folder first</div>
-              <p className="resource-empty__body">
-                Skills and extensions are discovered per workspace, plus your user folders.
-              </p>
-            </div>
+            <WorkspaceRequired
+              description={
+                tab === "skills"
+                  ? "Open a project to see its skills and the skills available from your user folders."
+                  : "Open a project to see and manage its extensions."
+              }
+              onOpenWorkspace={onOpenWorkspace}
+            />
           ) : tab === "skills" ? (
             <SkillsTab
               searching={normalizedQuery.length > 0}

@@ -417,6 +417,7 @@ export function Sidebar(props: SidebarProps) {
         <div className="sidebar__nav">
           <button
             className={`sidebar__nav-item ${activeView === "threads" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "threads" ? "page" : undefined}
             type="button"
             onClick={() => onSetActiveView("threads")}
           >
@@ -425,6 +426,7 @@ export function Sidebar(props: SidebarProps) {
           </button>
           <button
             className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "scheduled" ? "page" : undefined}
             type="button"
             data-testid="sidebar-scheduled"
             onClick={() => onSetActiveView("scheduled")}
@@ -433,7 +435,8 @@ export function Sidebar(props: SidebarProps) {
             <span>Scheduled</span>
           </button>
           <button
-            className="sidebar__nav-item"
+            className={`sidebar__nav-item ${activeView === "skills" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "skills" ? "page" : undefined}
             type="button"
             onClick={() =>
               onOpenSkills(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
@@ -443,7 +446,8 @@ export function Sidebar(props: SidebarProps) {
             <span>Skills</span>
           </button>
           <button
-            className="sidebar__nav-item"
+            className={`sidebar__nav-item ${activeView === "extensions" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "extensions" ? "page" : undefined}
             type="button"
             onClick={() =>
               onOpenExtensions(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)

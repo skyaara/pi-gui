@@ -1985,19 +1985,19 @@
   background: var(--surface);
 }
 
-.settings-group > :first-child {
+.settings-group:not(.resource-empty) > :first-child {
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
 
-.settings-group > :last-child {
+.settings-group:not(.resource-empty) > :last-child {
   border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
 }
 
-.settings-group > :only-child {
+.settings-group:not(.resource-empty) > :only-child {
   border-radius: var(--radius-2xl);
 }
 
-.settings-group > * + * {
+.settings-group:not(.resource-empty) > * + * {
   border-top: 1px solid var(--border-light);
 }
 
@@ -3439,4 +3439,20 @@ mark.thread-find-active {
 .model-row__tag {
   border: 1px solid var(--border-default);
   color: var(--muted-soft);
+}
+
+.customize-page {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.resource-empty > .button {
+  justify-self: center;
+  margin-top: 16px;
+}
+
+.workspace-required {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
 }

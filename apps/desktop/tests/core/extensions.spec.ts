@@ -511,7 +511,7 @@ test("manages extensions and prefers runtime commands over colliding host action
     await expect(enabledSwitch).toBeChecked();
     await enabledSwitch.click();
     await expect(enabledSwitch).not.toBeChecked();
-    await window.getByRole("button", { name: "Back to app", exact: true }).click();
+    await window.getByRole("button", { name: "Threads", exact: true }).click();
     await expect(window.locator(".chat-header__title")).toHaveText("Inspect extension surface");
     await expect(window.getByTestId("extension-dock")).toHaveCount(0);
     const composer = window.getByTestId("composer");
@@ -524,7 +524,7 @@ test("manages extensions and prefers runtime commands over colliding host action
     await expect(enabledSwitch).not.toBeChecked();
     await enabledSwitch.click();
     await expect(enabledSwitch).toBeChecked();
-    await window.getByRole("button", { name: "Back to app", exact: true }).click();
+    await window.getByRole("button", { name: "Threads", exact: true }).click();
     await expect(window.locator(".chat-header__title")).toHaveText("Extension Surface");
     await expect(window.getByTestId("extension-dock-summary")).toHaveText("Demo ready");
     await expect(window.getByTestId("extension-dock-body")).toHaveCount(0);
@@ -664,8 +664,8 @@ test("switches piui tools off app-wide and keeps them off after a restart", asyn
   const openPiGuiTools = async (window: Page) => {
     const list = window.getByTestId("extensions-list");
     const openButton = window.getByRole("button", { name: "Extensions", exact: true });
-    // A restart restores the last open view, so Settings may already show the list.
-    await expect(list.or(openButton)).toBeVisible();
+    // A restart restores the list while keeping the primary navigation visible.
+    await expect(openButton).toBeVisible();
     if (!(await list.isVisible())) {
       await openButton.click();
     }

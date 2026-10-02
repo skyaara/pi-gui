@@ -95,8 +95,7 @@ test("visible app navigation and settings persistence without test hooks", async
         await page.getByRole("button", { name: "Skills", exact: true }).click();
         await expect(page.getByTestId("skills-surface")).toBeVisible();
         await page.screenshot({ path: join(evidence, "surface-skills.png") });
-        await page.waitForTimeout(600);
-        await page.getByRole("button", { name: "Back to app", exact: true }).click();
+        await page.getByRole("button", { name: "Threads", exact: true }).click();
         await page
           .getByRole("complementary")
           .getByRole("button", { name: "New thread", exact: true })
