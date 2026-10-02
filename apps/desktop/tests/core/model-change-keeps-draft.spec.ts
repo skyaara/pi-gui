@@ -38,17 +38,20 @@ test("changing model or thinking from the composer footer keeps the typed prompt
     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
 
     await footer.getByRole("button", { name: "openai:gpt-5" }).click();
-    await footer.getByRole("button", { name: "GPT-4o" }).click();
+    await window
+      .getByRole("dialog", { name: "Choose model" })
+      .getByRole("button", { name: /GPT-4o/ })
+      .click();
     await expect(footer.getByRole("button", { name: "openai:gpt-4o" })).toBeVisible();
     await expect(window.getByTestId("transcript")).toContainText("Model set to openai:gpt-4o");
     await expect(composer).toHaveValue(prompt);
     await expect(attachment).toHaveCount(1);
 
     const thinkingBadge = footer.locator(".model-selector__badge").nth(1);
-    await expect(thinkingBadge).toHaveText("off");
+    await expect(thinkingBadge).toHaveText("Off");
     await thinkingBadge.click();
     await expect(
-      footer.getByRole("dialog", { name: "Thinking level" }).locator(".model-selector__item-label"),
+      window.getByRole("dialog", { name: "Thinking level" }).locator(".model-selector__item-label"),
     ).toHaveText(["Off"]);
     await window.keyboard.press("Escape");
     await expect(thinkingBadge).toBeFocused();
@@ -69,10 +72,10 @@ test("changing model or thinking from the composer footer keeps the typed prompt
     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe("");
     await expect(composer).toHaveValue("");
     await expect(attachment).toHaveCount(1);
-    await expect(thinkingBadge).toHaveText("medium");
+    await expect(thinkingBadge).toHaveText("Medium");
     await composer.fill(prompt);
     await thinkingBadge.click();
-    const thinkingMenu = footer.getByRole("dialog", { name: "Thinking level" });
+    const thinkingMenu = window.getByRole("dialog", { name: "Thinking level" });
     await expect(thinkingMenu.locator(".model-selector__item-label")).toHaveText([
       "Minimal",
       "Low",
@@ -80,7 +83,7 @@ test("changing model or thinking from the composer footer keeps the typed prompt
       "High",
     ]);
     await thinkingMenu.getByRole("button", { name: /^Minimal/ }).click();
-    await expect(thinkingBadge).toHaveText("minimal");
+    await expect(thinkingBadge).toHaveText("Minimal");
     await expect(composer).toHaveValue(prompt);
     await expect(attachment).toHaveCount(1);
     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);

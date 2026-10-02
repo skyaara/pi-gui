@@ -49,7 +49,10 @@ test("toggles and restores window transparency", async () => {
       const expected = themeTokensFor("default", variant);
       await expect
         .poll(() => elementCssProperty(window, ".sidebar", "background-color"))
-        .toBe(await resolveColor(window, expected["--sidebar-navigation-surface"]!));
+        .toBe(await resolveColor(window, expected["--sidebar-glass"]!));
+      await expect
+        .poll(() => elementCssProperty(window, ".topbar", "background-color"))
+        .toBe(await resolveColor(window, expected["--surface-glass"]!));
       const threads = window.getByRole("button", { name: "Threads", exact: true });
       await threads.click();
       await expect(threads).toHaveAttribute("aria-current", "page");

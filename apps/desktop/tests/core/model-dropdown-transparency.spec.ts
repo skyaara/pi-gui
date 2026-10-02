@@ -53,7 +53,7 @@ test("model and effort menus remain usable above a transparent composer", async 
       await composer.locator(".model-selector__badge").nth(1).click();
       const effort = window.getByRole("dialog", { name: "Thinking level" });
       await effort.getByRole("button", { name: "Low", exact: true }).click();
-      await expect(composer.getByRole("button", { name: "low", exact: true })).toBeVisible();
+      await expect(composer.getByRole("button", { name: "Low", exact: true })).toBeVisible();
       await trigger.click();
       await window.keyboard.press("ArrowDown");
       await expect(menu.locator(".model-selector__item").first()).toBeFocused();

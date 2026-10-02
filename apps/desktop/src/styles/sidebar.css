@@ -43,6 +43,7 @@
 }
 
 .enable-transparency .sidebar {
+  background: var(--sidebar-glass);
   backdrop-filter: var(--glass-blur) var(--glass-saturation);
 }
 

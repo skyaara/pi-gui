@@ -4,15 +4,16 @@ import type {
   RuntimeSettingsSnapshot,
   RuntimeSnapshot,
 } from "@pi-gui/session-driver/runtime-types";
+import {
+  buildModelOptions,
+  buildThinkingOptions,
+  resolveThinkingLevel,
+} from "../conversation/composer-commands";
+import { ModelSelector } from "../conversation/model-selector";
+import { effectiveModelDiscovery } from "@pi-gui/session-driver/runtime-types";
 import { SearchIcon } from "../../ui/icons";
 import { SettingsSelect, SettingsSwitch } from "./settings-controls";
-import {
-  filterModels,
-  labelForThinking,
-  SettingsGroup,
-  SettingsRow,
-  THINKING_LEVELS,
-} from "./settings-utils";
+import { filterModels, SettingsGroup, SettingsRow, THINKING_LEVELS } from "./settings-utils";
 
 interface SettingsModelsSectionProps {
   readonly runtime?: RuntimeSnapshot;
@@ -24,16 +25,11 @@ interface SettingsModelsSectionProps {
   readonly onOpenProviders: () => void;
 }
 
-const THINKING_OPTIONS = THINKING_LEVELS.map((level) => ({
-  value: level,
-  label: labelForThinking(level),
-}));
-
 function modelPattern(model: RuntimeModelRecord): string {
   return `${model.providerId}/${model.modelId}`;
 }
 
-/** Cursor's Models page: defaults on top, then one searchable list with a switch per model. */
+/** Model defaults and the searchable allowlist share Pi discovery and capabilities. */
 export function SettingsModelsSection({
   runtime,
   onSetDefaultModel,
@@ -48,24 +44,38 @@ export function SettingsModelsSection({
   const availableModels = models.filter((model) => model.available);
   const unconnectedModels = models.filter((model) => !model.available);
 
-  // No saved patterns means pi enables every available model.
-  const savedPatterns = runtime?.settings.enabledModelPatterns ?? [];
-  const activePatterns =
-    savedPatterns.length === 0 ? availableModels.map(modelPattern) : savedPatterns;
+  const enabledOptions = buildModelOptions(runtime);
+  const activePatterns = enabledOptions.map((model) => `${model.providerId}/${model.modelId}`);
   const activeSet = new Set(activePatterns);
-  const enabledModels = availableModels.filter((model) => activeSet.has(modelPattern(model)));
-
-  const defaultProvider = runtime?.settings.defaultProvider;
-  const defaultModelId = runtime?.settings.defaultModelId;
+  const enabledModels = enabledOptions.flatMap((option) => {
+    const model = availableModels.find(
+      (entry) => entry.providerId === option.providerId && entry.modelId === option.modelId,
+    );
+    return model ? [model] : [];
+  });
+  const discoveredDefault = effectiveModelDiscovery(runtime)?.defaultModel;
+  const defaultProvider = discoveredDefault?.providerId ?? runtime?.settings.defaultProvider;
+  const defaultModelId = discoveredDefault?.modelId ?? runtime?.settings.defaultModelId;
   const defaultValue =
     defaultProvider && defaultModelId ? `${defaultProvider}:${defaultModelId}` : undefined;
-  const defaultIsEnabled = enabledModels.some(
+  const selectedModel = enabledModels.find(
     (model) => model.providerId === defaultProvider && model.modelId === defaultModelId,
+  );
+  const defaultIsEnabled = Boolean(selectedModel);
+  const thinkingOptions = buildThinkingOptions(selectedModel);
+  const thinkingLevel = resolveThinkingLevel(
+    selectedModel,
+    discoveredDefault?.thinkingLevel ?? runtime?.settings.defaultThinkingLevel,
   );
 
   const searching = query.trim().length > 0;
   const visibleAvailable = filterModels(availableModels, query);
   const visibleUnconnected = filterModels(unconnectedModels, query);
+
+  const setThinkingLevel = (value: string) => {
+    const level = THINKING_LEVELS.find((entry) => entry === value);
+    if (level) onSetThinkingLevel(level);
+  };
 
   const setEnabled = (pattern: string, enabled: boolean) => {
     const next = enabled
@@ -78,26 +88,31 @@ export function SettingsModelsSection({
     <>
       <SettingsGroup>
         <SettingsRow title="Default model" description="Used for new threads.">
-          <SettingsSelect
-            label="Default model"
-            options={enabledModels.map((model) => ({
-              value: `${model.providerId}:${model.modelId}`,
-              label: `${model.providerName} · ${model.label}`,
-            }))}
-            value={defaultIsEnabled ? defaultValue : undefined}
-            onChange={(value) => {
-              const [provider = "", ...modelParts] = value.split(":");
-              onSetDefaultModel(provider, modelParts.join(":"));
-            }}
+          <ModelSelector
+            modelControlLabel="Default model"
+            runtime={runtime}
+            provider={defaultIsEnabled ? defaultProvider : undefined}
+            modelId={defaultIsEnabled ? defaultModelId : undefined}
+            thinkingLevel={thinkingLevel}
+            showThinkingControl={false}
+            showEmptyModelControl
+            dropdownPlacement="below"
+            onSetModel={onSetDefaultModel}
+            onSetThinking={setThinkingLevel}
           />
         </SettingsRow>
-        <SettingsRow title="Reasoning" description="Default reasoning effort for new threads.">
-          <SettingsSelect
-            label="Reasoning"
-            options={THINKING_OPTIONS}
-            value={runtime?.settings.defaultThinkingLevel ?? undefined}
-            onChange={onSetThinkingLevel}
-          />
+        {thinkingOptions.length > 0 ? (
+          <SettingsRow title="Thinking level">
+            <SettingsSelect
+              label="Thinking level"
+              options={thinkingOptions}
+              value={thinkingLevel}
+              onChange={setThinkingLevel}
+            />
+          </SettingsRow>
+        ) : null}
+        <SettingsRow title="Fast mode">
+          <span>{selectedModel?.supportsFastMode ? "Available" : "Unavailable"}</span>
         </SettingsRow>
         {defaultValue && !defaultIsEnabled ? (
           <div className="settings-row">
@@ -219,7 +234,10 @@ function ModelRow({
         </div>
         <div className="settings-row__description">
           {model.providerName} · {modelPattern(model)}
-          {model.reasoning ? <span className="model-row__tag">Reasoning</span> : null}
+          {model.reasoning ? <span className="model-row__tag">Thinking</span> : null}
+          <span className="model-row__tag">
+            {model.supportsFastMode ? "Fast available" : "Fast unavailable"}
+          </span>
           {model.supportsImages ? <span className="model-row__tag">Images</span> : null}
         </div>
       </div>

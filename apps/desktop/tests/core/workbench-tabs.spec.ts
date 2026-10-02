@@ -531,7 +531,7 @@ test("shows and selects GPT-6 Sol from the upgraded Pi model catalog", async ({}
     await expect(badge).toHaveText("GPT-6 Sol");
     await expect(badge).toHaveAttribute("aria-label", "openai:gpt-6-sol");
     await expect(
-      window.locator(".composer").getByRole("button", { name: "medium", exact: true }),
+      window.locator(".composer").getByRole("button", { name: "Medium", exact: true }),
     ).toBeVisible();
     await window.screenshot({ path: testInfo.outputPath("gpt-6-sol-selected.png") });
   } finally {

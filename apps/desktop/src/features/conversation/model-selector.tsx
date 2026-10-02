@@ -27,6 +27,8 @@ interface ModelSelectorProps {
   readonly selectionHint?: string;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
+  readonly modelControlLabel?: string;
+  readonly showThinkingControl?: boolean;
   readonly fastMode?: boolean;
   readonly onSetFastMode?: (enabled: boolean) => void;
 }
@@ -47,6 +49,8 @@ export function ModelSelector({
   selectionHint,
   onSetModel,
   onSetThinking,
+  modelControlLabel,
+  showThinkingControl = true,
   fastMode = false,
   onSetFastMode,
 }: ModelSelectorProps) {
@@ -204,7 +208,10 @@ export function ModelSelector({
             className="model-selector__badge"
             type="button"
             disabled={disabled}
-            aria-label={provider && modelId ? `${provider}:${modelId}` : modelBadgeLabel}
+            aria-label={
+              modelControlLabel ??
+              (provider && modelId ? `${provider}:${modelId}` : modelBadgeLabel)
+            }
             aria-expanded={open === "model"}
             aria-haspopup="dialog"
             title={provider && modelId ? `${provider}:${modelId}` : undefined}
@@ -293,7 +300,7 @@ export function ModelSelector({
                                   type="button"
                                   aria-pressed={isActive}
                                   onClick={() => {
-                                    if (!isActive) onSetModel(option.providerId, option.modelId);
+                                    onSetModel(option.providerId, option.modelId);
                                     setOpen("none");
                                     triggerRef.current?.focus();
                                   }}
@@ -331,7 +338,7 @@ export function ModelSelector({
             : null}
         </span>
       ) : null}
-      {effectiveThinkingLevel ? (
+      {showThinkingControl && effectiveThinkingLevel ? (
         <span className="model-selector__anchor">
           <button
             className="model-selector__badge"
@@ -343,7 +350,7 @@ export function ModelSelector({
               setOpen(open === "thinking" ? "none" : "thinking");
             }}
           >
-            {effectiveThinkingLevel}
+            {thinkingOptions.find((option) => option.value === effectiveThinkingLevel)?.label}
             <ChevronDownIcon />
           </button>
           {open === "thinking"
@@ -383,15 +390,21 @@ export function ModelSelector({
             : null}
         </span>
       ) : null}
-      {activeModel?.supportsFastMode && onSetFastMode ? (
+      {activeModel && onSetFastMode ? (
         <button
           type="button"
           role="switch"
           aria-label="Fast mode"
-          aria-checked={fastMode}
-          title={fastMode ? "Fast mode on" : "Fast mode off"}
-          className={`model-selector__badge${fastMode ? " model-selector__badge--fast" : ""}`}
-          disabled={disabled}
+          aria-checked={Boolean(activeModel.supportsFastMode && fastMode)}
+          title={
+            !activeModel.supportsFastMode
+              ? "Fast mode unavailable for this model"
+              : fastMode
+                ? "Fast mode on"
+                : "Fast mode off"
+          }
+          className={`model-selector__badge${activeModel.supportsFastMode && fastMode ? " model-selector__badge--fast" : ""}`}
+          disabled={disabled || !activeModel.supportsFastMode}
           onClick={() => onSetFastMode(!fastMode)}
         >
           <LightningIcon />

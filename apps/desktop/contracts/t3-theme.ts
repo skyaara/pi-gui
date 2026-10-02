@@ -8,6 +8,7 @@ export const t3ThemeTokens: Readonly<Record<ResolvedTheme, ThemeTokens>> = {
   light: {
     "--window": "#fcfcfc",
     "--sidebar": "#fafafa",
+    "--sidebar-glass": "rgba(250, 250, 250, 0.7)",
     "--sidebar-navigation-surface": "#fafafa",
     "--sidebar-control-surface": "#f4f4f5",
     "--main": "#fcfcfc",
@@ -40,6 +41,7 @@ export const t3ThemeTokens: Readonly<Record<ResolvedTheme, ThemeTokens>> = {
   dark: {
     "--window": "#0a0a0a",
     "--sidebar": "#000000",
+    "--sidebar-glass": "rgba(0, 0, 0, 0.7)",
     "--sidebar-navigation-surface": "#000000",
     "--sidebar-control-surface": "#0a0a0a",
     "--main": "#0a0a0a",

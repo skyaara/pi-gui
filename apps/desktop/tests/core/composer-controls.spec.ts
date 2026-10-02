@@ -124,7 +124,7 @@ test("supports keyboard shortcuts, slash menus, and topbar controls through the 
     await expect(optionsMenu).toHaveCount(0);
     await expect(window.getByTestId("transcript")).toContainText("Thinking set to high");
     await expect(
-      window.locator(".composer").getByRole("button", { name: "high", exact: true }),
+      window.locator(".composer").getByRole("button", { name: "High", exact: true }),
     ).toBeVisible();
 
     await composer.fill("Keep the draft /thinking");

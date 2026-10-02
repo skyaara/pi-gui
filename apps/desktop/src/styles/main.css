@@ -1742,6 +1742,10 @@
   backdrop-filter: var(--glass-blur) var(--glass-saturation);
 }
 
+.enable-transparency .secondary-surface__sidebar {
+  background: var(--sidebar-glass);
+}
+
 .enable-transparency .topbar {
   background: var(--surface-glass) !important;
   backdrop-filter: var(--glass-blur) var(--glass-saturation);
