@@ -51,14 +51,14 @@
   --radius-pill: 999px;
   --radius-round: 50%;
 
-  /* ---- Type scale (compact, px-based like Codex) ------------------------- */
-  --text-xs: 11px;
-  --text-sm: 12px;
+  /* Compact desktop scale, compared with Grok Bot: 12/13/14/15/17px. */
+  --text-xs: 12px;
+  --text-sm: 13px;
   --text-base: 14px;
   --text-md: 15px;
-  --text-lg: 16px;
-  --text-xl: 20px;
-  --text-2xl: 28px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-2xl: 26px;
 
   --leading-tight: 1.25;
   --leading-snug: 1.375;

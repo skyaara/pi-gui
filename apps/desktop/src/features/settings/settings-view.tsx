@@ -118,7 +118,7 @@ export function SettingsView({
 
   if (!workspace && definition.needsWorkspace) {
     return (
-      <section className="canvas">
+      <section className="canvas settings-canvas">
         <div className="conversation settings-view">
           {header}
           <div className="settings-group">
@@ -137,7 +137,7 @@ export function SettingsView({
   }
 
   return (
-    <section className="canvas">
+    <section className="canvas settings-canvas">
       <div className="conversation settings-view">
         {header}
 
