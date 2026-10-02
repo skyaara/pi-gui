@@ -9,6 +9,19 @@ function Icon({ children }: { readonly children: ReactNode }) {
   );
 }
 
+export function LightningIcon() {
+  return (
+    <Icon>
+      <path
+        d="M11.5 2.5 4.5 11H10l-1.5 6.5 7-8.5H10l1.5-6.5Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </Icon>
+  );
+}
+
 export function PlusIcon() {
   return (
     <Icon>

@@ -27,6 +27,8 @@ test("Fast toggle is off by default, preserves drafts and persists across restar
       "aria-checked",
       "false",
     );
+    await expect(window.getByRole("switch", { name: "Fast mode" }).locator("svg")).toHaveCount(1);
+    await expect(window.getByRole("switch", { name: "Fast mode" })).toHaveText("");
     await window.getByRole("switch", { name: "Fast mode" }).click();
     await expect(window.getByRole("switch", { name: "Fast mode" })).toHaveAttribute(
       "aria-checked",

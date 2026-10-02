@@ -52,7 +52,7 @@
   min-width: 280px;
   max-height: 380px;
   overflow: auto;
-  background: var(--surface);
+  background: var(--composer-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   box-shadow: var(--elevation-menu);
@@ -285,4 +285,8 @@
 .model-selector__badge--fast {
   color: var(--accent);
   background: var(--surface-muted);
+}
+
+.model-selector__badge--fast svg {
+  fill: currentColor;
 }

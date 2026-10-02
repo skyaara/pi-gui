@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { CheckIcon, ChevronDownIcon, ModelIcon, SearchIcon } from "../../ui/icons";
+import { createPortal } from "react-dom";
+import { CheckIcon, ChevronDownIcon, LightningIcon, ModelIcon, SearchIcon } from "../../ui/icons";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
   buildModelOptions,
@@ -53,6 +54,7 @@ export function ModelSelector({
   const [modelFilter, setModelFilter] = useState("");
   const [selectedProvider, setSelectedProvider] = useState<string | undefined>();
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -106,7 +108,11 @@ export function ModelSelector({
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node) &&
+        !dropdownRef.current?.contains(event.target as Node)
+      ) {
         setOpen("none");
       }
     };
@@ -178,7 +184,7 @@ export function ModelSelector({
         }
         if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
         const items = Array.from(
-          containerRef.current?.querySelectorAll<HTMLButtonElement>(".model-selector__item") ?? [],
+          dropdownRef.current?.querySelectorAll<HTMLButtonElement>(".model-selector__item") ?? [],
         );
         if (!items.length) return;
         event.preventDefault();
@@ -211,112 +217,118 @@ export function ModelSelector({
             <span className="model-selector__current-label">{modelBadgeLabel}</span>
             <ChevronDownIcon />
           </button>
-          {open === "model" ? (
-            <div
-              className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
-              role="dialog"
-              aria-label="Choose model"
-              style={dropdownStyle}
-              onWheel={(event) => event.stopPropagation()}
-            >
-              <div className="model-selector__layout">
-                <nav className="model-selector__providers" aria-label="Model providers">
-                  <button
-                    type="button"
-                    className="model-selector__provider"
-                    aria-label="All providers"
-                    aria-pressed={!selectedProvider}
-                    title="All providers"
-                    onClick={() => {
-                      setSelectedProvider(undefined);
-                      searchRef.current?.focus();
-                    }}
-                  >
-                    <ModelIcon />
-                  </button>
-                  {providers.map((providerId) => (
-                    <button
-                      key={providerId}
-                      type="button"
-                      className="model-selector__provider"
-                      aria-label={providerLabel(providerId)}
-                      aria-pressed={selectedProvider === providerId}
-                      title={providerLabel(providerId)}
-                      onClick={() => {
-                        setSelectedProvider(providerId);
-                        searchRef.current?.focus();
-                      }}
-                    >
-                      <ProviderIcon provider={providerId} />
-                    </button>
-                  ))}
-                </nav>
-                <div className="model-selector__content">
-                  <div className="model-selector__filter">
-                    <SearchIcon />
-                    <input
-                      ref={searchRef}
-                      className="model-selector__filter-input"
-                      aria-label="Search models"
-                      placeholder="Search models..."
-                      value={modelFilter}
-                      onChange={(event) => setModelFilter(event.target.value)}
-                      autoFocus
-                    />
-                  </div>
-                  <div className="model-selector__results">
-                    {groupedModels.map((group, index) => (
-                      <div key={`${group.provider}:${index}`}>
-                        <div className="model-selector__group-title">
-                          {providerLabel(group.provider)}
-                        </div>
-                        {group.items.map((option) => {
-                          const isActive =
-                            option.providerId === provider && option.modelId === modelId;
-                          const model = runtime?.models.find(
-                            (entry) =>
-                              entry.providerId === option.providerId &&
-                              entry.modelId === option.modelId,
-                          );
-                          return (
-                            <button
-                              className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
-                              key={`${option.providerId}:${option.modelId}`}
-                              type="button"
-                              aria-pressed={isActive}
-                              onClick={() => {
-                                if (!isActive) onSetModel(option.providerId, option.modelId);
-                                setOpen("none");
-                                triggerRef.current?.focus();
-                              }}
-                            >
-                              <span className="model-selector__item-copy">
-                                <span className="model-selector__item-label">
-                                  {model?.label ?? option.modelId}
-                                </span>
-                                <span className="model-selector__item-meta">{option.modelId}</span>
-                              </span>
-                              {isActive ? <CheckIcon /> : null}
-                            </button>
-                          );
-                        })}
+          {open === "model"
+            ? createPortal(
+                <div
+                  ref={dropdownRef}
+                  className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
+                  role="dialog"
+                  aria-label="Choose model"
+                  style={dropdownStyle}
+                  onWheel={(event) => event.stopPropagation()}
+                >
+                  <div className="model-selector__layout">
+                    <nav className="model-selector__providers" aria-label="Model providers">
+                      <button
+                        type="button"
+                        className="model-selector__provider"
+                        aria-label="All providers"
+                        aria-pressed={!selectedProvider}
+                        title="All providers"
+                        onClick={() => {
+                          setSelectedProvider(undefined);
+                          searchRef.current?.focus();
+                        }}
+                      >
+                        <ModelIcon />
+                      </button>
+                      {providers.map((providerId) => (
+                        <button
+                          key={providerId}
+                          type="button"
+                          className="model-selector__provider"
+                          aria-label={providerLabel(providerId)}
+                          aria-pressed={selectedProvider === providerId}
+                          title={providerLabel(providerId)}
+                          onClick={() => {
+                            setSelectedProvider(providerId);
+                            searchRef.current?.focus();
+                          }}
+                        >
+                          <ProviderIcon provider={providerId} />
+                        </button>
+                      ))}
+                    </nav>
+                    <div className="model-selector__content">
+                      <div className="model-selector__filter">
+                        <SearchIcon />
+                        <input
+                          ref={searchRef}
+                          className="model-selector__filter-input"
+                          aria-label="Search models"
+                          placeholder="Search models..."
+                          value={modelFilter}
+                          onChange={(event) => setModelFilter(event.target.value)}
+                          autoFocus
+                        />
                       </div>
-                    ))}
-                    {groupedModels.length === 0 ? (
-                      <div className="model-selector__empty">
-                        {noMatchingModels
-                          ? "No matching models. Try a different search or provider."
-                          : emptyModelTitle}
+                      <div className="model-selector__results">
+                        {groupedModels.map((group, index) => (
+                          <div key={`${group.provider}:${index}`}>
+                            <div className="model-selector__group-title">
+                              {providerLabel(group.provider)}
+                            </div>
+                            {group.items.map((option) => {
+                              const isActive =
+                                option.providerId === provider && option.modelId === modelId;
+                              const model = runtime?.models.find(
+                                (entry) =>
+                                  entry.providerId === option.providerId &&
+                                  entry.modelId === option.modelId,
+                              );
+                              return (
+                                <button
+                                  className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
+                                  key={`${option.providerId}:${option.modelId}`}
+                                  type="button"
+                                  aria-pressed={isActive}
+                                  onClick={() => {
+                                    if (!isActive) onSetModel(option.providerId, option.modelId);
+                                    setOpen("none");
+                                    triggerRef.current?.focus();
+                                  }}
+                                >
+                                  <span className="model-selector__item-copy">
+                                    <span className="model-selector__item-label">
+                                      {model?.label ?? option.modelId}
+                                    </span>
+                                    <span className="model-selector__item-meta">
+                                      {option.modelId}
+                                    </span>
+                                  </span>
+                                  {isActive ? <CheckIcon /> : null}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ))}
+                        {groupedModels.length === 0 ? (
+                          <div className="model-selector__empty">
+                            {noMatchingModels
+                              ? "No matching models. Try a different search or provider."
+                              : emptyModelTitle}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
+                      <div className="model-selector__help">
+                        {selectionHint ?? "↑ ↓ navigate · Enter select · Esc close"}
+                      </div>
+                    </div>
                   </div>
-                  <div className="model-selector__help">
-                    {selectionHint ?? "↑ ↓ navigate · Enter select · Esc close"}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
+                </div>,
+                document.body,
+              )
+            : null}
         </span>
       ) : null}
       {effectiveThinkingLevel ? (
@@ -334,37 +346,41 @@ export function ModelSelector({
             {effectiveThinkingLevel}
             <ChevronDownIcon />
           </button>
-          {open === "thinking" ? (
-            <div
-              className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
-              role="dialog"
-              aria-label="Thinking level"
-              style={dropdownStyle}
-              onWheel={(event) => event.stopPropagation()}
-            >
-              <div className="model-selector__group-title">Thinking Level</div>
-              {thinkingOptions.map((option) => {
-                const isActive = option.value === effectiveThinkingLevel;
-                return (
-                  <button
-                    className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      if (!isActive) {
-                        onSetThinking(option.value);
-                      }
-                      setOpen("none");
-                      triggerRef.current?.focus();
-                    }}
-                  >
-                    <span className="model-selector__item-label">{option.label}</span>
-                    {isActive ? <CheckIcon /> : null}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
+          {open === "thinking"
+            ? createPortal(
+                <div
+                  ref={dropdownRef}
+                  className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
+                  role="dialog"
+                  aria-label="Thinking level"
+                  style={dropdownStyle}
+                  onWheel={(event) => event.stopPropagation()}
+                >
+                  <div className="model-selector__group-title">Thinking Level</div>
+                  {thinkingOptions.map((option) => {
+                    const isActive = option.value === effectiveThinkingLevel;
+                    return (
+                      <button
+                        className={`model-selector__item${isActive ? " model-selector__item--active" : ""}`}
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          if (!isActive) {
+                            onSetThinking(option.value);
+                          }
+                          setOpen("none");
+                          triggerRef.current?.focus();
+                        }}
+                      >
+                        <span className="model-selector__item-label">{option.label}</span>
+                        {isActive ? <CheckIcon /> : null}
+                      </button>
+                    );
+                  })}
+                </div>,
+                document.body,
+              )
+            : null}
         </span>
       ) : null}
       {activeModel?.supportsFastMode && onSetFastMode ? (
@@ -373,11 +389,12 @@ export function ModelSelector({
           role="switch"
           aria-label="Fast mode"
           aria-checked={fastMode}
+          title={fastMode ? "Fast mode on" : "Fast mode off"}
           className={`model-selector__badge${fastMode ? " model-selector__badge--fast" : ""}`}
           disabled={disabled}
           onClick={() => onSetFastMode(!fastMode)}
         >
-          Fast {fastMode ? <CheckIcon /> : null}
+          <LightningIcon />
         </button>
       ) : null}
     </span>

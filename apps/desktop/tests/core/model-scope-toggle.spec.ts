@@ -236,7 +236,7 @@ async function expectModelOptions(
   const scope = window.locator(scopeSelector).first();
   const badge = scope.locator(".model-selector__badge").first();
   await badge.click();
-  const dropdown = scope.locator(".model-selector__dropdown").first();
+  const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
   await expect(dropdown).toBeVisible();
   for (const label of expectations.visibleModelLabels) {
     await expect(dropdown).toContainText(label);
@@ -251,7 +251,7 @@ async function expectModelOptions(
 async function selectComposerModel(window: Page, label: string): Promise<void> {
   const badge = window.locator(".composer__bar .model-selector__badge").first();
   await badge.click();
-  const dropdown = window.locator(".composer__bar .model-selector__dropdown").first();
+  const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
   await expect(dropdown).toBeVisible();
   await dropdown.getByRole("button", { name: new RegExp(label, "i") }).click();
 }

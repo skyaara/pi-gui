@@ -524,7 +524,7 @@ test("shows and selects GPT-6 Sol from the upgraded Pi model catalog", async ({}
     await selectSession(window, TASK_A);
     const badge = window.locator(".composer__bar .model-selector__badge").first();
     await badge.click();
-    const dropdown = window.locator(".composer__bar .model-selector__dropdown").first();
+    const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
     await expect(dropdown).toContainText("GPT-6 Sol");
     await expect(dropdown).toContainText("GPT-6 Luna");
     await dropdown.getByRole("button", { name: /GPT-6 Sol/ }).click();

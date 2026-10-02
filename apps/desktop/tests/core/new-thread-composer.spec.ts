@@ -166,7 +166,7 @@ test("new thread can choose and remember its first model without visiting settin
     await expect(startButton).toBeEnabled();
 
     await modelBadge.click();
-    const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
+    const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
     await expect(dropdown).toContainText("GPT-5");
     await expect(dropdown).toContainText("GPT-4o");
     await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
@@ -271,7 +271,7 @@ test("new thread routes disabled-model recovery to settings models", async () =>
     await expect(window.getByRole("button", { name: "Start thread" })).toBeDisabled();
 
     await modelBadge.click();
-    const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
+    const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
     await expect(dropdown).toBeVisible();
     await expect(dropdown).toContainText("No models available");
     await expect(dropdown).not.toContainText("Open Settings > Models");
@@ -347,7 +347,7 @@ test("refreshing discovers a newly available provider without configured model d
     await expect(notice).toHaveCount(0);
 
     await modelBadge.click();
-    const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
+    const dropdown = window.getByRole("dialog", { name: "Choose model", exact: true });
     await expect(dropdown).toContainText("GPT-5");
     await expect(dropdown).toContainText("GPT-4o");
   } finally {
