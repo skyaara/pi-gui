@@ -145,7 +145,6 @@ export function NewThreadView({
     return (
       <section className="canvas canvas--empty">
         <div className="empty-panel">
-          <div className="session-header__eyebrow">New thread</div>
           <h1>Open a folder to begin</h1>
           <p>
             Select a repository from the sidebar first, then start a local or worktree-backed
@@ -163,8 +162,7 @@ export function NewThreadView({
           <div className="new-thread__logo" data-testid="new-thread-logo">
             <PiLogoMark />
           </div>
-          <div className="new-thread__eyebrow">New thread</div>
-          <h1 className="new-thread__title">Let&apos;s build</h1>
+          <h1 className="new-thread__title">New thread</h1>
           <label className="new-thread__workspace-picker">
             <span className="sr-only">Workspace</span>
             <select

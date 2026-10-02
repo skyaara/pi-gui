@@ -129,8 +129,8 @@
 
 .scheduled-editor__header h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 610;
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
 }
 
 .scheduled-editor__field {

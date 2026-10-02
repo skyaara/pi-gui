@@ -5,6 +5,7 @@ import App from "./app/App";
 import { RendererErrorBoundary } from "./app/desktop-recovery";
 import { applyLastTheme } from "./ui/active-theme";
 import "./dev-reload-hook";
+import "@fontsource-variable/manrope";
 import "./styles.css";
 
 window.addEventListener(

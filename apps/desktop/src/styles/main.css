@@ -1919,9 +1919,9 @@
 .view-header__title {
   margin: 0;
   color: var(--text-strong);
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  letter-spacing: var(--tracking-tight);
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
 }
 
 .view-header__body {
@@ -1948,11 +1948,6 @@
 .settings-view .view-header {
   align-items: center;
   margin-bottom: var(--space-8);
-}
-
-.settings-view .view-header__title {
-  font-size: 22px;
-  font-weight: var(--font-medium);
 }
 
 .settings-view .view-header__body {
@@ -2949,8 +2944,8 @@
 
 .extension-dialog__title {
   color: var(--text-strong);
-  font-size: 20px;
-  font-weight: 630;
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
 }
 
 .extension-dialog__body {
@@ -3049,18 +3044,16 @@
 
 .tree-modal__eyebrow {
   color: var(--muted-soft);
-  font-size: 12px;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
 }
 
 .tree-modal__title {
   margin: 4px 0 0;
   color: var(--text-strong);
-  font-size: 22px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
 }
 
 .tree-modal__close {

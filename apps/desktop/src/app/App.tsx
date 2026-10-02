@@ -1136,7 +1136,6 @@ export default function App() {
             ) : (
               <section className="canvas canvas--empty">
                 <div className="empty-panel">
-                  <div className="session-header__eyebrow">Workspace</div>
                   <h1>Open a folder to start</h1>
                   <p>Add a project folder before creating a new thread.</p>
                 </div>
@@ -1303,7 +1302,6 @@ export default function App() {
           ) : selectedWorkspace ? (
             <section className="canvas canvas--empty">
               <div className="empty-panel">
-                <div className="session-header__eyebrow">Workspace</div>
                 <h1>{selectedWorkspace.name}</h1>
                 <p>Create a thread for this folder, then jump between sessions from the sidebar.</p>
                 <div className="empty-panel__actions">
@@ -1324,7 +1322,6 @@ export default function App() {
           ) : (
             <section className="canvas canvas--empty">
               <div className="empty-panel">
-                <div className="session-header__eyebrow">Workspace</div>
                 <h1>Open a folder to start</h1>
                 <p>
                   Add project folders, group sessions under them, and jump between threads from the

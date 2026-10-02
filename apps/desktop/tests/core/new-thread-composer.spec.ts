@@ -31,7 +31,7 @@ test("new thread reuses composer behaviors for slash commands, image previews, a
 
     const composer = window.getByTestId("new-thread-composer");
     await expect(window.getByTestId("new-thread-logo")).toBeVisible();
-    await expect(window.getByRole("heading", { name: "Let's build" })).toBeVisible();
+    await expect(window.getByRole("heading", { name: "New thread" })).toBeVisible();
     await expect(composer).toBeFocused();
     await expect(composer).toHaveAttribute(
       "placeholder",

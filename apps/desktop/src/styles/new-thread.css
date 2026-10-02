@@ -31,20 +31,12 @@
   display: block;
 }
 
-.new-thread__eyebrow {
-  color: var(--muted-soft);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .new-thread__hero h1 {
   margin: 0;
   color: var(--text-strong);
-  font-size: 30px;
-  font-weight: 640;
-  letter-spacing: -0.03em;
+  font-size: 18px;
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
 }
 
 .new-thread__title {
