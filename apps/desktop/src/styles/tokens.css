@@ -99,9 +99,9 @@
   --accent-rail: color-mix(in srgb, var(--accent) 90%, transparent);
 
   /* ---- Focus ring -------------------------------------------------------- */
-  --focus-ring-color: color-mix(in srgb, var(--accent) 32%, transparent);
-  --focus-ring: 0 0 0 3px var(--focus-ring-color);
-  --focus-ring-border: color-mix(in srgb, var(--accent) 45%, transparent);
+  --focus-ring-color: color-mix(in srgb, var(--text-strong) 35%, transparent);
+  --focus-ring: 0 0 0 1px var(--focus-ring-color);
+  --focus-ring-border: var(--focus-ring-color);
 
   /* ---- Status tints ------------------------------------------------------ */
   --success-tint-bg: color-mix(in srgb, var(--success) 14%, transparent);

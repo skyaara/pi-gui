@@ -204,8 +204,9 @@
 }
 
 .thread-history-toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: 1px solid var(--focus-ring-color);
+  outline-offset: -1px;
+  box-shadow: none;
 }
 
 .icon-button,
@@ -516,8 +517,8 @@
 }
 
 .workspace-rename__input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--focus-ring-color);
+  border-color: var(--focus-ring-border);
+  box-shadow: none;
 }
 
 .workspace-rename__actions {

@@ -380,7 +380,7 @@
 
 .file-explorer__filter:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--focus-ring-border);
 }
 
 .file-workbench__header {
@@ -811,7 +811,7 @@
 
 .composer__surface:focus-within {
   border-color: var(--focus-ring-border);
-  box-shadow: 0 0 0 2px var(--focus-ring-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .composer__surface--drag-active {
@@ -992,9 +992,10 @@
 }
 
 .model-onboarding-notice__action:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
-  outline-offset: 3px;
+  outline: 1px solid var(--focus-ring-color);
+  outline-offset: 2px;
   border-radius: var(--radius-xs);
+  box-shadow: none;
 }
 
 .schema-skew-notice {
@@ -1034,9 +1035,10 @@
 }
 
 .schema-skew-notice__dismiss:focus-visible {
-  outline: 2px solid var(--focus-ring-color);
-  outline-offset: 3px;
+  outline: 1px solid var(--focus-ring-color);
+  outline-offset: 2px;
   border-radius: var(--radius-xs);
+  box-shadow: none;
 }
 
 .composer__config {
@@ -2290,7 +2292,7 @@
 }
 
 .theme-mode-tile input:focus-visible + .theme-mode-tile__preview {
-  outline: 2px solid var(--focus-ring-color);
+  outline: 1px solid var(--focus-ring-color);
   outline-offset: 2px;
 }
 
@@ -3366,7 +3368,7 @@
 }
 
 .thread-search-bar__input:focus {
-  border-color: var(--accent);
+  border-color: var(--focus-ring-border);
 }
 
 .thread-search-bar__count {

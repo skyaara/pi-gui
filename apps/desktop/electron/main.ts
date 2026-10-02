@@ -1623,7 +1623,8 @@ function promptDataUrl(message: string, placeholder: string, manualCode = false)
   .msg { line-height: 1.4; white-space: pre-wrap; }
   input { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #c3c8d0; border-radius: 6px;
     background: #fff; color: inherit; }
-  input:focus { outline: 2px solid #4a8cff; outline-offset: 0; border-color: #4a8cff; }
+  input:focus { outline: none; border-color: color-mix(in srgb, currentColor 35%, transparent); }
+  button:focus-visible, summary:focus-visible { outline: 1px solid color-mix(in srgb, currentColor 35%, transparent); outline-offset: 2px; }
   .row { margin-top: auto; display: flex; justify-content: flex-end; gap: 8px; }
   button { padding: 6px 16px; font-size: 13px; border-radius: 6px; border: 1px solid transparent; cursor: pointer; }
   #pi-prompt-cancel { background: transparent; border-color: #b7bdc7; color: inherit; }

@@ -94,7 +94,8 @@
 }
 
 .model-selector__filter-input:focus {
-  border-color: var(--accent);
+  border-color: var(--focus-ring-border);
+  box-shadow: none;
 }
 
 .model-selector__dropdown--below {
@@ -195,7 +196,8 @@
 }
 
 .extension-flags__input:focus {
-  border-color: var(--accent);
+  border-color: var(--focus-ring-border);
+  box-shadow: none;
 }
 
 .extension-flags__badge--readonly {

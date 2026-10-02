@@ -991,8 +991,9 @@
 
 .turn-changes__file:focus-visible,
 .turn-changes__review:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline: 1px solid var(--focus-ring-color);
+  outline-offset: -1px;
+  box-shadow: none;
 }
 
 .turn-changes__path {
