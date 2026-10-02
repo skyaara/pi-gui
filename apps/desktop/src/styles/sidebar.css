@@ -931,7 +931,7 @@
 }
 
 .sidebar__footer {
-  border-top: 1px solid var(--line);
+  grid-row: 3;
 }
 
 .sidebar__settings {
