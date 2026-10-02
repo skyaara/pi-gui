@@ -1,4 +1,4 @@
-import { PIUI_WORDMARK_PATH, PIUI_WORDMARK_VIEWBOX } from "./piui-brand";
+import { PIUI_AGENT_MARK, PIUI_UI_PATH, PIUI_WORDMARK_VIEWBOX } from "./piui-brand";
 import type { ReactNode } from "react";
 
 function Icon({ children }: { readonly children: ReactNode }) {
@@ -177,7 +177,10 @@ export function ArrowUpIcon() {
 export function PiLogoMark() {
   return (
     <svg role="img" aria-label="piui" viewBox={PIUI_WORDMARK_VIEWBOX} fill="currentColor">
-      <path d={PIUI_WORDMARK_PATH} />
+      {PIUI_AGENT_MARK.map(({ fill, path }) => (
+        <path key={fill} fill={fill} d={path} />
+      ))}
+      <path d={PIUI_UI_PATH} />
     </svg>
   );
 }
