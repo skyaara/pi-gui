@@ -405,8 +405,7 @@
   font-weight: 520;
 }
 
-.workspace-row__time,
-.session-row__time {
+.workspace-row__time {
   color: var(--muted-soft);
   font-size: 11px;
   font-weight: 500;
@@ -554,8 +553,7 @@
 .pinned-thread-group {
   display: grid;
   gap: 4px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
 }
 
 .recency-thread-group {
@@ -564,32 +562,14 @@
   padding-top: 8px;
 }
 
-.recency-thread-group__head {
-  height: 24px;
-  padding: 0 4px;
-  display: flex;
-  align-items: center;
-  color: var(--muted-subtle);
-  font-size: 11px;
-  font-weight: 620;
-}
-
+.recency-thread-group__head,
 .pinned-thread-group__head {
   height: 24px;
-  padding: 0 4px;
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: var(--muted-subtle);
-  font-size: 11px;
-  font-weight: 620;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-}
-
-.pinned-thread-group__head svg {
-  width: 14px;
-  height: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: var(--font-medium);
 }
 
 .session-row {
@@ -700,14 +680,6 @@
   min-width: 0;
 }
 
-.session-row__context {
-  font-size: 11px;
-  color: var(--muted-soft);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .session-row__trailing {
   min-width: 0;
   height: 24px;
@@ -738,18 +710,10 @@
   padding-left: 18px;
 }
 
-.session-row__time,
 .session-row__action {
   transition:
     opacity var(--motion-base) var(--ease-out),
     transform var(--motion-base) var(--ease-out);
-}
-
-.session-row__time {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  position: static;
 }
 
 .session-row__workspace-icon {
@@ -838,21 +802,12 @@
   margin-left: 18px;
 }
 
-.session-row:hover .session-row__time,
-.session-row:focus-within .session-row__time {
-  opacity: 0;
-}
-
 .session-row:hover .session-row__action,
 .session-row:focus-within .session-row__action {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
   transform: scale(1);
-}
-
-.session-row--pinned .session-row__time {
-  opacity: 0;
 }
 
 .session-row--pinned .session-row__pin-action {

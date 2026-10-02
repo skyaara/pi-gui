@@ -170,15 +170,15 @@ test("maintenance: skills, pin, thread list, worktree, queued follow-ups", async
       await composer.fill("");
       await checkpoint("skills-alias");
     });
-    await test.step("Create threads from New thread until Today shows Show more", async () => {
-      const showMore = page.getByRole("button", { name: "Show more Today" });
+    await test.step("Create threads from New thread until Recents shows Show more", async () => {
+      const showMore = page.getByRole("button", { name: "Show more Recents" });
       for (let index = 2; index <= 6; index += 1) {
         if (await showMore.isVisible()) break;
         await startThread(`Reply with exactly FILLER_${index}. Do not use tools.`);
       }
       await expect(showMore).toBeVisible();
       await showMore.click();
-      const showLess = page.getByRole("button", { name: "Show less Today" });
+      const showLess = page.getByRole("button", { name: "Show less Recents" });
       await expect(showLess).toBeVisible();
       await showLess.click();
       await expect(showMore).toBeVisible();
@@ -189,7 +189,7 @@ test("maintenance: skills, pin, thread list, worktree, queued follow-ups", async
         (entry) => realpathSync(entry.path) === realpathSync(workspace),
       )?.name;
       expect(rootName).toBeTruthy();
-      // Time grouping hides a folder row once that folder has threads.
+      // Exercise project grouping before opening folder actions.
       await page.getByRole("button", { name: "Customize Sidebar" }).click();
       await page.getByRole("menuitem", { name: "Grouping" }).click();
       await page.getByRole("menuitemradio", { name: "Workspace", exact: true }).click();
@@ -227,7 +227,7 @@ test("maintenance: skills, pin, thread list, worktree, queued follow-ups", async
       );
       expect(listed).toContain(selectedPath);
       expect(selectedPath).not.toBe(realpathSync(workspace));
-      // A thread still waiting for its title is also named "New thread" in Workspace grouping.
+      // A thread still waiting for its title is also named "New thread" in Projects grouping.
       await page.locator(".sidebar__new").click();
       await expect(page.getByTestId("new-thread-composer")).toBeVisible();
       await expect(page.getByRole("button", { name: "Local", exact: true })).toBeVisible();

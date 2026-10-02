@@ -2,6 +2,8 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { expect, test } from "@playwright/test";
 import {
+  chooseThreadGrouping,
+  desktopShortcut,
   getDesktopState,
   launchDesktop,
   makeUserDataDir,
@@ -93,6 +95,17 @@ test("projectless chats get separate working folders and survive restart", async
         .click();
     }
     expect(new Set(folders).size).toBe(2);
+    await expect(page.locator(".workspace-row")).toHaveCount(0);
+    await chooseThreadGrouping(page, "workspace");
+    await expect(
+      page.getByRole("region", { name: "Recents", exact: true }).locator(".session-row__title"),
+    ).toHaveText(["Second personal chat", "First personal chat"]);
+    await page.keyboard.press(desktopShortcut("2"));
+    await expect(page.locator(".chat-header__title")).toHaveText("First personal chat");
+    await page
+      .getByRole("complementary")
+      .getByRole("button", { name: "New thread", exact: true })
+      .click();
     await expect(page.getByTestId("new-thread-composer")).toBeVisible();
     await page.screenshot({ path: test.info().outputPath("no-project.png") });
   } finally {

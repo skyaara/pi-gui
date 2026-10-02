@@ -58,10 +58,8 @@ import {
   WorktreeIcon,
 } from "../../ui/icons";
 import { THREAD_SHORTCUT_SLOT_COUNT, type PiDesktopApi } from "../../../contracts/ipc";
-import { formatRelativeTime } from "../../lib/string-utils";
 import { PaneResizeHandle, type PaneWidthBounds } from "../../ui/pane-resize-handle";
 import { usePersistedPaneWidth } from "../../ui/use-persisted-pane-width";
-import { sessionLastInteractedAt } from "../../../contracts/thread-recency";
 import type { WorkspaceMenuState } from "./hooks/use-workspace-menu";
 import type { ThreadMenuState } from "./hooks/use-thread-actions";
 import { archiveThreadShortcut, ThreadActionsMenu } from "./thread-actions";
@@ -319,19 +317,11 @@ export function Sidebar(props: SidebarProps) {
       : [];
   };
 
-  const folderHasThreads = (folderId: string) =>
-    threadSidebarModel.workspaceGroups.some(
-      (group) => group.workspace.id === folderId && group.threads.length > 0,
-    ) ||
-    threadSidebarModel.pinnedThreads.some((thread) => thread.folderId === folderId) ||
-    threadSidebarModel.archivedThreads.some((thread) => thread.folderId === folderId);
-  const showFolderRow = (group: WorkspaceThreadGroup) =>
-    threadGrouping === "workspace" || !folderHasThreads(group.workspace.id);
   const rootGroups = threadSidebarModel.workspaceGroups.filter(
-    (group) => group.workspace.kind === "primary" && showFolderRow(group),
+    (group) => group.workspace.kind === "primary" && !group.workspace.isStandalone,
   );
   const orphanGroups = threadSidebarModel.workspaceGroups.filter(
-    (group) => group.workspace.kind !== "primary" && showFolderRow(group),
+    (group) => group.workspace.kind !== "primary" && !group.workspace.isStandalone,
   );
   const pinnedThreads = threadSidebarModel.pinnedThreads;
   const pinnedSortableIds = pinnedThreads.map(pinnedSortableId);
@@ -473,36 +463,6 @@ export function Sidebar(props: SidebarProps) {
 
       {visibleWorkspaces.length > 0 ? (
         <div className="sidebar__section">
-          <div className="section__head">
-            <span>Threads</span>
-            <div className="section__tools">
-              <ThreadGroupingControl
-                grouping={threadGrouping}
-                onChange={(grouping) => {
-                  void updateSnapshot(setSnapshot, () => api.setThreadGrouping(grouping)).catch(
-                    (error: unknown) => {
-                      console.error("[renderer] setThreadGrouping failed", error);
-                    },
-                  );
-                }}
-              />
-              <button
-                aria-label="Open folder"
-                className="icon-button"
-                type="button"
-                onClick={() => {
-                  void updateSnapshot(setSnapshot, () => api.pickWorkspace()).catch(
-                    (error: unknown) => {
-                      console.error("[renderer] pickWorkspace failed", error);
-                    },
-                  );
-                }}
-              >
-                <FolderIcon />
-              </button>
-            </div>
-          </div>
-
           <DndContext
             sensors={sensors}
             collisionDetection={headerCollision}
@@ -511,6 +471,48 @@ export function Sidebar(props: SidebarProps) {
           >
             <ThreadShortcutContext.Provider value={shortcutByKey}>
               <div className="workspace-list" data-testid="workspace-list">
+                {pinnedThreads.length > 0 ? (
+                  <PinnedThreadsSection
+                    pinnedThreads={pinnedThreads}
+                    sortableIds={pinnedSortableIds}
+                    sortableIdForThread={pinnedSortableId}
+                    selectedWorkspace={selectedWorkspace}
+                    selectedSession={selectedSession}
+                    threadMenu={threadMenu}
+                    onArchiveSession={onArchiveSession}
+                    onSelectSession={onSelectSession}
+                    onSetSessionPinned={onSetSessionPinned}
+                  />
+                ) : null}
+                <div className="section__head">
+                  <span>Projects</span>
+                  <div className="section__tools">
+                    <ThreadGroupingControl
+                      grouping={threadGrouping}
+                      onChange={(grouping) => {
+                        void updateSnapshot(setSnapshot, () =>
+                          api.setThreadGrouping(grouping),
+                        ).catch((error: unknown) => {
+                          console.error("[renderer] setThreadGrouping failed", error);
+                        });
+                      }}
+                    />
+                    <button
+                      aria-label="Open folder"
+                      className="icon-button"
+                      type="button"
+                      onClick={() => {
+                        void updateSnapshot(setSnapshot, () => api.pickWorkspace()).catch(
+                          (error: unknown) => {
+                            console.error("[renderer] pickWorkspace failed", error);
+                          },
+                        );
+                      }}
+                    >
+                      <FolderIcon />
+                    </button>
+                  </div>
+                </div>
                 <SortableContext items={rootGroupIds} strategy={verticalListSortingStrategy}>
                   {rootGroups.map((group) => (
                     <SortableWorkspaceFolder
@@ -580,39 +582,38 @@ export function Sidebar(props: SidebarProps) {
                     />
                   </section>
                 ))}
-                {pinnedThreads.length > 0 ? (
-                  <PinnedThreadsSection
-                    pinnedThreads={pinnedThreads}
-                    sortableIds={pinnedSortableIds}
-                    sortableIdForThread={pinnedSortableId}
-                    selectedWorkspace={selectedWorkspace}
-                    selectedSession={selectedSession}
-                    threadMenu={threadMenu}
-                    onArchiveSession={onArchiveSession}
-                    onSelectSession={onSelectSession}
-                    onSetSessionPinned={onSetSessionPinned}
-                  />
-                ) : null}
-                {threadGrouping === "time"
-                  ? threadSidebarModel.recencySections.map((section) => (
-                      <RecencyThreadSectionView
-                        key={section.bucket}
-                        section={section}
-                        historyExpanded={expandedHistory.has(
-                          recencyHistoryExpansionKey(section.bucket),
-                        )}
-                        onToggleHistory={() =>
-                          toggleHistoryExpanded(recencyHistoryExpansionKey(section.bucket))
-                        }
-                        selectedWorkspace={selectedWorkspace}
-                        selectedSession={selectedSession}
-                        threadMenu={threadMenu}
-                        onArchiveSession={onArchiveSession}
-                        onSelectSession={onSelectSession}
-                        onSetSessionPinned={onSetSessionPinned}
-                      />
-                    ))
-                  : null}
+                {threadSidebarModel.recencySections.map((section) => {
+                  const visibleSection =
+                    threadGrouping === "time"
+                      ? section
+                      : {
+                          ...section,
+                          threads: section.threads.filter(
+                            (thread) =>
+                              ![...rootGroups, ...orphanGroups].some(
+                                (group) => group.workspace.id === thread.folderId,
+                              ),
+                          ),
+                        };
+                  return visibleSection.threads.length > 0 ? (
+                    <RecencyThreadSectionView
+                      key={section.bucket}
+                      section={visibleSection}
+                      historyExpanded={expandedHistory.has(
+                        recencyHistoryExpansionKey(section.bucket),
+                      )}
+                      onToggleHistory={() =>
+                        toggleHistoryExpanded(recencyHistoryExpansionKey(section.bucket))
+                      }
+                      selectedWorkspace={selectedWorkspace}
+                      selectedSession={selectedSession}
+                      threadMenu={threadMenu}
+                      onArchiveSession={onArchiveSession}
+                      onSelectSession={onSelectSession}
+                      onSetSessionPinned={onSetSessionPinned}
+                    />
+                  ) : null;
+                })}
                 {threadSidebarModel.archivedThreads.length > 0 ? (
                   <ArchivedThreadsSection
                     archivedThreads={threadSidebarModel.archivedThreads}
@@ -1282,8 +1283,8 @@ function ThreadGroupingControl({
                 >
                   {(
                     [
-                      ["time", "Time"],
-                      ["workspace", "Workspace"],
+                      ["time", "Recents"],
+                      ["workspace", "Projects"],
                     ] as const
                   ).map(([value, label]) => (
                     <button
@@ -1423,10 +1424,7 @@ function PinnedThreadsSection({
 }) {
   return (
     <section className="pinned-thread-group" aria-label="Pinned threads">
-      <div className="pinned-thread-group__head">
-        <PinIcon filled />
-        <span>Pinned</span>
-      </div>
+      <div className="pinned-thread-group__head">Pinned</div>
       <SortableContext items={[...sortableIds]} strategy={verticalListSortingStrategy}>
         <div className="session-list session-list--pinned">
           {pinnedThreads.map((thread) => {
@@ -1601,6 +1599,11 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
         >
           <button
             className="session-row__select"
+            title={
+              showContext
+                ? `${thread.session.title} — ${thread.contextLabel}`
+                : thread.session.title
+            }
             onClick={(event) => {
               event.stopPropagation();
               onSelect();
@@ -1624,9 +1627,6 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
               <span className="session-row__title-line">
                 <span className="session-row__title">{thread.session.title}</span>
               </span>
-              {showContext ? (
-                <span className="session-row__context">{thread.contextLabel}</span>
-              ) : null}
             </span>
           </button>
           <span className="session-row__trailing">
@@ -1639,11 +1639,7 @@ const ThreadSessionRow = forwardRef<HTMLDivElement, ThreadSessionRowProps>(
               <span className="session-row__shortcut" aria-hidden="true">
                 {shortcutBadge.label}
               </span>
-            ) : (
-              <span className="session-row__time">
-                {formatRelativeTime(sessionLastInteractedAt(thread.session))}
-              </span>
-            )}
+            ) : null}
             <span className="session-row__action-cluster">
               {!archived ? (
                 <button

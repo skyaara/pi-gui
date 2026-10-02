@@ -4,14 +4,7 @@ import type {
   ThreadGrouping,
   WorkspaceRecord,
 } from "../../../contracts/desktop-state";
-import {
-  compareByRecency,
-  RECENCY_BUCKET_LABELS,
-  RECENCY_BUCKET_ORDER,
-  recencyBucketId,
-  sessionLastInteractedAt,
-  type RecencyBucketId,
-} from "../../../contracts/thread-recency";
+import { compareByRecency } from "../../../contracts/thread-recency";
 
 export interface ThreadEnvironmentMeta {
   readonly kind: "local" | "worktree";
@@ -47,7 +40,7 @@ export function threadHistoryPreview<T>(
 }
 
 export interface RecencyThreadSection {
-  readonly bucket: RecencyBucketId;
+  readonly bucket: "recent";
   readonly label: string;
   readonly threads: readonly ThreadListEntry[];
 }
@@ -61,10 +54,7 @@ export interface ThreadSidebarModel {
   readonly recencyOrder: readonly ThreadListEntry[];
 }
 
-export function buildThreadSidebarModel(
-  state: DesktopAppState,
-  nowMs: number = Date.now(),
-): ThreadSidebarModel {
+export function buildThreadSidebarModel(state: DesktopAppState): ThreadSidebarModel {
   const entries = collectThreadEntries(state);
   const pinnedThreads = entries
     .filter((entry) => !entry.session.archivedAt && Boolean(entry.session.pinnedAt))
@@ -87,12 +77,10 @@ export function buildThreadSidebarModel(
       threads: historyThreads.filter((entry) => entry.folderId === workspace.id),
     })),
     pinnedThreads,
-    recencySections: RECENCY_BUCKET_ORDER.flatMap((bucket) => {
-      const threads = historyThreads.filter(
-        (entry) => recencyBucketId(sessionLastInteractedAt(entry.session), nowMs) === bucket,
-      );
-      return threads.length > 0 ? [{ bucket, label: RECENCY_BUCKET_LABELS[bucket], threads }] : [];
-    }),
+    recencySections:
+      historyThreads.length > 0
+        ? [{ bucket: "recent", label: "Recents", threads: historyThreads }]
+        : [],
     archivedThreads,
     recencyOrder,
   };
@@ -207,7 +195,7 @@ export function workspaceHistoryExpansionKey(workspaceId: string): string {
   return `workspace:${workspaceId}`;
 }
 
-export function recencyHistoryExpansionKey(bucket: RecencyBucketId): string {
+export function recencyHistoryExpansionKey(bucket: "recent"): string {
   return `bucket:${bucket}`;
 }
 
@@ -227,15 +215,32 @@ export function visibleThreadShortcutOrder(
   const collapsedWorkspaceIds = new Set(options.collapsedWorkspaceIds ?? []);
   const unpinned =
     options.grouping === "workspace"
-      ? options.model.workspaceGroups
-          .filter((group) => !collapsedWorkspaceIds.has(group.workspace.id))
-          .flatMap(
-            (group) =>
+      ? [
+          ...options.model.workspaceGroups
+            .filter(
+              (group) =>
+                !group.workspace.isStandalone && !collapsedWorkspaceIds.has(group.workspace.id),
+            )
+            .flatMap(
+              (group) =>
+                threadHistoryPreview(
+                  group.threads,
+                  expandedHistory.has(workspaceHistoryExpansionKey(group.workspace.id)),
+                ).visible,
+            ),
+          ...options.model.recencySections.flatMap(
+            (section) =>
               threadHistoryPreview(
-                group.threads,
-                expandedHistory.has(workspaceHistoryExpansionKey(group.workspace.id)),
+                section.threads.filter((thread) =>
+                  options.model.workspaceGroups.some(
+                    (group) =>
+                      group.workspace.isStandalone && group.workspace.id === thread.folderId,
+                  ),
+                ),
+                expandedHistory.has(recencyHistoryExpansionKey(section.bucket)),
               ).visible,
-          )
+          ),
+        ]
       : options.model.recencySections.flatMap(
           (section) =>
             threadHistoryPreview(

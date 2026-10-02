@@ -20,7 +20,7 @@ import {
 const proofDir =
   process.env.PI_APP_RECENCY_PROOF_DIR ?? join(tmpdir(), "pi-gui-recency-thread-list");
 
-test("caps each time bucket at five and hides workspace headers", async () => {
+test("keeps projects visible and caps Recents at five", async () => {
   test.setTimeout(90_000);
   const userDataDir = await makeUserDataDir("pi-app-user-data-recency-cap-");
   const workspaceAPath = await makeWorkspace("recency-a");
@@ -41,23 +41,22 @@ test("caps each time bucket at five and hides workspace headers", async () => {
     await customize.hover();
     await expect(window.getByRole("tooltip", { name: "Customize Sidebar" })).toBeVisible();
     await expectThreadGrouping(window, "time");
-    const today = recencySection(window, "Today");
+    const today = recencySection(window, "Recents");
     await expect(today).toBeVisible();
     await expect(today.locator(".session-row")).toHaveCount(5);
-    await expect(window.locator(".workspace-row")).toHaveCount(0);
-    await today.getByRole("button", { name: "Show more Today" }).click();
+    await expect(window.locator(".workspace-row")).toHaveCount(2);
+    await today.getByRole("button", { name: "Show more Recents" }).click();
     await expect(today.locator(".session-row")).toHaveCount(8);
-    await today.getByRole("button", { name: "Show less Today" }).click();
+    await today.getByRole("button", { name: "Show less Recents" }).click();
     await expect(today.locator(".session-row")).toHaveCount(5);
-    await expect(today.locator(".session-row__context")).toContainText([basename(workspaceAPath)]);
-    await expect(today.locator(".session-row__context")).toContainText([basename(workspaceBPath)]);
+    await expect(today.locator(".session-row__context, .session-row__time")).toHaveCount(0);
     await captureSidebarProof(window, "mixed-folders-today.png");
   } finally {
     await harness.close();
   }
 });
 
-test("does not bump Today when a thread is opened", async () => {
+test("does not bump Recents when a thread is opened", async () => {
   test.setTimeout(90_000);
   const userDataDir = await makeUserDataDir("pi-app-user-data-recency-open-");
   const workspacePath = await makeWorkspace("recency-open");
@@ -71,14 +70,14 @@ test("does not bump Today when a thread is opened", async () => {
     const workspace = await waitForWorkspaceByPath(window, workspacePath);
     await createHistoryThreads(window, workspace.id, ["Older today", "Newest today"]);
 
-    await expectTodayTitles(window, ["Newest today", "Older today"]);
+    await expectRecentTitles(window, ["Newest today", "Older today"]);
     const before = await recencyStamps(window, workspace.id, ["Older today", "Newest today"]);
 
-    await recencySection(window, "Today")
+    await recencySection(window, "Recents")
       .locator(".session-row__select", { hasText: "Older today" })
       .click();
     await expect(window.locator(".chat-header__title")).toHaveText("Older today");
-    await expectTodayTitles(window, ["Newest today", "Older today"]);
+    await expectRecentTitles(window, ["Newest today", "Older today"]);
 
     const after = await recencyStamps(window, workspace.id, ["Older today", "Newest today"]);
     expect(after).toEqual(before);
@@ -88,7 +87,7 @@ test("does not bump Today when a thread is opened", async () => {
   }
 });
 
-test("bumps a sent thread to the top of Today", async () => {
+test("bumps a sent thread to the top of Recents", async () => {
   test.setTimeout(90_000);
   const userDataDir = await makeUserDataDir("pi-app-user-data-recency-send-");
   const agentDir = join(userDataDir, "agent");
@@ -104,16 +103,16 @@ test("bumps a sent thread to the top of Today", async () => {
     const window = await harness.firstWindow();
     const workspace = await waitForWorkspaceByPath(window, workspacePath);
     await createHistoryThreads(window, workspace.id, ["Older today", "Newest today"]);
-    await expectTodayTitles(window, ["Newest today", "Older today"]);
+    await expectRecentTitles(window, ["Newest today", "Older today"]);
 
-    await recencySection(window, "Today")
+    await recencySection(window, "Recents")
       .locator(".session-row__select", { hasText: "Older today" })
       .click();
     await expect(window.locator(".chat-header__title")).toHaveText("Older today");
-    await expectTodayTitles(window, ["Newest today", "Older today"]);
+    await expectRecentTitles(window, ["Newest today", "Older today"]);
 
     await sendComposerPrompt(window, "Bump this thread by sending");
-    await expectTodayTitles(window, ["Older today", "Newest today"]);
+    await expectRecentTitles(window, ["Older today", "Newest today"]);
 
     const state = await getDesktopState(window);
     const sessions = workspaceSessions(state, workspace.id);
@@ -151,22 +150,27 @@ test("selects pinned threads first with 1-9 and paints badges while the modifier
 
     const pinned = window.getByRole("region", { name: "Pinned threads" });
     await expect(pinned.locator(".session-row__title")).toHaveText(["Charlie"]);
-    await expectTodayTitles(window, ["Bravo", "Alpha"]);
+    await expectRecentTitles(window, ["Bravo", "Alpha"]);
+    const pinnedBox = await pinned.boundingBox();
+    const projectBox = await window.locator(".workspace-row").boundingBox();
+    const recentBox = await recencySection(window, "Recents").boundingBox();
+    expect(pinnedBox!.y).toBeLessThan(projectBox!.y);
+    expect(projectBox!.y).toBeLessThan(recentBox!.y);
     await expectShortcutBadges(window, ["Charlie", "Bravo", "Alpha"]);
 
-    await recencySection(window, "Today")
+    await recencySection(window, "Recents")
       .locator(".session-row__select", { hasText: "Alpha" })
       .click();
     await expect(window.locator(".chat-header__title")).toHaveText("Alpha");
     await window.keyboard.press(desktopShortcut("1"));
     await expect(window.locator(".chat-header__title")).toHaveText("Charlie");
 
-    await recencySection(window, "Today")
+    await recencySection(window, "Recents")
       .locator(".session-row__select", { hasText: "Alpha" })
       .click();
     await expect(window.locator(".chat-header__title")).toHaveText("Alpha");
-    await sendComposerPrompt(window, "Send moves Alpha to the top of Today");
-    await expectTodayTitles(window, ["Alpha", "Bravo"]);
+    await sendComposerPrompt(window, "Send moves Alpha to the top of Recents");
+    await expectRecentTitles(window, ["Alpha", "Bravo"]);
     await expectShortcutBadges(window, ["Charlie", "Alpha", "Bravo"]);
     await window.keyboard.press(desktopShortcut("1"));
     await expect(window.locator(".chat-header__title")).toHaveText("Charlie");
@@ -211,7 +215,7 @@ test("selects pinned threads first with 1-9 and paints badges while the modifier
   }
 });
 
-test("groups seeded Last 7 Days, Last 30 Days, and Older threads", async () => {
+test("combines chats of all ages in Recents", async () => {
   test.setTimeout(120_000);
   const userDataDir = await makeUserDataDir("pi-app-user-data-recency-buckets-");
   const workspaceAPath = await makeWorkspace("recency-buckets-a");
@@ -283,54 +287,54 @@ test("groups seeded Last 7 Days, Last 30 Days, and Older threads", async () => {
   try {
     const window = await secondRun.firstWindow();
     await waitForWorkspaceByPath(window, workspaceAPath);
-    await expect(recencySection(window, "Today").locator(".session-row__title")).toHaveText([
+    await expectRecentTitles(window, [
       "Today thread",
-    ]);
-    await expect(recencySection(window, "Last 7 Days").locator(".session-row__title")).toHaveText([
       "Week thread",
-    ]);
-    await expect(recencySection(window, "Last 30 Days").locator(".session-row__title")).toHaveText([
       "Month thread",
-    ]);
-    await expect(recencySection(window, "Older").locator(".session-row__title")).toHaveText([
       "Older thread",
     ]);
-    await expect(recencySection(window, "Last 7 Days").locator(".session-row__context")).toHaveText(
-      [basename(workspaceAPath)],
-    );
-    await expect(recencySection(window, "Older").locator(".session-row__context")).toHaveText([
-      basename(workspaceBPath),
-    ]);
-    await captureSidebarProof(window, "seeded-buckets.png");
+    await expect(window.locator(".workspace-row")).toHaveCount(2);
+    await expect(window.locator(".session-row__context, .session-row__time")).toHaveCount(0);
+    await expect(
+      recencySection(window, "Recents").locator(".session-row__select", { hasText: "Week thread" }),
+    ).toHaveAttribute("title", `Week thread — ${basename(workspaceAPath)}`);
+    await captureSidebarProof(window, "all-ages-recents.png");
 
     const weekStampBefore = findSession(await getDesktopState(window), "Week thread").session
       .lastInteractedAt;
-    await recencySection(window, "Last 7 Days")
+    await recencySection(window, "Recents")
       .locator(".session-row__select", { hasText: "Week thread" })
       .click();
     await expect(window.locator(".chat-header__title")).toHaveText("Week thread");
-    await expect(recencySection(window, "Last 7 Days").locator(".session-row__title")).toHaveText([
+    await expectRecentTitles(window, [
+      "Today thread",
       "Week thread",
+      "Month thread",
+      "Older thread",
     ]);
-    await expectTodayTitles(window, ["Today thread"]);
     expect(findSession(await getDesktopState(window), "Week thread").session.lastInteractedAt).toBe(
       weekStampBefore,
     );
-    await captureSidebarProof(window, "click-keeps-week-bucket.png");
+    await captureSidebarProof(window, "click-keeps-recents-order.png");
 
-    await sendComposerPrompt(window, "Send moves Week into Today");
-    await expectTodayTitles(window, ["Week thread", "Today thread"]);
+    await sendComposerPrompt(window, "Send moves Week to the top");
+    await expectRecentTitles(window, [
+      "Week thread",
+      "Today thread",
+      "Month thread",
+      "Older thread",
+    ]);
     await expect(window.getByRole("region", { name: "Last 7 Days" })).toHaveCount(0);
     const weekAfterSend = findSession(await getDesktopState(window), "Week thread").session;
     expect(weekAfterSend.lastInteractedAt).toBeTruthy();
     expect(weekAfterSend.lastInteractedAt! > (weekStampBefore ?? "")).toBe(true);
-    await captureSidebarProof(window, "send-bumps-week-to-today.png");
+    await captureSidebarProof(window, "send-bumps-recents.png");
   } finally {
     await secondRun.close();
   }
 });
 
-test("caps a long Last 7 Days bucket and sorts the folder by last send", async () => {
+test("caps a long Recents list and sorts the folder by last send", async () => {
   test.setTimeout(120_000);
   const userDataDir = await makeUserDataDir("pi-app-user-data-grouping-");
   const workspacePath = await makeWorkspace("grouping-folder");
@@ -397,7 +401,7 @@ test("caps a long Last 7 Days bucket and sorts the folder by last send", async (
   try {
     const window = await secondRun.firstWindow();
     await waitForWorkspaceByPath(window, workspacePath);
-    const week = recencySection(window, "Last 7 Days");
+    const week = recencySection(window, "Recents");
     await expect(week.locator(".session-row__title")).toHaveText([
       "Sent later",
       "Catalog newer",
@@ -405,8 +409,8 @@ test("caps a long Last 7 Days bucket and sorts the folder by last send", async (
       "Week 3",
       "Week 2",
     ]);
-    await expect(window.locator(".workspace-row")).toHaveCount(0);
-    await week.getByRole("button", { name: "Show more Last 7 Days" }).click();
+    await expect(window.locator(".workspace-row")).toHaveCount(1);
+    await week.getByRole("button", { name: "Show more Recents" }).click();
     await expect(week.locator(".session-row__title")).toHaveText([
       "Sent later",
       "Catalog newer",
@@ -415,7 +419,7 @@ test("caps a long Last 7 Days bucket and sorts the folder by last send", async (
       "Week 2",
       "Week 1",
     ]);
-    await week.getByRole("button", { name: "Show less Last 7 Days" }).click();
+    await week.getByRole("button", { name: "Show less Recents" }).click();
     await expect(week.locator(".session-row")).toHaveCount(5);
 
     await chooseThreadGrouping(window, "workspace");
@@ -464,7 +468,7 @@ test("caps a long Last 7 Days bucket and sorts the folder by last send", async (
     await expect(window.locator(".workspace-group .session-row__title").first()).toHaveText(
       "Sent later",
     );
-    await expect(window.getByRole("region", { name: "Last 7 Days" })).toHaveCount(0);
+    await expect(window.getByRole("region", { name: "Recents" })).toHaveCount(0);
   } finally {
     await thirdRun.close();
   }
@@ -529,8 +533,8 @@ function recencySection(window: Page, label: string): Locator {
   return window.getByRole("region", { name: label, exact: true });
 }
 
-async function expectTodayTitles(window: Page, titles: readonly string[]): Promise<void> {
-  await expect(recencySection(window, "Today").locator(".session-row__title")).toHaveText([
+async function expectRecentTitles(window: Page, titles: readonly string[]): Promise<void> {
+  await expect(recencySection(window, "Recents").locator(".session-row__title")).toHaveText([
     ...titles,
   ]);
 }

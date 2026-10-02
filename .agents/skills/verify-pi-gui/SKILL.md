@@ -31,7 +31,7 @@ PI_GUI_MODEL=gpt-5.6-luna \
 .agents/skills/verify-pi-gui/scripts/prove.sh --maintenance
 ```
 
-That command starts threads from New thread, then checks Skills Try, pin while a run is going, Show more Today, a permanent worktree against `git worktree list`, and queued follow-up plus steer. Time grouping hides the folder row after those threads exist, so the worktree step switches Grouping to Workspace before it opens workspace actions. It is not a substitute for the default send/stream proof.
+That command starts threads from New thread, then checks Skills Try, pin while a run is going, Show more Recents, a permanent worktree against `git worktree list`, and queued follow-up plus steer. The worktree step uses Projects grouping before it opens workspace actions. It is not a substitute for the default send/stream proof.
 
 In a Claude cloud session, the repository's SessionStart hook (`scripts/cloud/session-start.sh`) has already written `~/.pi/agent/auth.json` from the environment's `PI_AUTH_JSON_B64` variable, started Xvfb on `DISPLAY=:99`, and exported the real-auth variables above. Run `pnpm install --frozen-lockfile`, then `prove.sh` with no prefix. The environment must use `scripts/cloud/setup.sh` as its setup script and allow `chatgpt.com` and `auth.openai.com`. If the hook reports that auth is missing, or the provider rejects the credential, stop and ask the user for a fresh `PI_AUTH_JSON_B64`. Never print the auth file.
 
@@ -61,7 +61,7 @@ The default `conversation.spec.ts` drives [conversations](features/conversations
 4. Send a follow-up through the composer that starts a bounded 25-second shell command. Observe its running tool and start file, click Stop run, and require aborted output, idle controls, and no completion file before the natural deadline. Check distinct drafts by switching both ways.
 5. Archive/restore Bravo through sidebar controls. Restart the app, select both conversations, and verify transcripts and drafts.
 
-`proof.spec.ts`, selected only by `--smoke`, clicks Settings sections, opens Skills and New thread, and verifies a preference after restart. `--maintenance` (`maintenance.spec.ts`) drives the remaining mapped surfaces in a visible session: Skills Try and slash aliases, pin/unpin while a run is going, New thread until Show more Today, Grouping switched to Workspace so the folder actions menu is visible, a permanent worktree checked with `git worktree list`, and a real-provider Enter-queue / modified-Enter steer. It does not create those threads through session IPC. The model configuration and scratch workspace are launch fixtures; they do not prove account onboarding or native folder opening.
+`proof.spec.ts`, selected only by `--smoke`, clicks Settings sections, opens Skills and New thread, and verifies a preference after restart. `--maintenance` (`maintenance.spec.ts`) drives the remaining mapped surfaces in a visible session: Skills Try and slash aliases, pin/unpin while a run is going, New thread until Show more Recents, Grouping switched to Projects, a permanent worktree checked with `git worktree list`, and a real-provider Enter-queue / modified-Enter steer. It does not create those threads through session IPC. The model configuration and scratch workspace are launch fixtures; they do not prove account onboarding or native folder opening.
 
 Playwright sends input to the real renderer; it does not move the desktop pointer. Native pickers, clipboard, permissions and OS switching need a native/Computer Use journey. The launcher uses the development Electron binary with freshly built app code, not a packaged installation. Read the feature map for other required entry points. [Queued follow-ups](features/follow-ups.md), worktrees, and native/package paths have separate coverage; do not imply they passed with the default proof.
 
@@ -85,7 +85,7 @@ Root `AGENTS.md` prohibits deleting temporary artifacts without approval. Retain
 
 - `scripts/prove.sh [--conversation|--smoke|--maintenance]`: executable CLI; default is conversation. Builds, allocates artifacts, runs the chosen recipe, preserves exit status, checks retained proof. `--maintenance` requires the same real-auth environment as conversation.
 - `scripts/conversation.spec.ts`: default real-provider user journey.
-- `scripts/maintenance.spec.ts`: visible sweep of skills Try, pin while running, Show more Today, worktree plus Git, and queued follow-ups.
+- `scripts/maintenance.spec.ts`: visible sweep of skills Try, pin while running, Show more Recents, worktree plus Git, and queued follow-ups.
 - `scripts/proof.spec.ts`: secondary no-provider UI smoke.
 - `scripts/playwright.config.ts`: inherits repo defaults, selects these recipes, disables retries.
 

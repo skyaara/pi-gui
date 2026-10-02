@@ -15,9 +15,6 @@ import {
   workspaceHistoryExpansionKey,
 } from "../../src/features/threads/thread-groups";
 
-const now = new Date(2026, 8, 21, 15, 0, 0);
-const nowMs = now.getTime();
-
 function isoDaysAgo(days: number, hour = 12): string {
   return new Date(2026, 8, 21 - days, hour, 0, 0).toISOString();
 }
@@ -66,7 +63,7 @@ function state(
   };
 }
 
-test("omits empty date buckets and mixed-folder threads share one recency list", () => {
+test("combines all ages and projects into one Recents list", () => {
   const model = buildThreadSidebarModel(
     state([
       workspace("alpha", "Alpha", [
@@ -75,22 +72,16 @@ test("omits empty date buckets and mixed-folder threads share one recency list",
       ]),
       workspace("beta", "Beta", [session("week", "Week thread", { updatedAt: isoDaysAgo(2) })]),
     ]),
-    nowMs,
   );
 
   expect(model.folders.map((folder) => folder.name)).toEqual(["Alpha", "Beta"]);
-  expect(model.recencySections.map((section) => section.bucket)).toEqual([
-    "today",
-    "last-7-days",
-    "older",
-  ]);
-  expect(
-    model.recencySections.find((section) => section.bucket === "last-30-days"),
-  ).toBeUndefined();
+  expect(model.recencySections.map((section) => section.label)).toEqual(["Recents"]);
   expect(model.recencySections[0]?.threads.map((thread) => thread.session.title)).toEqual([
     "Today thread",
+    "Week thread",
+    "Older thread",
   ]);
-  expect(model.recencySections[1]?.threads[0]?.contextLabel).toBe("Beta");
+  expect(model.recencySections[0]?.threads[1]?.contextLabel).toBe("Beta");
   expect(model.recencyOrder.map((thread) => thread.session.title)).toEqual([
     "Today thread",
     "Week thread",
@@ -98,7 +89,7 @@ test("omits empty date buckets and mixed-folder threads share one recency list",
   ]);
 });
 
-test("keeps pins out of date buckets even when the pin is the latest send", () => {
+test("keeps pins out of Recents even when the pin is the latest send", () => {
   const pinned = session("pin", "Pinned recent", {
     updatedAt: isoDaysAgo(8),
     lastInteractedAt: isoDaysAgo(0, 16),
@@ -108,13 +99,10 @@ test("keeps pins out of date buckets even when the pin is the latest send", () =
     updatedAt: isoDaysAgo(0, 10),
     lastInteractedAt: isoDaysAgo(0, 10),
   });
-  const model = buildThreadSidebarModel(
-    state([workspace("alpha", "Alpha", [pinned, today])]),
-    nowMs,
-  );
+  const model = buildThreadSidebarModel(state([workspace("alpha", "Alpha", [pinned, today])]));
 
   expect(model.pinnedThreads.map((thread) => thread.session.title)).toEqual(["Pinned recent"]);
-  expect(model.recencySections.map((section) => section.bucket)).toEqual(["today"]);
+  expect(model.recencySections.map((section) => section.bucket)).toEqual(["recent"]);
   expect(model.recencySections[0]?.threads.map((thread) => thread.session.title)).toEqual([
     "Unpinned today",
   ]);
@@ -135,10 +123,7 @@ test("puts a newer unpinned send ahead of an older pin in recencyOrder", () => {
     updatedAt: isoDaysAgo(0, 16),
     lastInteractedAt: isoDaysAgo(0, 16),
   });
-  const model = buildThreadSidebarModel(
-    state([workspace("alpha", "Alpha", [pinned, sent])]),
-    nowMs,
-  );
+  const model = buildThreadSidebarModel(state([workspace("alpha", "Alpha", [pinned, sent])]));
 
   expect(model.pinnedThreads.map((thread) => thread.session.title)).toEqual(["Older pin"]);
   expect(model.recencySections[0]?.threads.map((thread) => thread.session.title)).toEqual([
@@ -150,7 +135,7 @@ test("puts a newer unpinned send ahead of an older pin in recencyOrder", () => {
   ]);
 });
 
-test("excludes archived threads from recencyOrder and date buckets", () => {
+test("excludes archived threads from recencyOrder and Recents", () => {
   const model = buildThreadSidebarModel(
     state([
       workspace("alpha", "Alpha", [
@@ -161,7 +146,6 @@ test("excludes archived threads from recencyOrder and date buckets", () => {
         }),
       ]),
     ]),
-    nowMs,
   );
 
   expect(model.archivedThreads.map((thread) => thread.session.title)).toEqual(["Archived"]);
@@ -182,14 +166,13 @@ test("does not let a newer lastViewedAt steal recency from lastInteractedAt", ()
   });
   const model = buildThreadSidebarModel(
     state([workspace("alpha", "Alpha", [staleOpen, recentSend])]),
-    nowMs,
   );
 
   expect(model.recencyOrder.map((thread) => thread.session.title)).toEqual([
     "Recent send",
     "Stale open",
   ]);
-  expect(model.recencySections.map((section) => section.bucket)).toEqual(["today", "last-7-days"]);
+  expect(model.recencySections.map((section) => section.bucket)).toEqual(["recent"]);
 });
 
 test("labels worktree sessions with folder context", () => {
@@ -214,7 +197,6 @@ test("labels worktree sessions with folder context", () => {
   };
   const model = buildThreadSidebarModel(
     state([root, worktreeWorkspace], { worktreesByWorkspace: { root: [worktree] } }),
-    nowMs,
   );
 
   const worktreeEntry = model.recencyOrder.find((thread) => thread.session.id === "wt-thread");
@@ -237,10 +219,7 @@ test("sorts a workspace folder by last user message, not catalog updatedAt", () 
     updatedAt: isoDaysAgo(4),
     lastInteractedAt: isoDaysAgo(0, 9),
   });
-  const model = buildThreadSidebarModel(
-    state([workspace("alpha", "Alpha", [opened, sent])]),
-    nowMs,
-  );
+  const model = buildThreadSidebarModel(state([workspace("alpha", "Alpha", [opened, sent])]));
 
   expect(model.workspaceGroups[0]?.threads.map((thread) => thread.session.title)).toEqual([
     "Sent earlier today",
@@ -277,18 +256,17 @@ test("numbers shortcut slots pinned first, then visible rows", () => {
     state([workspace("alpha", "Alpha", [olderPin, newerSend, ...hidden, week, archived])], {
       pinnedSessionOrder: ["alpha:pin"],
     }),
-    nowMs,
   );
 
   expect(model.recencyOrder[0]?.session.title).toBe("Newer send");
   expect(
     visibleThreadShortcutOrder({ grouping: "time", model }).map((thread) => thread.session.title),
-  ).toEqual(["Older pin", "Newer send", "Extra 0", "Extra 1", "Extra 2", "Extra 3", "Week thread"]);
+  ).toEqual(["Older pin", "Newer send", "Extra 0", "Extra 1", "Extra 2", "Extra 3"]);
   expect(
     visibleThreadShortcutOrder({
       grouping: "time",
       model,
-      expandedHistory: new Set([recencyHistoryExpansionKey("today")]),
+      expandedHistory: new Set([recencyHistoryExpansionKey("recent")]),
     }).map((thread) => thread.session.title),
   ).toEqual([
     "Older pin",
@@ -327,7 +305,6 @@ test("numbers workspace rows after pins, skipping collapsed overflow", () => {
       [workspace("alpha", "Alpha", [pin, ...alphaThreads]), workspace("beta", "Beta", [beta])],
       { pinnedSessionOrder: ["alpha:pin"] },
     ),
-    nowMs,
   );
 
   expect(
@@ -364,7 +341,6 @@ test("numbers workspace rows only for folders that are open", () => {
   });
   const model = buildThreadSidebarModel(
     state([workspace("alpha", "Alpha", [alpha]), workspace("beta", "Beta", [beta])]),
-    nowMs,
   );
 
   expect(
@@ -374,7 +350,7 @@ test("numbers workspace rows only for folders that are open", () => {
       collapsedWorkspaceIds: ["alpha"],
     }).map((thread) => thread.session.title),
   ).toEqual(["Beta thread"]);
-  // Time buckets have no folders to fold, so every row stays numbered.
+  // Recents has no folders to fold, so every row stays numbered.
   expect(
     visibleThreadShortcutOrder({
       grouping: "time",
@@ -392,7 +368,6 @@ test("numbers visible rows in order when nothing is pinned", () => {
         session("older", "Older thread", { updatedAt: isoDaysAgo(40) }),
       ]),
     ]),
-    nowMs,
   );
 
   expect(

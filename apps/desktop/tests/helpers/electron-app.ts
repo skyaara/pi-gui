@@ -1947,7 +1947,7 @@ export async function chooseThreadGrouping(
   window: Page,
   grouping: "time" | "workspace",
 ): Promise<void> {
-  const label = grouping === "time" ? "Time" : "Workspace";
+  const label = grouping === "time" ? "Recents" : "Projects";
   await window.getByRole("button", { name: "Customize Sidebar" }).click();
   await window.getByRole("menuitem", { name: "Grouping" }).click();
   await window.getByRole("menuitemradio", { name: label, exact: true }).click();
@@ -1958,7 +1958,7 @@ export async function expectThreadGrouping(
   window: Page,
   grouping: "time" | "workspace",
 ): Promise<void> {
-  const label = grouping === "time" ? "Time" : "Workspace";
+  const label = grouping === "time" ? "Recents" : "Projects";
   await window.getByRole("button", { name: "Customize Sidebar" }).click();
   await window.getByRole("menuitem", { name: "Grouping" }).click();
   await expect(window.getByRole("menuitemradio", { name: label, exact: true })).toHaveAttribute(
@@ -1975,10 +1975,10 @@ async function expectCompactGroupingMenu(window: Page): Promise<void> {
   const submenu = window.getByRole("menu", { name: "Grouping" });
   const submenuBox = await submenu.boundingBox();
   const timeBox = await window
-    .getByRole("menuitemradio", { name: "Time", exact: true })
+    .getByRole("menuitemradio", { name: "Recents", exact: true })
     .boundingBox();
   expect(submenuBox, "Grouping submenu should be visible").not.toBeNull();
-  expect(timeBox, "Time option should be visible").not.toBeNull();
+  expect(timeBox, "Recents option should be visible").not.toBeNull();
   expect(
     submenuBox!.width,
     `Grouping submenu is ${submenuBox!.width}px in a ${viewportWidth}px window`,
