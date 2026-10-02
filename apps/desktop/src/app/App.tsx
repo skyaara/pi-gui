@@ -958,6 +958,9 @@ export default function App() {
   }
 
   const shellClassName = `shell${snapshot.sidebarCollapsed ? " shell--sidebar-collapsed" : ""}`;
+  const showNewThread =
+    snapshot.activeView === "new-thread" ||
+    (snapshot.activeView === "threads" && selectedWorkspace && !selectedSession);
 
   return (
     <div className={shellClassName}>
@@ -1006,12 +1009,8 @@ export default function App() {
       <main className={mainClassName} style={workbenchWidth.style}>
         <Topbar
           keyboardShortcuts={snapshot.keyboardShortcuts}
-          activeView={snapshot.activeView}
-          rootWorkspace={
-            snapshot.activeView === "new-thread"
-              ? (newThread.workspace ?? rootWorkspace)
-              : rootWorkspace
-          }
+          activeView={showNewThread ? "new-thread" : snapshot.activeView}
+          rootWorkspace={showNewThread ? (newThread.workspace ?? rootWorkspace) : rootWorkspace}
           selectedWorkspace={selectedWorkspace}
           selectedWorktree={selectedWorktree}
           api={api}
@@ -1088,8 +1087,7 @@ export default function App() {
               onCreateWithPi={handleCreateScheduledTaskWithPi}
               onOpenEditor={setScheduledEditor}
             />
-          ) : snapshot.activeView === "new-thread" ||
-            (snapshot.activeView === "threads" && selectedWorkspace && !selectedSession) ? (
+          ) : showNewThread ? (
             rootWorkspaceOptions.length > 0 ? (
               <NewThreadView
                 workspaces={rootWorkspaceOptions}

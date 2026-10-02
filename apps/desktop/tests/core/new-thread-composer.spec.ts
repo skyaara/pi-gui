@@ -170,19 +170,8 @@ test("new thread can choose and remember its first model without visiting settin
     await expect(dropdown).toContainText("GPT-5");
     await expect(dropdown).toContainText("GPT-4o");
     await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
-    const modelFilter = dropdown.locator(".model-selector__filter-input");
-    await expect(modelFilter).toBeFocused();
-    const providers = dropdown.getByRole("navigation", { name: "Model providers" });
-    await providers.getByRole("button", { name: "OpenAI", exact: true }).click();
-    await expect(providers.getByRole("button", { name: "OpenAI", exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await expect(modelFilter).toBeFocused();
-    await providers.getByRole("button", { name: "All providers" }).click();
-    await modelFilter.fill("GPT");
-    await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
-    await modelFilter.fill("");
+    await expect(dropdown.getByRole("textbox")).toHaveCount(0);
+    await expect(dropdown.getByRole("navigation", { name: "Model providers" })).toHaveCount(0);
     const bounds = await dropdown.boundingBox();
     const viewport = await window.evaluate(() => ({ width: innerWidth, height: innerHeight }));
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
@@ -190,13 +179,8 @@ test("new thread can choose and remember its first model without visiting settin
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
     expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height);
     await window.screenshot({ path: test.info().outputPath("first-model-picker.png") });
-    await modelFilter.fill("definitely-no-model");
-    await expect(dropdown).toContainText("No matching models");
-    await expect(modelBadge).toHaveText("GPT-5");
-    await modelFilter.fill("4o");
-    await expect(dropdown).toContainText("GPT-4o");
-    await expect(dropdown).not.toContainText("GPT-5");
-    await modelFilter.press("ArrowDown");
+    await dropdown.getByRole("button", { name: /GPT-5/ }).focus();
+    await window.keyboard.press("ArrowDown");
     await expect(dropdown.getByRole("button", { name: /GPT-4o/ })).toBeFocused();
     await window.keyboard.press("Enter");
 
@@ -340,10 +324,13 @@ test("refreshing discovers a newly available provider without configured model d
       (discovery) => discovery.defaultModel,
     )?.defaultModel;
     expect(resolvedDefault).toBeDefined();
-    await expect(modelBadge).toHaveAttribute(
-      "aria-label",
-      `${resolvedDefault!.providerId}:${resolvedDefault!.modelId}`,
-    );
+    const resolvedLabel = runtime?.models.find(
+      (model) =>
+        model.providerId === resolvedDefault!.providerId &&
+        model.modelId === resolvedDefault!.modelId,
+    )?.label;
+    expect(resolvedLabel).toBeDefined();
+    await expect(modelBadge).toHaveAttribute("aria-label", resolvedLabel!);
     await expect(notice).toHaveCount(0);
 
     await modelBadge.click();
@@ -387,12 +374,12 @@ test("settings do not show stale enabled-model pills when no providers are conne
     await expect(window.locator(".view-header__title")).toHaveText("Models");
 
     const enabledModelsSection = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Enabled models" }),
+      has: window.locator(".settings-list-label", { hasText: "Enabled models" }),
     });
     await expect(enabledModelsSection).toContainText("No connected models available yet.");
     await expect(enabledModelsSection).not.toContainText("openai/gpt-5");
     await expect(enabledModelsSection).not.toContainText("openai/gpt-4o");
-    await expect(enabledModelsSection.locator(".settings-section__title")).toContainText("0 of 0");
+    await expect(enabledModelsSection.locator(".settings-list-label")).toContainText("0 of 0");
   } finally {
     await harness.close();
   }
