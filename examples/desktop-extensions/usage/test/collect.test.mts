@@ -41,10 +41,13 @@ await test("reads every seeded session and matches pi's per-session usage totals
     assert.equal(thread.replies, expected.replies);
     assert.equal(thread.lastActiveAt, expected.lastActiveAt);
     const counts = sumDays(thread.days, null);
-    assert.deepEqual(
-      { ...counts, cost: Math.round(counts.cost * 1e6) },
-      { ...expected.totals, cost: Math.round(expected.totals.cost * 1e6) },
-    );
+    const { cost: actualCost, ...actualTokens } = counts;
+    const { cost: expectedCost, ...expectedTokens } = expected.totals;
+    assert.deepEqual(actualTokens, expectedTokens);
+    // Day buckets and the fixture add the same costs in different orders. Comparing rounded
+    // microdollars can flip at a half-unit boundary even when the doubles differ only by ulps.
+    const tolerance = Number.EPSILON * Math.max(1, expectedCost) * expected.replies * 2;
+    assert.ok(Math.abs(actualCost - expectedCost) <= tolerance, expected.title);
 
     // Cross-check against pi's own session stats accounting.
     const manager = SessionManager.open(expected.path);
