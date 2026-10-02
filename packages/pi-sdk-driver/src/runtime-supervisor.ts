@@ -808,26 +808,19 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
       (await this.buildProviderRecords(context)).map((provider) => [provider.id, provider]),
     );
 
-    return runtime
-      .getModels()
-      .map<RuntimeModelRecord>((model) => {
-        const provider = providers.get(model.provider);
-        return {
-          providerId: model.provider,
-          providerName: provider?.name ?? model.provider,
-          modelId: model.id,
-          label: model.name,
-          available: availableKeys.has(`${model.provider}:${model.id}`),
-          authType: provider?.authType ?? "none",
-          reasoning: Boolean(model.reasoning),
-          supportsImages: model.input.includes("image"),
-        };
-      })
-      .sort((left, right) =>
-        left.providerId === right.providerId
-          ? left.modelId.localeCompare(right.modelId)
-          : left.providerId.localeCompare(right.providerId),
-      );
+    return runtime.getModels().map<RuntimeModelRecord>((model) => {
+      const provider = providers.get(model.provider);
+      return {
+        providerId: model.provider,
+        providerName: provider?.name ?? model.provider,
+        modelId: model.id,
+        label: model.name,
+        available: availableKeys.has(`${model.provider}:${model.id}`),
+        authType: provider?.authType ?? "none",
+        reasoning: Boolean(model.reasoning),
+        supportsImages: model.input.includes("image"),
+      };
+    });
   }
 
   private async autoEnableModelsForAuthenticatedProviders(

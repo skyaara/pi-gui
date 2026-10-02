@@ -305,6 +305,7 @@ export function buildProviderOptions(
 
 export function buildModelOptions(
   runtime: RuntimeSnapshot | undefined,
+  currentModel?: { readonly providerId: string | undefined; readonly modelId: string | undefined },
 ): readonly ComposerModelOption[] {
   if (!runtime) {
     return [];
@@ -312,24 +313,33 @@ export function buildModelOptions(
 
   const enabledPatterns = runtime.settings.enabledModelPatterns;
   const allAvailable = enabledPatterns.length === 0;
-  const enabledSet = allAvailable ? undefined : new Set(enabledPatterns);
+  const enabledOrder = new Map(enabledPatterns.map((key, index) => [key, index]));
+  const priority = (model: RuntimeSnapshot["models"][number]) => {
+    if (model.providerId === currentModel?.providerId && model.modelId === currentModel.modelId)
+      return 0;
+    if (
+      model.providerId === runtime.settings.defaultProvider &&
+      model.modelId === runtime.settings.defaultModelId
+    )
+      return 1;
+    return 2;
+  };
 
   return [...runtime.models]
     .filter((model) => {
       if (!model.available) return false;
-      if (!enabledSet) return true;
-      return enabledSet.has(`${model.providerId}/${model.modelId}`);
+      return allAvailable || enabledOrder.has(`${model.providerId}/${model.modelId}`);
     })
     .sort((left: RuntimeSnapshot["models"][number], right: RuntimeSnapshot["models"][number]) => {
-      const providerCompare =
-        providerRankForId(runtime.providers, left.providerId) -
-        providerRankForId(runtime.providers, right.providerId);
-      if (providerCompare !== 0) {
-        return providerCompare;
+      // Pi preserves scoped order. Its full picker promotes current/default,
+      // then groups providers without alphabetizing each provider's catalog.
+      if (!allAvailable) {
+        return (
+          enabledOrder.get(`${left.providerId}/${left.modelId}`)! -
+          enabledOrder.get(`${right.providerId}/${right.modelId}`)!
+        );
       }
-      return `${left.providerName} ${left.label}`.localeCompare(
-        `${right.providerName} ${right.label}`,
-      );
+      return priority(left) - priority(right) || left.providerId.localeCompare(right.providerId);
     })
     .map((model: RuntimeSnapshot["models"][number]) => ({
       value: model.modelId,
@@ -466,14 +476,6 @@ function providerRank(provider: RuntimeProviderRecord): number {
     return 2;
   }
   return 3;
-}
-
-function providerRankForId(
-  providers: readonly RuntimeProviderRecord[],
-  providerId: string,
-): number {
-  const provider = providers.find((entry) => entry.id === providerId);
-  return provider ? providerRank(provider) : 99;
 }
 
 function summarizeSkillDescription(value: string): string {

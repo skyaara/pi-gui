@@ -51,7 +51,10 @@ export function ModelSelector({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const modelOptions = useMemo(() => buildModelOptions(runtime), [runtime]);
+  const modelOptions = useMemo(
+    () => buildModelOptions(runtime, { providerId: provider, modelId }),
+    [runtime, provider, modelId],
+  );
   const filteredModels = useMemo(() => {
     if (!modelFilter) return modelOptions;
     const q = modelFilter.toLowerCase();
@@ -63,7 +66,10 @@ export function ModelSelector({
     );
   }, [modelOptions, modelFilter]);
 
-  const providers = useMemo(() => groupByProvider(modelOptions), [modelOptions]);
+  const providers = useMemo(
+    () => [...new Set(modelOptions.map((option) => option.providerId))],
+    [modelOptions],
+  );
   const groupedModels = useMemo(
     () =>
       groupByProvider(
@@ -226,20 +232,20 @@ export function ModelSelector({
                   >
                     <ModelIcon />
                   </button>
-                  {providers.map((group) => (
+                  {providers.map((providerId) => (
                     <button
-                      key={group.provider}
+                      key={providerId}
                       type="button"
                       className="model-selector__provider"
-                      aria-label={providerLabel(group.provider)}
-                      aria-pressed={selectedProvider === group.provider}
-                      title={providerLabel(group.provider)}
+                      aria-label={providerLabel(providerId)}
+                      aria-pressed={selectedProvider === providerId}
+                      title={providerLabel(providerId)}
                       onClick={() => {
-                        setSelectedProvider(group.provider);
+                        setSelectedProvider(providerId);
                         searchRef.current?.focus();
                       }}
                     >
-                      <ProviderIcon provider={group.provider} />
+                      <ProviderIcon provider={providerId} />
                     </button>
                   ))}
                 </nav>
@@ -257,8 +263,8 @@ export function ModelSelector({
                     />
                   </div>
                   <div className="model-selector__results">
-                    {groupedModels.map((group) => (
-                      <div key={group.provider}>
+                    {groupedModels.map((group, index) => (
+                      <div key={`${group.provider}:${index}`}>
                         <div className="model-selector__group-title">
                           {providerLabel(group.provider)}
                         </div>
@@ -369,14 +375,14 @@ interface ModelGroup {
 }
 
 function groupByProvider(options: readonly ComposerModelOption[]): readonly ModelGroup[] {
-  const groups = new Map<string, ComposerModelOption[]>();
+  const groups: { provider: string; items: ComposerModelOption[] }[] = [];
   for (const option of options) {
-    const existing = groups.get(option.providerId);
-    if (existing) {
-      existing.push(option);
+    const existing = groups.at(-1);
+    if (existing?.provider === option.providerId) {
+      existing.items.push(option);
     } else {
-      groups.set(option.providerId, [option]);
+      groups.push({ provider: option.providerId, items: [option] });
     }
   }
-  return Array.from(groups.entries()).map(([provider, items]) => ({ provider, items }));
+  return groups;
 }

@@ -123,6 +123,7 @@ test("new thread can choose and remember its first model without visiting settin
     const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
     await expect(dropdown).toContainText("GPT-5");
     await expect(dropdown).toContainText("GPT-4o");
+    await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
     const modelFilter = dropdown.locator(".model-selector__filter-input");
     await expect(modelFilter).toBeFocused();
     const providers = dropdown.getByRole("navigation", { name: "Model providers" });
@@ -133,6 +134,9 @@ test("new thread can choose and remember its first model without visiting settin
     );
     await expect(modelFilter).toBeFocused();
     await providers.getByRole("button", { name: "All providers" }).click();
+    await modelFilter.fill("GPT");
+    await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
+    await modelFilter.fill("");
     const bounds = await dropdown.boundingBox();
     const viewport = await window.evaluate(() => ({ width: innerWidth, height: innerHeight }));
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
