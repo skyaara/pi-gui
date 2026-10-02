@@ -178,6 +178,7 @@
     "electron-builder": "26.8.1",
     "electron-vite": "^5.0.0",
     "playwright": "^1.58.2",
+    "sharp": "0.34.5",
     "shiki": "4.4.3",
     "vite": "^6.2.0",
     "vite-tsconfig-paths": "^6.1.1"

@@ -1,3 +1,4 @@
+import { PIUI_WORDMARK_PATH, PIUI_WORDMARK_VIEWBOX } from "./piui-brand";
 import type { ReactNode } from "react";
 
 function Icon({ children }: { readonly children: ReactNode }) {
@@ -175,21 +176,8 @@ export function ArrowUpIcon() {
 
 export function PiLogoMark() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 64 64" fill="none">
-      <rect width="64" height="64" rx="18" fill="#1f2638" />
-      <text
-        x="50%"
-        y="54%"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontFamily="SF Pro Display, SF Pro Text, ui-sans-serif, system-ui, sans-serif"
-        fontSize="34"
-        fontStyle="italic"
-        fontWeight="700"
-        fill="#ffffff"
-      >
-        π
-      </text>
+    <svg role="img" aria-label="piui" viewBox={PIUI_WORDMARK_VIEWBOX} fill="currentColor">
+      <path d={PIUI_WORDMARK_PATH} />
     </svg>
   );
 }

@@ -19,15 +19,15 @@
 }
 
 .new-thread__logo {
-  width: 44px;
-  height: 44px;
+  width: 96px;
+  height: 54px;
   display: grid;
   place-items: center;
 }
 
 .new-thread__logo svg {
-  width: 44px;
-  height: 44px;
+  width: 96px;
+  height: 54px;
   display: block;
 }
 
@@ -202,4 +202,8 @@
   color: var(--muted);
   font-size: 13px;
   padding: 8px;
+}
+
+.new-thread__logo {
+  color: var(--text-strong);
 }

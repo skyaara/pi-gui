@@ -3513,3 +3513,15 @@ mark.thread-find-active {
   justify-content: flex-end;
   flex-wrap: wrap;
 }
+
+.workspace-welcome__logo {
+  width: 96px;
+  height: 54px;
+  margin: 0 auto 12px;
+  color: var(--text-strong);
+}
+.workspace-welcome__logo svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

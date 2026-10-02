@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { DesktopAppState } from "../../../contracts/desktop-state";
 import type { PiDesktopApi } from "../../../contracts/ipc";
-import { ChevronRightIcon, FolderIcon, ForkIcon } from "../../ui/icons";
+import { ChevronRightIcon, FolderIcon, ForkIcon, PiLogoMark } from "../../ui/icons";
 
 export function WorkspaceWelcome({
   api,
@@ -57,6 +57,9 @@ export function WorkspaceWelcome({
     <section className="canvas canvas--welcome" aria-label="Get started">
       <div className="workspace-welcome" data-testid="empty-state">
         <div className="workspace-welcome__intro">
+          <div className="workspace-welcome__logo">
+            <PiLogoMark />
+          </div>
           <h1>Start a project</h1>
           <p>Open a local folder or bring in a repository.</p>
         </div>
