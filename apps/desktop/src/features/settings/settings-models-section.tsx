@@ -90,6 +90,7 @@ export function SettingsModelsSection({
         <SettingsRow title="Default model" description="Used for new threads.">
           <ModelSelector
             modelControlLabel="Default model"
+            showModelDetails
             runtime={runtime}
             provider={defaultIsEnabled ? defaultProvider : undefined}
             modelId={defaultIsEnabled ? defaultModelId : undefined}

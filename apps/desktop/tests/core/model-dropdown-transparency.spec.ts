@@ -45,7 +45,11 @@ test("model and effort menus remain usable above a transparent composer", async 
       expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
       expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
       await window.screenshot({ path: test.info().outputPath(`model-menu-${context}.png`) });
-      await menu.getByRole("textbox", { name: "Search models" }).fill("gpt");
+      await expect(menu.getByRole("textbox")).toHaveCount(0);
+      await expect(menu.getByRole("navigation")).toHaveCount(0);
+      await expect(menu.locator(".model-selector__group-title")).toHaveCount(0);
+      await expect(menu.locator(".model-selector__item-meta")).toHaveCount(0);
+      await expect(menu.locator(".model-selector__item")).toHaveText(["GPT-5", "GPT-4o"]);
       await expect(menu.locator(".model-selector__item").first()).toBeVisible();
       await menu.locator(".model-selector__item").first().click();
       await expect(menu).toHaveCount(0);

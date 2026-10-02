@@ -29,6 +29,7 @@ interface ModelSelectorProps {
   readonly onSetThinking: (level: string) => void;
   readonly modelControlLabel?: string;
   readonly showThinkingControl?: boolean;
+  readonly showModelDetails?: boolean;
   readonly fastMode?: boolean;
   readonly onSetFastMode?: (enabled: boolean) => void;
 }
@@ -51,6 +52,7 @@ export function ModelSelector({
   onSetThinking,
   modelControlLabel,
   showThinkingControl = true,
+  showModelDetails = false,
   fastMode = false,
   onSetFastMode,
 }: ModelSelectorProps) {
@@ -147,7 +149,10 @@ export function ModelSelector({
         dropdownPlacement === "below"
           ? below >= 220 || below > above
           : above < 220 && below > above;
-      const width = Math.min(open === "model" ? 380 : 300, window.innerWidth - 24);
+      const width = Math.min(
+        open === "model" && showModelDetails ? 380 : 300,
+        window.innerWidth - 24,
+      );
       setDropdownStyle({
         position: "fixed",
         width,
@@ -167,7 +172,7 @@ export function ModelSelector({
       window.removeEventListener("resize", position);
       window.removeEventListener("scroll", position, true);
     };
-  }, [open, dropdownPlacement]);
+  }, [open, dropdownPlacement, showModelDetails]);
 
   if (!shouldRenderModelControl && !effectiveThinkingLevel) {
     return null;
@@ -210,11 +215,11 @@ export function ModelSelector({
             disabled={disabled}
             aria-label={
               modelControlLabel ??
-              (provider && modelId ? `${provider}:${modelId}` : modelBadgeLabel)
+              (showModelDetails && provider && modelId ? `${provider}:${modelId}` : modelBadgeLabel)
             }
             aria-expanded={open === "model"}
             aria-haspopup="dialog"
-            title={provider && modelId ? `${provider}:${modelId}` : undefined}
+            title={showModelDetails && provider && modelId ? `${provider}:${modelId}` : undefined}
             onClick={(event) => {
               triggerRef.current = event.currentTarget;
               setOpen(open === "model" ? "none" : "model");
@@ -234,57 +239,65 @@ export function ModelSelector({
                   style={dropdownStyle}
                   onWheel={(event) => event.stopPropagation()}
                 >
-                  <div className="model-selector__layout">
-                    <nav className="model-selector__providers" aria-label="Model providers">
-                      <button
-                        type="button"
-                        className="model-selector__provider"
-                        aria-label="All providers"
-                        aria-pressed={!selectedProvider}
-                        title="All providers"
-                        onClick={() => {
-                          setSelectedProvider(undefined);
-                          searchRef.current?.focus();
-                        }}
-                      >
-                        <ModelIcon />
-                      </button>
-                      {providers.map((providerId) => (
+                  <div
+                    className={`model-selector__layout${showModelDetails ? "" : " model-selector__layout--compact"}`}
+                  >
+                    {showModelDetails ? (
+                      <nav className="model-selector__providers" aria-label="Model providers">
                         <button
-                          key={providerId}
                           type="button"
                           className="model-selector__provider"
-                          aria-label={providerLabel(providerId)}
-                          aria-pressed={selectedProvider === providerId}
-                          title={providerLabel(providerId)}
+                          aria-label="All providers"
+                          aria-pressed={!selectedProvider}
+                          title="All providers"
                           onClick={() => {
-                            setSelectedProvider(providerId);
+                            setSelectedProvider(undefined);
                             searchRef.current?.focus();
                           }}
                         >
-                          <ProviderIcon provider={providerId} />
+                          <ModelIcon />
                         </button>
-                      ))}
-                    </nav>
+                        {providers.map((providerId) => (
+                          <button
+                            key={providerId}
+                            type="button"
+                            className="model-selector__provider"
+                            aria-label={providerLabel(providerId)}
+                            aria-pressed={selectedProvider === providerId}
+                            title={providerLabel(providerId)}
+                            onClick={() => {
+                              setSelectedProvider(providerId);
+                              searchRef.current?.focus();
+                            }}
+                          >
+                            <ProviderIcon provider={providerId} />
+                          </button>
+                        ))}
+                      </nav>
+                    ) : null}
                     <div className="model-selector__content">
-                      <div className="model-selector__filter">
-                        <SearchIcon />
-                        <input
-                          ref={searchRef}
-                          className="model-selector__filter-input"
-                          aria-label="Search models"
-                          placeholder="Search models..."
-                          value={modelFilter}
-                          onChange={(event) => setModelFilter(event.target.value)}
-                          autoFocus
-                        />
-                      </div>
+                      {showModelDetails ? (
+                        <div className="model-selector__filter">
+                          <SearchIcon />
+                          <input
+                            ref={searchRef}
+                            className="model-selector__filter-input"
+                            aria-label="Search models"
+                            placeholder="Search models..."
+                            value={modelFilter}
+                            onChange={(event) => setModelFilter(event.target.value)}
+                            autoFocus
+                          />
+                        </div>
+                      ) : null}
                       <div className="model-selector__results">
                         {groupedModels.map((group, index) => (
                           <div key={`${group.provider}:${index}`}>
-                            <div className="model-selector__group-title">
-                              {providerLabel(group.provider)}
-                            </div>
+                            {showModelDetails ? (
+                              <div className="model-selector__group-title">
+                                {providerLabel(group.provider)}
+                              </div>
+                            ) : null}
                             {group.items.map((option) => {
                               const isActive =
                                 option.providerId === provider && option.modelId === modelId;
@@ -309,9 +322,11 @@ export function ModelSelector({
                                     <span className="model-selector__item-label">
                                       {model?.label ?? option.modelId}
                                     </span>
-                                    <span className="model-selector__item-meta">
-                                      {option.modelId}
-                                    </span>
+                                    {showModelDetails ? (
+                                      <span className="model-selector__item-meta">
+                                        {option.modelId}
+                                      </span>
+                                    ) : null}
                                   </span>
                                   {isActive ? <CheckIcon /> : null}
                                 </button>
@@ -327,9 +342,11 @@ export function ModelSelector({
                           </div>
                         ) : null}
                       </div>
-                      <div className="model-selector__help">
-                        {selectionHint ?? "↑ ↓ navigate · Enter select · Esc close"}
-                      </div>
+                      {showModelDetails || selectionHint ? (
+                        <div className="model-selector__help">
+                          {selectionHint ?? "↑ ↓ navigate · Enter select · Esc close"}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </div>,

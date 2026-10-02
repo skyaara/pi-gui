@@ -70,6 +70,10 @@
   min-height: 0;
   height: 344px;
 }
+.model-selector__layout--compact {
+  height: auto;
+  max-height: inherit;
+}
 .model-selector__providers {
   width: 46px;
   flex: none;
