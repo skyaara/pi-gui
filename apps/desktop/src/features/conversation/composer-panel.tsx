@@ -77,6 +77,8 @@ interface ComposerPanelProps {
   readonly onSelectSlashOption: (option: ComposerSlashOption) => void;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
+  readonly fastMode?: boolean;
+  readonly onSetFastMode?: (enabled: boolean) => void;
   readonly modelOnboarding: ModelOnboardingState;
   readonly onOpenModelSettings: (section: ModelOnboardingSettingsSection) => void;
   readonly onSubmit: () => void;
@@ -136,6 +138,8 @@ export function ComposerPanel({
   onSelectSlashOption,
   onSetModel,
   onSetThinking,
+  fastMode = false,
+  onSetFastMode,
   modelOnboarding,
   onOpenModelSettings,
   onSubmit,
@@ -225,6 +229,8 @@ export function ComposerPanel({
                     emptyModelTitle={modelOnboarding.emptyModelTitle}
                     onSetModel={onSetModel}
                     onSetThinking={onSetThinking}
+                    fastMode={fastMode}
+                    onSetFastMode={onSetFastMode}
                   />
                   <ExtensionFlagsBadge values={extensionFlags} />
                   <ContextMeter usage={usage} />

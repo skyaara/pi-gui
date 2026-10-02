@@ -1583,6 +1583,10 @@ export class DesktopAppStore {
     });
   }
 
+  async setSessionFastMode(sessionRef: SessionRef, enabled: boolean): Promise<DesktopAppState> {
+    return this.conversationOwner.setSessionFastMode(sessionRef, enabled);
+  }
+
   async setSessionThinkingLevel(
     sessionRef: SessionRef,
     thinkingLevel: NonNullable<RuntimeSettingsSnapshot["defaultThinkingLevel"]>,

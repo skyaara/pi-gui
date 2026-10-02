@@ -69,6 +69,7 @@ export interface SessionConfig {
   readonly provider?: string;
   readonly modelId?: string;
   readonly thinkingLevel?: string;
+  readonly fastMode?: boolean;
 }
 
 export type SessionTreeNodeKind =
@@ -139,6 +140,7 @@ export interface CreateSessionOptions {
   readonly title?: string;
   readonly initialModel?: SessionModelSelection;
   readonly initialThinkingLevel?: string;
+  readonly initialFastMode?: boolean;
   /** Values for flags the session's extensions registered, applied when pi loads them. */
   readonly extensionFlagValues?: ExtensionFlagValues;
 }
@@ -400,6 +402,7 @@ export interface SessionDriver {
   cancelCurrentRun(sessionRef: SessionRef): Promise<void>;
   setSessionModel(sessionRef: SessionRef, selection: SessionModelSelection): Promise<void>;
   setSessionThinkingLevel(sessionRef: SessionRef, thinkingLevel: string): Promise<void>;
+  setSessionFastMode?(sessionRef: SessionRef, enabled: boolean): Promise<void>;
   renameSession(sessionRef: SessionRef, title: string): Promise<void>;
   compactSession(sessionRef: SessionRef, customInstructions?: string): Promise<void>;
   reloadSession(sessionRef: SessionRef): Promise<void>;

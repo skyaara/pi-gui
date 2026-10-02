@@ -63,6 +63,8 @@ interface NewThreadViewProps {
   readonly onSelectStandalone: () => void;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
+  readonly fastMode?: boolean;
+  readonly onSetFastMode?: (enabled: boolean) => void;
   readonly extensionFlags: ExtensionFlagValues;
   readonly onSetExtensionFlag: (name: string, value: boolean | string) => void;
   readonly onOpenModelSettings: (section: ModelOnboardingSettingsSection) => void;
@@ -112,6 +114,8 @@ export function NewThreadView({
   onSelectStandalone,
   onSetModel,
   onSetThinking,
+  fastMode = false,
+  onSetFastMode,
   extensionFlags,
   onSetExtensionFlag,
   onOpenModelSettings,
@@ -244,6 +248,8 @@ export function NewThreadView({
                   fileInputRef={fileInputRef}
                   onSetModel={onSetModel}
                   onSetThinking={onSetThinking}
+                  fastMode={fastMode}
+                  onSetFastMode={onSetFastMode}
                   extensionFlags={extensionFlags}
                   onSetExtensionFlag={onSetExtensionFlag}
                   onAddAttachments={onAddAttachments}
@@ -290,6 +296,8 @@ interface NewThreadComposerFooterProps {
   readonly fileInputRef: RefObject<HTMLInputElement | null>;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
+  readonly fastMode?: boolean;
+  readonly onSetFastMode?: (enabled: boolean) => void;
   readonly extensionFlags: ExtensionFlagValues;
   readonly onSetExtensionFlag: (name: string, value: boolean | string) => void;
   readonly onAddAttachments: (files: File[]) => void;
@@ -306,6 +314,8 @@ function NewThreadComposerFooter({
   fileInputRef,
   onSetModel,
   onSetThinking,
+  fastMode = false,
+  onSetFastMode,
   extensionFlags,
   onSetExtensionFlag,
   onAddAttachments,
@@ -333,6 +343,8 @@ function NewThreadComposerFooter({
               emptyModelTitle={modelOnboarding.emptyModelTitle}
               onSetModel={onSetModel}
               onSetThinking={onSetThinking}
+              fastMode={fastMode}
+              onSetFastMode={onSetFastMode}
             />
             <ExtensionFlagsSelector
               runtime={runtime}

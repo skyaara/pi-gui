@@ -59,6 +59,7 @@ type ConversationDriver = Pick<
   | "sendUserMessage"
   | "setSessionModel"
   | "setSessionThinkingLevel"
+  | "setSessionFastMode"
   | "unarchiveSession"
 >;
 
@@ -182,6 +183,7 @@ export interface ConversationOwner {
     modelId: string,
   ): Promise<DesktopAppState>;
   setSessionThinkingLevel(sessionRef: SessionRef, thinkingLevel: string): Promise<DesktopAppState>;
+  setSessionFastMode(sessionRef: SessionRef, enabled: boolean): Promise<DesktopAppState>;
   cancelCurrentRun(sessionRef: SessionRef | undefined): Promise<DesktopAppState>;
   sendMessageToSession(
     sessionRef: SessionRef,
@@ -220,6 +222,7 @@ export function createConversationOwner(store: ConversationOwnerHost): Conversat
       submitComposerToSession(store, sessionRef, text, attachments, options),
     setSessionModel: (target, provider, modelId) =>
       setSessionModel(store, target, provider, modelId),
+    setSessionFastMode: (sessionRef, enabled) => setSessionFastMode(store, sessionRef, enabled),
     setSessionThinkingLevel: (sessionRef, thinkingLevel) =>
       setSessionThinkingLevel(store, sessionRef, thinkingLevel),
     cancelCurrentRun: (sessionRef) => cancelCurrentRun(store, sessionRef),
@@ -681,6 +684,25 @@ async function setSessionModel(
     await store.driver.setSessionModel(sessionRef, { provider, modelId });
     syncSessionConfig(store, key, { provider, modelId });
     return finishSessionChange(store, sessionRef, key, `Model set to ${provider}:${modelId}`);
+  });
+}
+
+async function setSessionFastMode(
+  store: ComposerStore,
+  sessionRef: SessionRef,
+  enabled: boolean,
+): Promise<DesktopAppState> {
+  await store.initialize();
+  return store.withErrorHandling(async () => {
+    if (!store.driver.setSessionFastMode) throw new Error("Fast mode is unavailable.");
+    await store.driver.setSessionFastMode(sessionRef, enabled);
+    syncSessionConfig(store, sessionKey(sessionRef), { fastMode: enabled });
+    return finishSessionChange(
+      store,
+      sessionRef,
+      sessionKey(sessionRef),
+      `Fast mode ${enabled ? "on" : "off"}`,
+    );
   });
 }
 

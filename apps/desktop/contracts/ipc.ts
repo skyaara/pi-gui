@@ -164,6 +164,7 @@ export const desktopIpc = {
   setDefaultThinkingLevel: "pi-gui:set-default-thinking-level",
   setSessionModel: "pi-gui:set-session-model",
   setSessionThinkingLevel: "pi-gui:set-session-thinking-level",
+  setSessionFastMode: "pi-gui:set-session-fast-mode",
   loginProvider: "pi-gui:login-provider",
   logoutProvider: "pi-gui:logout-provider",
   setProviderApiKey: "pi-gui:set-provider-api-key",
@@ -766,6 +767,11 @@ export interface PiDesktopApi {
     sessionId: string,
     provider: string,
     modelId: string,
+  ): Promise<DesktopAppState>;
+  setSessionFastMode(
+    workspaceId: string,
+    sessionId: string,
+    enabled: boolean,
   ): Promise<DesktopAppState>;
   setSessionThinkingLevel(
     workspaceId: string,

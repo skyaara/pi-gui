@@ -1,3 +1,4 @@
+import { supportsFastMode } from "./fast-mode.js";
 import { clampThinkingLevel, getSupportedThinkingLevels } from "@earendil-works/pi-ai/models";
 import { toAuthInteraction } from "./login-interaction.js";
 import { readFile } from "node:fs/promises";
@@ -820,6 +821,7 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
         authType: provider?.authType ?? "none",
         reasoning: Boolean(model.reasoning),
         supportsImages: model.input.includes("image"),
+        supportsFastMode: supportsFastMode(model),
         supportedThinkingLevels: getSupportedThinkingLevels(model),
         defaultThinkingLevel: clampThinkingLevel(
           model,

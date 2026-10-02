@@ -97,6 +97,10 @@ export class PiSdkDriver implements SessionDriver {
     return this.supervisor.setSessionModel(sessionRef, selection);
   }
 
+  setSessionFastMode(sessionRef: SessionRef, enabled: boolean): Promise<void> {
+    return this.supervisor.setSessionFastMode(sessionRef, enabled);
+  }
+
   setSessionThinkingLevel(sessionRef: SessionRef, thinkingLevel: string): Promise<void> {
     return this.supervisor.setSessionThinkingLevel(sessionRef, thinkingLevel);
   }

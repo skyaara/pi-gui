@@ -167,6 +167,7 @@ export async function startThread(
         title: NEW_THREAD_PLACEHOLDER_TITLE,
         ...(initialModel ? { initialModel } : {}),
         ...(initialThinkingLevel ? { initialThinkingLevel } : {}),
+        initialFastMode: input.fastMode === true,
         extensionFlagValues: extensionFlags.applied,
       });
     } catch (error) {

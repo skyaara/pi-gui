@@ -73,6 +73,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
   const [provider, setProvider] = useState<string | undefined>();
   const [modelId, setModelId] = useState<string | undefined>();
   const [thinkingLevel, setThinkingLevel] = useState<string | undefined>();
+  const [fastMode, setFastMode] = useState(false);
   // Flag edits on this surface, laid over the workspace's remembered defaults.
   const [extensionFlagEdits, setExtensionFlagEdits] = useState<ExtensionFlagValues>({});
   const [composerError, setComposerError] = useState<string | undefined>();
@@ -187,6 +188,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       setProvider(undefined);
       setModelId(undefined);
       setThinkingLevel(undefined);
+      setFastMode(false);
       setExtensionFlagEdits({});
       setComposerError(undefined);
     },
@@ -255,6 +257,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     setProvider(undefined);
     setModelId(undefined);
     setThinkingLevel(undefined);
+    setFastMode(false);
     setExtensionFlagEdits({});
     setComposerError(undefined);
   }, []);
@@ -264,6 +267,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       setProvider(nextProvider);
       setModelId(nextModelId);
       setThinkingLevel(undefined);
+      setFastMode(false);
       if (api && workspace && !runtime?.settings.defaultModelId) {
         void updateSnapshot(setSnapshot, () =>
           api.setDefaultModel(workspace.id, nextProvider, nextModelId),
@@ -370,6 +374,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       provider: resolvedProvider,
       modelId: resolvedModelId,
       thinkingLevel: resolvedThinkingLevel,
+      fastMode: activeModel?.supportsFastMode === true && fastMode,
       ...(Object.keys(extensionFlags).length > 0 ? { extensionFlags } : {}),
     };
     startingGenerationRef.current = generation;
@@ -387,6 +392,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
         setProvider(undefined);
         setModelId(undefined);
         setThinkingLevel(undefined);
+        setFastMode(false);
         setExtensionFlagEdits({});
         setEnvironment("local");
       })
@@ -408,6 +414,8 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     resolvedModelId,
     resolvedProvider,
     resolvedThinkingLevel,
+    fastMode,
+    activeModel,
     rootWorkspaceId,
     setSnapshot,
   ]);
@@ -544,6 +552,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       resolvedProvider,
       resolvedModelId,
       resolvedThinkingLevel,
+      fastMode,
       extensionFlags,
       setExtensionFlag,
       modelOnboarding,
@@ -553,6 +562,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       setEnvironment,
       chooseModel,
       setThinkingLevel,
+      setFastMode,
       setPendingWorkspaceId,
       selectWorkspace,
       addAttachments,
@@ -579,6 +589,8 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       resolvedProvider,
       resolvedModelId,
       resolvedThinkingLevel,
+      fastMode,
+      activeModel,
       extensionFlags,
       setExtensionFlag,
       modelOnboarding,

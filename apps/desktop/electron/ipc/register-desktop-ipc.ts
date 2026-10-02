@@ -125,6 +125,7 @@ type ConversationOwner = Pick<
   | "respondToHostUiRequest"
   | "setSessionModel"
   | "setSessionThinkingLevel"
+  | "setSessionFastMode"
   | "withError"
 >;
 
@@ -474,6 +475,19 @@ export function registerDesktopIpc({
         owners.settings.setDefaultThinkingLevel(
           expectNonEmptyString(rawWorkspaceId, "workspaceId"),
           expectOptionalThinkingLevel(thinkingLevel),
+        ),
+      ),
+  );
+  ipcMain.handle(
+    desktopIpc.setSessionFastMode,
+    (event, workspaceId: unknown, sessionId: unknown, enabled: unknown) =>
+      run(event, () =>
+        owners.conversation.setSessionFastMode(
+          {
+            workspaceId: expectNonEmptyString(workspaceId, "workspaceId"),
+            sessionId: expectNonEmptyString(sessionId, "sessionId"),
+          },
+          expectBoolean(enabled, "enabled"),
         ),
       ),
   );

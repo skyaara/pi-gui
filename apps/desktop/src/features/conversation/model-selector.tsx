@@ -26,6 +26,8 @@ interface ModelSelectorProps {
   readonly selectionHint?: string;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
+  readonly fastMode?: boolean;
+  readonly onSetFastMode?: (enabled: boolean) => void;
 }
 
 type OpenDropdown = "none" | "model" | "thinking";
@@ -44,6 +46,8 @@ export function ModelSelector({
   selectionHint,
   onSetModel,
   onSetThinking,
+  fastMode = false,
+  onSetFastMode,
 }: ModelSelectorProps) {
   const [open, setOpen] = useState<OpenDropdown>("none");
   const [modelFilter, setModelFilter] = useState("");
@@ -354,10 +358,7 @@ export function ModelSelector({
                       triggerRef.current?.focus();
                     }}
                   >
-                    <span className="model-selector__item-copy" title={option.description}>
-                      <span className="model-selector__item-label">{option.label}</span>
-                      <span className="model-selector__item-meta">{option.description}</span>
-                    </span>
+                    <span className="model-selector__item-label">{option.label}</span>
                     {isActive ? <CheckIcon /> : null}
                   </button>
                 );
@@ -365,6 +366,19 @@ export function ModelSelector({
             </div>
           ) : null}
         </span>
+      ) : null}
+      {activeModel?.supportsFastMode && onSetFastMode ? (
+        <button
+          type="button"
+          role="switch"
+          aria-label="Fast mode"
+          aria-checked={fastMode}
+          className={`model-selector__badge${fastMode ? " model-selector__badge--fast" : ""}`}
+          disabled={disabled}
+          onClick={() => onSetFastMode(!fastMode)}
+        >
+          Fast {fastMode ? <CheckIcon /> : null}
+        </button>
       ) : null}
     </span>
   );

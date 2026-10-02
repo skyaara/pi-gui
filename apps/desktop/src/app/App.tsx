@@ -1,3 +1,4 @@
+import { createSessionModelControls } from "../features/conversation/session-model-controls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
@@ -772,31 +773,17 @@ export default function App() {
   ]
     .filter(Boolean)
     .join(" ");
-  const handleSetSessionModel = (provider: string, modelId: string) => {
-    if (!selectedWorkspace || !selectedSession) {
-      return;
-    }
-    void updateSnapshot(setSnapshot, () =>
-      api.setSessionModel(selectedWorkspace.id, selectedSession.id, provider, modelId),
-    ).catch((error: unknown) => {
-      console.error("[renderer] updateSnapshot failed", error);
-    });
-  };
-
-  const handleSetSessionThinking = (level: string) => {
-    if (!selectedWorkspace || !selectedSession) {
-      return;
-    }
-    void updateSnapshot(setSnapshot, () =>
-      api.setSessionThinkingLevel(
-        selectedWorkspace.id,
-        selectedSession.id,
-        level as NonNullable<RuntimeSnapshot["settings"]["defaultThinkingLevel"]>,
-      ),
-    ).catch((error: unknown) => {
-      console.error("[renderer] updateSnapshot failed", error);
-    });
-  };
+  const {
+    setModel: handleSetSessionModel,
+    setThinking: handleSetSessionThinking,
+    setFastMode: handleSetSessionFastMode,
+  } = createSessionModelControls(
+    api,
+    selectedSession && selectedWorkspace
+      ? { workspaceId: selectedWorkspace.id, sessionId: selectedSession.id }
+      : undefined,
+    setSnapshot,
+  );
 
   const handleTrySkill = (command: string) => {
     void updateSnapshot(setSnapshot, () => api.setActiveView("threads")).catch((error: unknown) => {
@@ -1137,6 +1124,8 @@ export default function App() {
                 onSelectStandalone={() => newThread.openStandalone(true)}
                 onSetModel={newThread.chooseModel}
                 onSetThinking={newThread.setThinkingLevel}
+                fastMode={newThread.fastMode}
+                onSetFastMode={newThread.setFastMode}
                 extensionFlags={newThread.extensionFlags}
                 onSetExtensionFlag={newThread.setExtensionFlag}
                 onOpenModelSettings={(section) => openSettings(newThread.workspace?.id, section)}
@@ -1251,6 +1240,8 @@ export default function App() {
                 }}
                 onSetModel={handleSetSessionModel}
                 onSetThinking={handleSetSessionThinking}
+                fastMode={selectedSession?.config?.fastMode ?? false}
+                onSetFastMode={handleSetSessionFastMode}
                 modelOnboarding={selectedSessionModelOnboarding}
                 onOpenModelSettings={(section) =>
                   openSettings(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id, section)

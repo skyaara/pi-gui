@@ -314,6 +314,13 @@ contextBridge.exposeInMainWorld("piApp", {
       provider,
       modelId,
     ) as Promise<DesktopAppState>,
+  setSessionFastMode: (workspaceId: string, sessionId: string, enabled: boolean) =>
+    ipcRenderer.invoke(
+      desktopIpc.setSessionFastMode,
+      workspaceId,
+      sessionId,
+      enabled,
+    ) as Promise<DesktopAppState>,
   setSessionThinkingLevel: (
     workspaceId: string,
     sessionId: string,

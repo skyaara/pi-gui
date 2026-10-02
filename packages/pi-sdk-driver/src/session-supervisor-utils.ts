@@ -1,3 +1,4 @@
+import { readFastMode } from "./fast-mode.js";
 import { basename } from "node:path";
 import {
   sessionEntryToContextMessages,
@@ -78,13 +79,16 @@ export function buildSnapshot(source: SnapshotSource): SessionSnapshot {
 }
 
 export function deriveSessionConfig(sessionManager: {
+  getBranch?(): readonly { type: string; customType?: string; data?: unknown }[];
   buildSessionContext(): {
     thinkingLevel: string;
     model: { provider: string; modelId: string } | null;
   };
 }): SessionConfig | undefined {
   const context = sessionManager.buildSessionContext();
+  const fastMode = readFastMode(sessionManager.getBranch?.() ?? []);
   const config: SessionConfig = {
+    ...(fastMode !== undefined ? { fastMode } : {}),
     ...(context.model ? { provider: context.model.provider, modelId: context.model.modelId } : {}),
     ...(context.thinkingLevel ? { thinkingLevel: context.thinkingLevel } : {}),
   };

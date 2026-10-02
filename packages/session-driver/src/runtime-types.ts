@@ -34,6 +34,7 @@ export interface RuntimeModelRecord {
   readonly reasoning: boolean;
   readonly supportsImages: boolean;
   /** Absent only in snapshots cached before capability discovery was added. */
+  readonly supportsFastMode?: boolean;
   readonly supportedThinkingLevels?: readonly string[];
   readonly defaultThinkingLevel?: string;
 }

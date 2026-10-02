@@ -247,6 +247,9 @@ export function expectStartThreadInput(value: unknown): StartThreadInput {
     provider: expectOptionalNonEmptyString(record.provider, "input.provider"),
     modelId: expectOptionalNonEmptyString(record.modelId, "input.modelId"),
     thinkingLevel: expectOptionalString(record.thinkingLevel, "input.thinkingLevel"),
+    ...(record.fastMode !== undefined
+      ? { fastMode: expectBoolean(record.fastMode, "input.fastMode") }
+      : {}),
     extensionFlags:
       record.extensionFlags === undefined
         ? undefined

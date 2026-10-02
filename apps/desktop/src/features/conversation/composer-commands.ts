@@ -194,32 +194,32 @@ const HOST_ACTION_SLASH_COMMANDS: readonly ComposerSlashCommand[] = [
 ] as const;
 
 export const THINKING_OPTIONS: readonly ComposerSlashOption[] = [
-  { value: "off", label: "Off", description: "No reasoning" },
-  { value: "minimal", label: "Minimal", description: "Very brief reasoning" },
+  { value: "off", label: "Off", description: "" },
+  { value: "minimal", label: "Minimal", description: "" },
   {
     value: "low",
     label: "Low",
-    description: "Light reasoning",
+    description: "",
   },
   {
     value: "medium",
     label: "Medium",
-    description: "Moderate reasoning",
+    description: "",
   },
   {
     value: "high",
     label: "High",
-    description: "Deep reasoning",
+    description: "",
   },
   {
     value: "xhigh",
     label: "Extra High",
-    description: "Extra-high reasoning",
+    description: "",
   },
   {
     value: "max",
     label: "Max",
-    description: "Maximum reasoning",
+    description: "",
   },
 ] as const;
 

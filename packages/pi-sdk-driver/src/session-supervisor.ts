@@ -114,6 +114,7 @@ import {
   workspaceToRef,
   type RunOutcome,
 } from "./session-supervisor-utils.js";
+import { FAST_MODE_ENTRY, fastModeExtension, supportsFastMode } from "./fast-mode.js";
 import { forcePersistPiSession } from "./compat/pi-session-persistence.js";
 import { createTurnCaptureExtension } from "./turn-capture.js";
 import { createTranscriptIdentityExtension } from "./transcript-identity.js";
@@ -354,6 +355,7 @@ export class SessionSupervisor {
         : {}),
       resourceLoaderOptions: {
         extensionFactories: [
+          { name: "piui-fast-mode", hidden: true, factory: fastModeExtension },
           ...this.piAddons,
           ...this.builtinExtensions,
           {
@@ -740,6 +742,9 @@ export class SessionSupervisor {
       runtime,
       options?.title ?? deriveWorkspaceTitle(workspace),
     );
+    if (options?.initialFastMode && supportsFastMode(session.model)) {
+      session.sessionManager.appendCustomEntry(FAST_MODE_ENTRY, { enabled: true });
+    }
     session.sessionManager.appendSessionInfo(record.title);
     forcePersistPiSession(session.sessionManager);
     record.config = deriveSessionConfig(session.sessionManager);
@@ -1379,6 +1384,18 @@ export class SessionSupervisor {
     forcePersistPiSession(session.sessionManager);
     record.config = deriveSessionConfig(session.sessionManager);
     this.refreshUsage(record);
+    await this.persistSnapshot(record);
+    await this.emit(record, sessionUpdatedEvent(record));
+  }
+
+  async setSessionFastMode(sessionRef: SessionRef, enabled: boolean): Promise<void> {
+    const record = await this.ensureRecord(sessionRef);
+    const session = this.requireSession(record);
+    if (enabled && !supportsFastMode(session.model))
+      throw new Error("Fast mode is unavailable for this model.");
+    session.sessionManager.appendCustomEntry(FAST_MODE_ENTRY, { enabled });
+    forcePersistPiSession(session.sessionManager);
+    record.config = deriveSessionConfig(session.sessionManager);
     await this.persistSnapshot(record);
     await this.emit(record, sessionUpdatedEvent(record));
   }
