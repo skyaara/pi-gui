@@ -1449,18 +1449,7 @@
 
 .secondary-surface__nav {
   display: grid;
-  gap: var(--space-4);
-}
-
-.secondary-surface__nav-group {
-  display: grid;
   gap: 1px;
-}
-
-.secondary-surface__nav-group-label {
-  padding: 0 var(--space-2) var(--space-1);
-  color: var(--muted-soft);
-  font-size: 12px;
 }
 
 .secondary-surface__nav-item {

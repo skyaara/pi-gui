@@ -380,7 +380,6 @@ export function ModelSelector({
                   style={dropdownStyle}
                   onWheel={(event) => event.stopPropagation()}
                 >
-                  <div className="model-selector__group-title">Thinking Level</div>
                   {thinkingOptions.map((option) => {
                     const isActive = option.value === effectiveThinkingLevel;
                     return (

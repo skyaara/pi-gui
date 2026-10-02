@@ -91,7 +91,6 @@ function SecondarySurfaceNav({
 }) {
   const [query, setQuery] = useState("");
   const matches = filterNavItems(items, query);
-  const groups = [...new Set(matches.map((item) => item.group))];
 
   return (
     <>
@@ -117,24 +116,17 @@ function SecondarySurfaceNav({
         />
       </label>
       <nav aria-label={label} className="secondary-surface__nav">
-        {groups.map((group) => (
-          <div className="secondary-surface__nav-group" key={group}>
-            <div className="secondary-surface__nav-group-label">{group}</div>
-            {matches
-              .filter((item) => item.group === group)
-              .map((item) => (
-                <button
-                  key={item.id}
-                  aria-current={activeNavId === item.id ? "page" : undefined}
-                  className={`secondary-surface__nav-item ${activeNavId === item.id ? "secondary-surface__nav-item--active" : ""}`}
-                  type="button"
-                  onClick={() => onSelect(item.id)}
-                >
-                  <span className="secondary-surface__nav-icon">{item.icon}</span>
-                  <span>{item.title}</span>
-                </button>
-              ))}
-          </div>
+        {matches.map((item) => (
+          <button
+            key={item.id}
+            aria-current={activeNavId === item.id ? "page" : undefined}
+            className={`secondary-surface__nav-item ${activeNavId === item.id ? "secondary-surface__nav-item--active" : ""}`}
+            type="button"
+            onClick={() => onSelect(item.id)}
+          >
+            <span className="secondary-surface__nav-icon">{item.icon}</span>
+            <span>{item.title}</span>
+          </button>
         ))}
         {matches.length === 0 ? (
           <p className="secondary-surface__nav-empty">No matches for “{query.trim()}”</p>

@@ -45,6 +45,7 @@ test("Fast toggle is off by default, preserves drafts and persists across restar
     await expect(composer).toHaveValue("Keep this draft");
     await window.locator(".composer__bar .model-selector__badge").nth(1).click();
     const menu = window.getByRole("dialog", { name: "Thinking level" });
+    await expect(menu.locator(".model-selector__group-title")).toHaveCount(0);
     await expect(menu.locator(".model-selector__item-meta")).toHaveCount(0);
     await expect(menu.getByRole("button", { name: "Minimal", exact: true })).toBeVisible();
     await window.keyboard.press("Escape");

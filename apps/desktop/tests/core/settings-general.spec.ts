@@ -83,6 +83,17 @@ test("settings nav search filters sections, opens the first match and clears on 
     const surface = window.getByTestId("settings-surface");
     await expect(surface).toBeVisible();
     const nav = surface.getByRole("navigation", { name: "Settings sections" });
+    await expect(nav.locator(".secondary-surface__nav-group-label")).toHaveCount(0);
+    await expect(nav.getByRole("button")).toHaveText([
+      "General",
+      "Appearance",
+      "Notifications",
+      "Keyboard shortcuts",
+      "Providers",
+      "Models",
+      "MCP servers",
+      "Skills and extensions",
+    ]);
     const search = surface.getByLabel("Search settings");
 
     await search.fill("dark");
