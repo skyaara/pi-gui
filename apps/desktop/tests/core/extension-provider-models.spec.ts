@@ -97,7 +97,7 @@ test("models registered by an extension appear in settings", async () => {
 
     // Connected models are listed with a switch; models needing sign-in are not.
     const modelRow = window.getByTestId("settings-model-list").locator(".model-row", {
-      hasText: `${PROVIDER_ID}/${MODEL_ID}`,
+      hasText: "Extension E2E Model",
     });
     await expect(modelRow).toHaveCount(1);
     await expect(modelRow).toContainText("Extension E2E Model");
@@ -140,20 +140,20 @@ test("project extension models stay scoped to the workspace that registers them"
     await createNamedThread(window, "Alpha thread", { workspaceName: basename(alphaPath) });
     let rows = await searchAllModels(window, SCOPED_PREFIX);
     await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText(`${SCOPED_PREFIX}-alpha/alpha-model`);
+    await expect(rows.first()).toContainText("Model alpha-model");
     await window.keyboard.press("Escape");
 
     await createNamedThread(window, "Beta thread", { workspaceName: basename(betaPath) });
     rows = await searchAllModels(window, SCOPED_PREFIX);
     await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText(`${SCOPED_PREFIX}-beta/beta-model`);
+    await expect(rows.first()).toContainText("Model beta-model");
     await window.keyboard.press("Escape");
 
     // Back to alpha: opening beta must not have leaked its provider into alpha.
     await createNamedThread(window, "Alpha thread two", { workspaceName: basename(alphaPath) });
     rows = await searchAllModels(window, SCOPED_PREFIX);
     await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText(`${SCOPED_PREFIX}-alpha/alpha-model`);
+    await expect(rows.first()).toContainText("Model alpha-model");
   } finally {
     await harness.close();
   }

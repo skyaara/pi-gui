@@ -96,10 +96,6 @@ export function SettingsShortcutsSection({
   return (
     <>
       <div className="shortcut-settings__intro">
-        <p>
-          Choose Command or Control combinations for app and thread actions. Changes apply to all
-          windows.
-        </p>
         <button
           className="button button--ghost"
           type="button"
@@ -114,47 +110,45 @@ export function SettingsShortcutsSection({
           {error}
         </p>
       ) : null}
-      {[...new Set(CUSTOMIZABLE_SHORTCUTS.map((entry) => entry.group))].map((group) => (
-        <SettingsGroup key={group} title={group}>
-          {CUSTOMIZABLE_SHORTCUTS.filter((entry) => entry.group === group).map((entry) => (
-            <SettingsRow key={entry.id} title={entry.title}>
-              <div className="shortcut-settings__actions">
-                <kbd className="shortcut-settings__binding">
-                  {shortcutLabel(effectiveShortcut(entry.id, overrides), platform)}
-                </kbd>
+      <SettingsGroup>
+        {CUSTOMIZABLE_SHORTCUTS.map((entry) => (
+          <SettingsRow key={entry.id} title={entry.title}>
+            <div className="shortcut-settings__actions">
+              <kbd className="shortcut-settings__binding">
+                {shortcutLabel(effectiveShortcut(entry.id, overrides), platform)}
+              </kbd>
+              <button
+                className="button"
+                type="button"
+                aria-label={`Change ${entry.title} shortcut`}
+                disabled={pending}
+                onClick={(event) => {
+                  returnFocus.current = event.currentTarget;
+                  setEditing(entry);
+                }}
+              >
+                Change
+              </button>
+              {Object.hasOwn(overrides, entry.id) ? (
                 <button
                   className="button"
                   type="button"
-                  aria-label={`Change ${entry.title} shortcut`}
+                  aria-label={`Reset ${entry.title} shortcut`}
                   disabled={pending}
-                  onClick={(event) => {
-                    returnFocus.current = event.currentTarget;
-                    setEditing(entry);
+                  onClick={() => {
+                    const next = { ...overrides };
+                    delete next[entry.id];
+                    update(next);
                   }}
                 >
-                  Change
+                  Reset
                 </button>
-                {Object.hasOwn(overrides, entry.id) ? (
-                  <button
-                    className="button"
-                    type="button"
-                    aria-label={`Reset ${entry.title} shortcut`}
-                    disabled={pending}
-                    onClick={() => {
-                      const next = { ...overrides };
-                      delete next[entry.id];
-                      update(next);
-                    }}
-                  >
-                    Reset
-                  </button>
-                ) : null}
-              </div>
-            </SettingsRow>
-          ))}
-        </SettingsGroup>
-      ))}
-      <SettingsGroup title="Standard editor and window controls">
+              ) : null}
+            </div>
+          </SettingsRow>
+        ))}
+      </SettingsGroup>
+      <SettingsGroup>
         {STANDARD_SHORTCUTS.map((shortcut) => (
           <SettingsRow key={shortcut.title} title={shortcut.title}>
             <span className="settings-keys">

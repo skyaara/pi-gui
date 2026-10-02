@@ -24,88 +24,55 @@ export function SettingsNotificationsSection({
   const statusDescription = descriptionForPermissionStatus(notificationPermissionStatus);
   const showAskMacOs = notificationPermissionStatus === "default";
   const showOpenSystemSettings = notificationPermissionStatus === "denied";
-  const showRecoveryActions = showAskMacOs || showOpenSystemSettings;
-
   return (
-    <>
-      <SettingsGroup
-        title="System"
-        description="macOS decides whether piui can show desktop notifications at all."
-      >
-        <SettingsRow title="macOS notification access" description={statusDescription}>
+    <SettingsGroup>
+      <SettingsRow title="macOS notification access" description={statusDescription}>
+        <div className="settings-row__actions">
           <span className="settings-row__value">{statusLabel}</span>
-        </SettingsRow>
-        {showRecoveryActions ? (
-          <SettingsRow
-            title="Turn on notifications"
-            description={
-              showAskMacOs
-                ? "piui asks macOS when active work first moves into the background. You can also ask now."
-                : "macOS notifications are already turned off for piui. Open System Settings to enable them again."
-            }
-          >
-            <div className="settings-row__actions">
-              {showAskMacOs ? (
-                <button
-                  className="button button--secondary"
-                  disabled={notificationPermissionPending}
-                  type="button"
-                  onClick={onRequestNotificationPermission}
-                >
-                  Ask macOS
-                </button>
-              ) : null}
-              {showOpenSystemSettings ? (
-                <button
-                  className="button button--secondary"
-                  disabled={notificationPermissionPending}
-                  type="button"
-                  onClick={onOpenSystemNotificationSettings}
-                >
-                  Open System Settings
-                </button>
-              ) : null}
-            </div>
-          </SettingsRow>
-        ) : null}
-      </SettingsGroup>
-
-      <SettingsGroup
-        title="In-app alerts"
-        description="Choose which background events should try to notify once macOS access is enabled."
-      >
-        <SettingsRow
-          title="Background completion"
-          description="Notify when a background session finishes."
-        >
-          <SettingsSwitch
-            checked={notificationPreferences.backgroundCompletion}
-            label="Background completion"
-            onChange={(checked) => onSetNotificationPreferences({ backgroundCompletion: checked })}
-          />
-        </SettingsRow>
-        <SettingsRow
-          title="Background failures"
-          description="Notify when a background session fails."
-        >
-          <SettingsSwitch
-            checked={notificationPreferences.backgroundFailure}
-            label="Background failures"
-            onChange={(checked) => onSetNotificationPreferences({ backgroundFailure: checked })}
-          />
-        </SettingsRow>
-        <SettingsRow
-          title="Needs input or approval"
-          description="Notify when input is needed to continue."
-        >
-          <SettingsSwitch
-            checked={notificationPreferences.attentionNeeded}
-            label="Needs input or approval"
-            onChange={(checked) => onSetNotificationPreferences({ attentionNeeded: checked })}
-          />
-        </SettingsRow>
-      </SettingsGroup>
-    </>
+          {showAskMacOs ? (
+            <button
+              className="button button--secondary"
+              disabled={notificationPermissionPending}
+              type="button"
+              onClick={onRequestNotificationPermission}
+            >
+              Ask macOS
+            </button>
+          ) : null}
+          {showOpenSystemSettings ? (
+            <button
+              className="button button--secondary"
+              disabled={notificationPermissionPending}
+              type="button"
+              onClick={onOpenSystemNotificationSettings}
+            >
+              Open System Settings
+            </button>
+          ) : null}
+        </div>
+      </SettingsRow>
+      <SettingsRow title="Background completion">
+        <SettingsSwitch
+          checked={notificationPreferences.backgroundCompletion}
+          label="Background completion"
+          onChange={(checked) => onSetNotificationPreferences({ backgroundCompletion: checked })}
+        />
+      </SettingsRow>
+      <SettingsRow title="Background failures">
+        <SettingsSwitch
+          checked={notificationPreferences.backgroundFailure}
+          label="Background failures"
+          onChange={(checked) => onSetNotificationPreferences({ backgroundFailure: checked })}
+        />
+      </SettingsRow>
+      <SettingsRow title="Needs input or approval">
+        <SettingsSwitch
+          checked={notificationPreferences.attentionNeeded}
+          label="Needs input or approval"
+          onChange={(checked) => onSetNotificationPreferences({ attentionNeeded: checked })}
+        />
+      </SettingsRow>
+    </SettingsGroup>
   );
 }
 
@@ -124,17 +91,19 @@ function labelForPermissionStatus(status: DesktopNotificationPermissionStatus): 
   }
 }
 
-function descriptionForPermissionStatus(status: DesktopNotificationPermissionStatus): string {
+function descriptionForPermissionStatus(
+  status: DesktopNotificationPermissionStatus,
+): string | undefined {
   switch (status) {
     case "granted":
-      return "macOS will allow piui to show desktop notifications for background thread updates.";
+      return undefined;
     case "denied":
-      return "macOS notifications are turned off for piui. Enable them in System Settings to receive background completion alerts.";
+      return "Enable piui notifications in System Settings.";
     case "default":
-      return "piui has not asked macOS for desktop notification access yet.";
+      return "Allow notifications for background threads.";
     case "unsupported":
       return "Desktop notifications are unavailable on this system.";
     default:
-      return "Checking whether macOS notifications are available for piui.";
+      return undefined;
   }
 }

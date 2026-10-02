@@ -111,37 +111,24 @@ export function SettingsProvidersSection({
   return (
     <>
       {attentionProviders.length > 0 ? (
-        <SettingsGroup
-          title="Needs attention"
-          description="Your default model uses this provider, but it is not connected."
-        >
-          {attentionProviders.map((provider) => (
-            <ProviderRow key={provider.id} provider={provider} {...rowHandlers} />
-          ))}
-        </SettingsGroup>
+        <div data-testid="settings-provider-attention">
+          <SettingsGroup>
+            {attentionProviders.map((provider) => (
+              <ProviderRow key={provider.id} provider={provider} {...rowHandlers} />
+            ))}
+          </SettingsGroup>
+        </div>
       ) : null}
 
-      <section className="settings-section">
-        <h3 className="settings-section__title">
-          Connected <span className="resource-list__count">{connectedProviders.length}</span>
-        </h3>
-        <p className="settings-section__description">
-          pi picks models from connected providers first.
-        </p>
-        <div className="settings-group">
-          {connectedProviders.length > 0 ? (
-            connectedProviders.map((provider) => (
+      {connectedProviders.length > 0 ? (
+        <section className="settings-section" data-testid="settings-connected-providers">
+          <div className="settings-group">
+            {connectedProviders.map((provider) => (
               <ProviderRow key={provider.id} provider={provider} {...rowHandlers} />
-            ))
-          ) : (
-            <div className="settings-row">
-              <span className="settings-row__description">
-                No providers connected yet. Sign in or add an API key below.
-              </span>
-            </div>
-          )}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <SettingsCustomEndpointsSection
         existingProviderIds={existingProviderIds}
@@ -151,9 +138,9 @@ export function SettingsProvidersSection({
 
       <section className="settings-section">
         <div className="settings-section__header">
-          <h3 className="settings-section__title">
+          <div className="settings-list-label">
             Available <span className="resource-list__count">{availableProviders.length}</span>
-          </h3>
+          </div>
           <label className="resource-search">
             <SearchIcon />
             <input
@@ -166,9 +153,6 @@ export function SettingsProvidersSection({
             />
           </label>
         </div>
-        <p className="settings-section__description">
-          Sign in with OAuth or save an API key to connect a provider.
-        </p>
         <div className="settings-group" data-testid="settings-available-providers">
           {shownAvailable.length > 0 ? (
             shownAvailable.map((provider) => (

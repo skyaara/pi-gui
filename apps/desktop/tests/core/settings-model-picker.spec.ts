@@ -96,6 +96,17 @@ test("Settings picker restricts models and shows selected model capabilities acr
     await expect(window.locator(".settings-row").filter({ hasText: "Fast mode" })).toContainText(
       "Available",
     );
+    await window.getByLabel("Thinking level", { exact: true }).selectOption("minimal");
+    await expect(window.getByLabel("Thinking level", { exact: true })).toHaveValue("minimal");
+    await harness.close();
+    harness = await launchDesktop(userDataDir, {
+      agentDir,
+      initialWorkspaces: [workspace],
+      testMode: "background",
+    });
+    window = await harness.firstWindow();
+    await openModels(window);
+    await expect(window.getByLabel("Thinking level", { exact: true })).toHaveValue("minimal");
     await window.screenshot({ path: test.info().outputPath("settings-model-picker.png") });
   } finally {
     await harness.close();

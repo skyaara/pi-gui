@@ -54,17 +54,13 @@ test("settings lets the user save an API key for a built-in provider", async () 
     await dialog.getByRole("button", { name: "Set API key" }).click();
     await expect(dialog).toHaveCount(0);
 
-    const connectedProviders = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Connected" }),
-    });
+    const connectedProviders = window.getByTestId("settings-connected-providers");
     await expect(connectedProviders).toContainText("OpenAI");
     await expect(connectedProviders).toContainText("API key");
     await expect(connectedProviders.getByRole("button", { name: "Manage" })).toBeVisible();
 
     await window.getByRole("button", { name: "Models", exact: true }).click();
-    const enabledModels = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Enabled models" }),
-    });
+    const enabledModels = window.getByTestId("settings-model-list");
     await expect(
       enabledModels.getByRole("switch", { name: "Enable openai/gpt-5", exact: true }),
     ).toBeChecked();
@@ -102,9 +98,7 @@ test("settings shows environment-configured providers as managed externally", as
     await window.getByRole("button", { name: "Providers", exact: true }).click();
     await expect(window.locator(".view-header__title")).toHaveText("Providers");
 
-    const connectedProviders = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Connected" }),
-    });
+    const connectedProviders = window.getByTestId("settings-connected-providers");
     const openAiRow = connectedProviders.locator(".settings-row", {
       has: window.locator(".settings-row__title", { hasText: OPENAI_CATALOG_TITLE }),
     });
@@ -156,19 +150,15 @@ test("settings keeps models.json provider overrides in the external-config state
     await window.getByRole("button", { name: "Providers", exact: true }).click();
     await expect(window.locator(".view-header__title")).toHaveText("Providers");
 
-    const connectedProviders = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Connected" }),
-    });
+    const connectedProviders = window.getByTestId("settings-connected-providers");
     const openAiRow = connectedProviders.locator(".settings-row", {
       has: window.locator(".settings-row__title", { hasText: OPENAI_CATALOG_TITLE }),
     });
     await expect(openAiRow).toContainText("Configured externally");
     await expect(openAiRow.getByRole("button")).toHaveCount(0);
 
-    const customEndpoints = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Custom endpoints" }),
-    });
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    const customEndpoints = window.getByTestId("settings-custom-endpoints");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
     await expect(
       customEndpoints.locator(".settings-row", {
         has: window.locator(".settings-row__title", { hasText: /^openai$/ }),
@@ -218,18 +208,14 @@ test("opening the first workspace from the empty state hydrates provider and mod
     await window.getByRole("button", { name: "Providers", exact: true }).click();
     await expect(window.locator(".view-header__title")).toHaveText("Providers");
 
-    const connectedProviders = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Connected" }),
-    });
+    const connectedProviders = window.getByTestId("settings-connected-providers");
     await expect(connectedProviders).toContainText("OpenAI");
     await expect(connectedProviders).toContainText("API key");
 
     await window.getByRole("button", { name: "Models", exact: true }).click();
     await expect(window.locator(".view-header__title")).toHaveText("Models");
 
-    const enabledModels = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Enabled models" }),
-    });
+    const enabledModels = window.getByTestId("settings-model-list");
     await expect(
       enabledModels.getByRole("switch", { name: "Enable openai/gpt-5", exact: true }),
     ).toBeChecked();
@@ -264,9 +250,7 @@ test("providers flags the default model's provider when it is not connected", as
     const unconnected = window.getByTestId("settings-unconnected-model-list");
     await expect(unconnected).toHaveCount(0);
     await window.getByLabel("Search models").fill("gpt-4o");
-    await expect(
-      unconnected.locator(".model-row", { hasText: "openai/gpt-4o" }).first(),
-    ).toBeVisible();
+    await expect(unconnected.locator(".model-row", { hasText: "GPT-4o" }).first()).toBeVisible();
     await expect(unconnected.getByRole("switch")).toHaveCount(0);
 
     await window.getByRole("button", { name: "Connect a provider" }).click();
@@ -277,9 +261,7 @@ test("providers flags the default model's provider when it is not connected", as
     await window.getByRole("button", { name: /^Show \d+ more$/ }).click();
     await expect.poll(() => available.locator(".settings-row").count()).toBeGreaterThan(8);
 
-    const attention = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Needs attention" }),
-    });
+    const attention = window.getByTestId("settings-provider-attention");
     await expect(
       attention.locator(".settings-row__title", { hasText: OPENAI_CATALOG_TITLE }),
     ).toHaveCount(1);

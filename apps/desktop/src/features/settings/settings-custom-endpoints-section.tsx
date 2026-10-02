@@ -77,21 +77,14 @@ export function SettingsCustomEndpointsSection({
 
   return (
     <>
-      <SettingsGroup
-        title="Custom endpoints"
-        description="Add OpenAI-compatible endpoints (Ollama, vLLM, or your own server). Stored in ~/.pi/agent/models.json."
-      >
-        {loadError ? (
-          <div className="settings-row">
-            <span className="settings-row__description settings-warning">{loadError}</span>
-          </div>
-        ) : null}
-        {entries.length === 0 ? (
-          <div className="settings-row">
-            <span className="settings-row__description">No custom endpoints yet.</span>
-          </div>
-        ) : (
-          entries.map((entry) => (
+      <section data-testid="settings-custom-endpoints">
+        <SettingsGroup>
+          {loadError ? (
+            <div className="settings-row">
+              <span className="settings-row__description settings-warning">{loadError}</span>
+            </div>
+          ) : null}
+          {entries.map((entry) => (
             <div key={entry.providerId} className="settings-row">
               <div className="settings-row__label">
                 <div className="settings-row__title">{entry.providerId}</div>
@@ -121,22 +114,24 @@ export function SettingsCustomEndpointsSection({
                 </button>
               </div>
             </div>
-          ))
-        )}
-        <div className="settings-row">
-          <div className="settings-row__label">
-            <div className="settings-row__title">Add endpoint</div>
-            <div className="settings-row__description">
-              Register a local or custom OpenAI-compatible server.
+          ))}
+          <div className="settings-row">
+            <div className="settings-row__label">
+              <div className="settings-row__title">Custom endpoint</div>
+              <div className="settings-row__description">OpenAI-compatible server.</div>
+            </div>
+            <div className="settings-row__control">
+              <button
+                className="button"
+                type="button"
+                onClick={() => setDialog({ kind: "create" })}
+              >
+                Add endpoint
+              </button>
             </div>
           </div>
-          <div className="settings-row__control">
-            <button className="button" type="button" onClick={() => setDialog({ kind: "create" })}>
-              Add endpoint
-            </button>
-          </div>
-        </div>
-      </SettingsGroup>
+        </SettingsGroup>
+      </section>
 
       {dialog.kind !== "closed" ? (
         <CustomEndpointDialog

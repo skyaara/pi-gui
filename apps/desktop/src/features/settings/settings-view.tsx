@@ -111,9 +111,6 @@ export function SettingsView({
     <header className="view-header">
       <div>
         <h1 className="view-header__title">{definition.title}</h1>
-        <p className="view-header__body">
-          {definition.description(workspace?.name ?? "this workspace")}
-        </p>
       </div>
       {headerAccessory ? <div className="view-header__actions">{headerAccessory}</div> : null}
     </header>

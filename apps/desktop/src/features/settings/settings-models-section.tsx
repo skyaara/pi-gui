@@ -87,7 +87,7 @@ export function SettingsModelsSection({
   return (
     <>
       <SettingsGroup>
-        <SettingsRow title="Default model" description="Used for new threads.">
+        <SettingsRow title="Default model">
           <ModelSelector
             modelControlLabel="Default model"
             showModelDetails
@@ -127,12 +127,12 @@ export function SettingsModelsSection({
 
       <section className="settings-section">
         <div className="settings-section__header">
-          <h3 className="settings-section__title">
+          <div className="settings-list-label">
             Enabled models{" "}
             <span className="resource-list__count">
               {enabledModels.length} of {availableModels.length}
             </span>
-          </h3>
+          </div>
           <label className="resource-search">
             <SearchIcon />
             <input
@@ -145,9 +145,6 @@ export function SettingsModelsSection({
             />
           </label>
         </div>
-        <p className="settings-section__description">
-          Only enabled models appear in model pickers.
-        </p>
         <div className="settings-group" data-testid="settings-model-list">
           {visibleAvailable.length === 0 ? (
             <div className="settings-row">
@@ -185,17 +182,14 @@ export function SettingsModelsSection({
       {unconnectedModels.length > 0 && (!searching || visibleUnconnected.length > 0) ? (
         <section className="settings-section">
           <div className="settings-section__header">
-            <h3 className="settings-section__title">
+            <div className="settings-list-label">
               Not connected{" "}
               <span className="resource-list__count">{visibleUnconnected.length}</span>
-            </h3>
+            </div>
             <button className="button button--secondary" type="button" onClick={onOpenProviders}>
               Connect a provider
             </button>
           </div>
-          <p className="settings-section__description">
-            Models from providers you have not signed in to.
-          </p>
           {searching || showUnconnected ? (
             <div className="settings-group" data-testid="settings-unconnected-model-list">
               {visibleUnconnected.map((model) => (
@@ -234,12 +228,10 @@ function ModelRow({
           {isDefault ? <span className="model-row__badge">Default</span> : null}
         </div>
         <div className="settings-row__description">
-          {model.providerName} · {modelPattern(model)}
-          {model.reasoning ? <span className="model-row__tag">Thinking</span> : null}
+          {model.providerName}
           <span className="model-row__tag">
             {model.supportsFastMode ? "Fast available" : "Fast unavailable"}
           </span>
-          {model.supportsImages ? <span className="model-row__tag">Images</span> : null}
         </div>
       </div>
       {children ? <div className="settings-row__control">{children}</div> : null}

@@ -162,10 +162,8 @@ test("settings lets the user add, edit, and delete an OpenAI-compatible custom e
     const otherWorkspace = await waitForWorkspaceByPath(window, otherWorkspacePath);
     await openProvidersSettings(window);
 
-    const customEndpoints = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Custom endpoints" }),
-    });
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    const customEndpoints = window.getByTestId("settings-custom-endpoints");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
     await customEndpoints.getByRole("button", { name: "Add endpoint", exact: true }).click();
 
     const dialog = window.getByTestId("custom-endpoint-dialog");
@@ -224,7 +222,7 @@ test("settings lets the user add, edit, and delete an OpenAI-compatible custom e
 
     // Delete flow.
     await entryRow.getByRole("button", { name: "Remove", exact: true }).click();
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
 
     const afterDelete = await readModelsJson(agentDir);
     const afterDeleteProviders = (afterDelete.providers as Record<string, unknown>) ?? {};
@@ -293,9 +291,7 @@ test("custom endpoints keep legacy managed entries separate from built-in overri
     const workspace = await waitForWorkspaceByPath(window, workspacePath);
     await openProvidersSettings(window);
 
-    const customEndpoints = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Custom endpoints" }),
-    });
+    const customEndpoints = window.getByTestId("settings-custom-endpoints");
     await expect(customEndpoints).toContainText("legacy-local");
     await expect(
       customEndpoints.locator(".settings-row", {
@@ -342,7 +338,7 @@ test("custom endpoints keep legacy managed entries separate from built-in overri
       has: window.locator(".settings-row__title", { hasText: /^legacy-local$/ }),
     });
     await legacyRow.getByRole("button", { name: "Remove", exact: true }).click();
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
 
     const afterLegacyDelete = await readModelsJson(agentDir);
     const providers = afterLegacyDelete.providers as Record<string, unknown>;
@@ -371,9 +367,7 @@ test("custom endpoint dialog blocks colliding provider IDs and invalid base URLs
     const window = await harness.firstWindow();
     await openProvidersSettings(window);
 
-    const customEndpoints = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Custom endpoints" }),
-    });
+    const customEndpoints = window.getByTestId("settings-custom-endpoints");
     await customEndpoints.getByRole("button", { name: "Add endpoint", exact: true }).click();
 
     const dialog = window.getByTestId("custom-endpoint-dialog");
@@ -398,7 +392,7 @@ test("custom endpoint dialog blocks colliding provider IDs and invalid base URLs
     // ESC closes the dialog without saving.
     await dialog.press("Escape");
     await expect(dialog).toHaveCount(0);
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
   } finally {
     await harness.close();
   }
@@ -446,9 +440,7 @@ test("custom endpoint dialog supports a long-list keyboard flow with sticky acti
       .toEqual({ height: 600, width: 900 });
     await openProvidersSettings(window);
 
-    const customEndpoints = window.locator(".settings-section", {
-      has: window.locator(".settings-section__title", { hasText: "Custom endpoints" }),
-    });
+    const customEndpoints = window.getByTestId("settings-custom-endpoints");
     const openDialogButton = customEndpoints.getByRole("button", {
       name: "Add endpoint",
       exact: true,
@@ -465,13 +457,13 @@ test("custom endpoint dialog supports a long-list keyboard flow with sticky acti
     await expect(providerIdInput).toBeFocused();
     await window.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
 
     await openDialogButton.click();
     await expect(dialog.getByLabel("Provider ID")).toBeFocused();
     await cancelButton.click();
     await expect(dialog).toHaveCount(0);
-    await expect(customEndpoints).toContainText("No custom endpoints yet.");
+    await expect(customEndpoints.locator(".settings-row__title")).toHaveText(["Custom endpoint"]);
 
     await openDialogButton.click();
     await expect(dialog.getByLabel("Provider ID")).toBeFocused();

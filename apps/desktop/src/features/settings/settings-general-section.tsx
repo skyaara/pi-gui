@@ -34,56 +34,43 @@ export function SettingsGeneralSection({
   };
 
   return (
-    <>
-      <SettingsGroup title="Agent">
-        <SettingsRow
-          title="Model settings scope"
-          description="Apply the default model and enabled models everywhere, or set them per repo."
-        >
-          <SettingsSegmented
-            label="Model settings scope"
-            options={[
-              { value: "app-global", label: "App global" },
-              { value: "per-repo", label: "Per repo" },
-            ]}
-            value={modelSettingsScopeMode}
-            onChange={onSetModelSettingsScopeMode}
-          />
-        </SettingsRow>
-        <SettingsRow
-          title="Skill slash commands"
-          description="Offer each skill as a slash command in the composer."
-        >
-          <SettingsSwitch
-            checked={runtime?.settings.enableSkillCommands ?? true}
-            label="Enable skill slash commands"
-            onChange={onToggleSkillCommands}
-          />
-        </SettingsRow>
-      </SettingsGroup>
+    <SettingsGroup>
+      <SettingsRow title="Model settings scope">
+        <SettingsSegmented
+          label="Model settings scope"
+          options={[
+            { value: "app-global", label: "App global" },
+            { value: "per-repo", label: "Per repo" },
+          ]}
+          value={modelSettingsScopeMode}
+          onChange={onSetModelSettingsScopeMode}
+        />
+      </SettingsRow>
+      <SettingsRow title="Skill slash commands">
+        <SettingsSwitch
+          checked={runtime?.settings.enableSkillCommands ?? true}
+          label="Enable skill slash commands"
+          onChange={onToggleSkillCommands}
+        />
+      </SettingsRow>
 
-      <SettingsGroup title="Terminal">
-        <SettingsRow
-          title="Shell"
-          description="The shell the integrated terminal starts. Leave blank to use your login shell."
-        >
-          <input
-            aria-label="Shell of integrated terminal"
-            className="settings-text-input"
-            placeholder="/bin/zsh"
-            spellCheck={false}
-            type="text"
-            value={terminalShellDraft}
-            onBlur={commitTerminalShellDraft}
-            onChange={(event) => setTerminalShellDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.currentTarget.blur();
-              }
-            }}
-          />
-        </SettingsRow>
-      </SettingsGroup>
-    </>
+      <SettingsRow title="Terminal shell" description="Leave blank to use your login shell.">
+        <input
+          aria-label="Shell of integrated terminal"
+          className="settings-text-input"
+          placeholder="/bin/zsh"
+          spellCheck={false}
+          type="text"
+          value={terminalShellDraft}
+          onBlur={commitTerminalShellDraft}
+          onChange={(event) => setTerminalShellDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.currentTarget.blur();
+            }
+          }}
+        />
+      </SettingsRow>
+    </SettingsGroup>
   );
 }

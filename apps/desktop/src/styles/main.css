@@ -1933,7 +1933,7 @@
   gap: var(--space-2);
 }
 
-/* Codex-style settings page: a centred column of titled sections over grouped cards. */
+/* Settings: one page title, compact rows, and quiet list controls. */
 .settings-view {
   width: min(848px, 100%);
   margin: 0 auto;
@@ -1945,15 +1945,18 @@
   margin-bottom: var(--space-8);
 }
 
-.settings-view .view-header__body {
-  margin-top: var(--space-1);
-  color: var(--muted-soft);
-  font-size: 13px;
-}
-
 .settings-grid {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-4);
+}
+
+.settings-list-label {
+  color: var(--muted-soft);
+  font-size: 12px;
+}
+
+.settings-add-button {
+  justify-self: start;
 }
 
 .settings-section {

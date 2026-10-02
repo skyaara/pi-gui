@@ -69,6 +69,8 @@ test("adds, switches and removes an MCP server from Settings, editing mcp.json i
     await expect(row("project-docs").getByRole("button", { name: "Remove" })).toHaveCount(0);
     await expect(surface).not.toContainText("do-not-show-this");
 
+    await expect(surface.getByLabel("Server name")).toHaveCount(0);
+    await surface.getByRole("button", { name: "Add server", exact: true }).click();
     await surface.getByLabel("Server name").fill("fixture");
     await surface.getByLabel("Server description").fill("Writes marker files");
     await surface.getByLabel("Server command").fill(process.execPath);
@@ -208,11 +210,11 @@ test("rejects a server Settings cannot run and leaves mcp.json alone", async () 
     const window = await harness.firstWindow();
     await openMcpSettings(window);
     const surface = window.getByTestId("settings-surface");
-    // The copy names the file this app really uses, here the test's own agent directory.
-    await expect(surface.getByTestId("mcp-servers-empty")).toContainText(mcpPath);
-    await expect(surface).toContainText(`Saved to ${mcpPath}.`);
-    await expect(surface.getByTestId("mcp-servers-empty")).toContainText("/mcp");
+    // The initial pane keeps the add form out of the server list.
+    await expect(surface.getByTestId("mcp-servers-empty")).toContainText("No servers connected.");
+    await expect(surface.getByLabel("Server name")).toHaveCount(0);
 
+    await surface.getByRole("button", { name: "Add server", exact: true }).click();
     await surface.getByLabel("Server name").fill("local-file");
     await surface.getByRole("group", { name: "Server type" }).getByText("URL").click();
     await surface.getByLabel("Server URL").fill("file:///etc/passwd");

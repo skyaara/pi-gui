@@ -2,7 +2,7 @@ import type { ThemeMode, ThemePresetId } from "../../../contracts/desktop-state"
 import { SettingsSelect, SettingsSwitch } from "./settings-controls";
 import { SettingsGroup, SettingsRow } from "./settings-utils";
 import type { CSSProperties } from "react";
-import { themePreset, themePresets, themeSwatches, themeTokensFor } from "../../../contracts/theme";
+import { themePresets, themeSwatches, themeTokensFor } from "../../../contracts/theme";
 import { useActiveTheme } from "../../ui/active-theme";
 
 interface SettingsAppearanceSectionProps {
@@ -28,11 +28,10 @@ export function SettingsAppearanceSection({
   enableTransparency,
   onSetEnableTransparency,
 }: SettingsAppearanceSectionProps) {
-  const activePreset = themePreset(themePresetId);
   const { variant } = useActiveTheme();
   return (
     <>
-      <SettingsGroup title="Theme" plain>
+      <SettingsGroup plain>
         <div
           aria-label="Theme"
           className="theme-mode-tiles"
@@ -64,7 +63,7 @@ export function SettingsAppearanceSection({
       </SettingsGroup>
 
       <SettingsGroup>
-        <SettingsRow title="Color preset" description={activePreset.description}>
+        <SettingsRow title="Color preset">
           <span className="settings-preset-control">
             <span aria-hidden="true" className="settings-preset-swatches">
               {themeSwatches(themePresetId, variant).map((swatch, index) => (
@@ -79,10 +78,7 @@ export function SettingsAppearanceSection({
             />
           </span>
         </SettingsRow>
-        <SettingsRow
-          title="Window transparency"
-          description="Let desktop colors show through supported surfaces."
-        >
+        <SettingsRow title="Window transparency">
           <SettingsSwitch
             checked={enableTransparency}
             label="Window transparency"

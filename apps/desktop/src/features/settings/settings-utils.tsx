@@ -5,6 +5,8 @@ import type {
 } from "@pi-gui/session-driver/runtime-types";
 
 export const THINKING_LEVELS: NonNullable<RuntimeSettingsSnapshot["defaultThinkingLevel"]>[] = [
+  "off",
+  "minimal",
   "low",
   "medium",
   "high",

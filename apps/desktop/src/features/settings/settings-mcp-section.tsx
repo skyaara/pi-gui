@@ -84,14 +84,10 @@ export function SettingsMcpSection({ workspaceId, actions }: SettingsMcpSectionP
 
   const servers = snapshot?.servers ?? [];
   const problems = [...(error ? [error] : []), ...(snapshot?.errors ?? [])];
-  const globalConfigPath = snapshot?.globalConfigPath ?? "pi's global mcp.json";
 
   return (
     <>
-      <SettingsGroup
-        title="Servers"
-        description={`Shared with pi in the terminal: ${globalConfigPath}, plus this project's .pi/mcp.json.`}
-      >
+      <SettingsGroup>
         {problems.map((problem) => (
           <div className="settings-row" key={problem}>
             <span className="settings-row__description settings-warning">{problem}</span>
@@ -99,10 +95,7 @@ export function SettingsMcpSection({ workspaceId, actions }: SettingsMcpSectionP
         ))}
         {snapshot && servers.length === 0 ? (
           <div className="settings-row" data-testid="mcp-servers-empty">
-            <span className="settings-row__description">
-              No MCP servers yet. Servers come from {globalConfigPath}, which pi in the terminal
-              uses too. Connection status and sign-in show in threads: type /mcp.
-            </span>
+            <span className="settings-row__description">No servers connected. Add one below.</span>
           </div>
         ) : null}
         {servers.map((server) => (
@@ -123,15 +116,14 @@ export function SettingsMcpSection({ workspaceId, actions }: SettingsMcpSectionP
       </SettingsGroup>
 
       <AddMcpServerForm
-        configPath={globalConfigPath}
         disabled={pending}
         onAdd={(server) => apply(() => actions.onAddServer(server))}
       />
 
-      <SettingsGroup title="Code mode">
+      <SettingsGroup>
         <SettingsRow
-          title="Always on"
-          description="Lets the model run scripts that call tools. Turning it on also applies to open threads; turning it off applies to new threads. Off, pi turns it on when an MCP server needs it."
+          title="Code mode"
+          description="Allow tool scripts in every thread. Otherwise, pi enables them when needed."
         >
           <SettingsSwitch
             checked={snapshot?.codemodeAlwaysOn ?? false}
@@ -204,14 +196,13 @@ export function removeServerQuestion(server: McpServerRecord): string {
 type ServerKind = "command" | "url";
 
 function AddMcpServerForm({
-  configPath,
   disabled,
   onAdd,
 }: {
-  readonly configPath: string;
   readonly disabled: boolean;
   readonly onAdd: (server: NewMcpServerInput) => Promise<string | undefined>;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [kind, setKind] = useState<ServerKind>("command");
@@ -238,8 +229,21 @@ function AddMcpServerForm({
     }
   };
 
+  if (!expanded) {
+    return (
+      <button
+        className="button button--secondary settings-add-button"
+        type="button"
+        aria-expanded={false}
+        disabled={disabled}
+        onClick={() => setExpanded(true)}
+      >
+        Add server
+      </button>
+    );
+  }
   return (
-    <SettingsGroup title="Add server" description={`Saved to ${configPath}.`}>
+    <SettingsGroup>
       <SettingsRow title="Name">
         <input
           aria-label="Server name"
@@ -250,10 +254,7 @@ function AddMcpServerForm({
           onChange={(event) => setName(event.target.value)}
         />
       </SettingsRow>
-      <SettingsRow
-        title="What it does"
-        description="Optional. pi tells the model about the server with it."
-      >
+      <SettingsRow title="What it does" description="Optional.">
         <input
           aria-label="Server description"
           className="settings-text-input"
@@ -276,7 +277,7 @@ function AddMcpServerForm({
       </SettingsRow>
       {kind === "command" ? (
         <>
-          <SettingsRow title="Command" description="Started on this machine for each thread.">
+          <SettingsRow title="Command">
             <input
               aria-label="Server command"
               className="settings-text-input"
@@ -301,10 +302,7 @@ function AddMcpServerForm({
           </SettingsRow>
         </>
       ) : (
-        <SettingsRow
-          title="URL"
-          description="A streamable HTTP server. If it needs a sign-in, type /mcp login in a thread."
-        >
+        <SettingsRow title="URL" description="For sign-in, use /mcp login in a thread.">
           <input
             aria-label="Server URL"
             className="settings-text-input"
@@ -317,9 +315,17 @@ function AddMcpServerForm({
       )}
       <div className="settings-row">
         <span className="settings-row__description">
-          Open threads reload to start it. Add env or headers in the file itself.
+          Open threads reload after adding a server.
         </span>
-        <div className="settings-row__control">
+        <div className="settings-row__actions">
+          <button
+            className="button button--ghost"
+            type="button"
+            disabled={disabled}
+            onClick={() => setExpanded(false)}
+          >
+            Cancel
+          </button>
           <button
             className="button"
             disabled={disabled || !ready}
