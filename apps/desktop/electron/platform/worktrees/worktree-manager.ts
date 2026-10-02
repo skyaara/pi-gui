@@ -198,7 +198,7 @@ export class GitWorktreeManager {
       throw new Error("The primary workspace cannot be removed as a git worktree.");
     }
     if (this.options.isAppWorktreePath && !(await this.isRemovableAppWorktree(targetPath))) {
-      throw new Error("Only worktrees created by pi-gui can be removed here.");
+      throw new Error("Only worktrees created by piui can be removed here.");
     }
 
     try {

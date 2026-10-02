@@ -351,12 +351,12 @@ function openMcpSignInUrl(url: string): void {
     console.error(
       `Refusing to open an MCP sign-in URL${parsed ? ` on ${parsed.origin}` : " that is not http or https"}`,
     );
-    showMcpSignInUrl(url, "pi-gui opens only https links, or http links on this computer.");
+    showMcpSignInUrl(url, "piui opens only https links, or http links on this computer.");
     return;
   }
   shell.openExternal(parsed.toString()).catch((error: unknown) => {
     console.error(`Failed to open an MCP sign-in URL on ${parsed.origin}`, error);
-    showMcpSignInUrl(parsed.toString(), "pi-gui could not open your browser.");
+    showMcpSignInUrl(parsed.toString(), "piui could not open your browser.");
   });
 }
 
@@ -365,7 +365,7 @@ function showMcpSignInUrl(url: string, reason: string): void {
   const window = mainWindow && canPublishToWindow(mainWindow) ? mainWindow : undefined;
   const options: MessageBoxOptions = {
     type: "warning",
-    title: "pi-gui",
+    title: "piui",
     message: "Open this MCP sign-in link yourself",
     detail: `${reason} Check the link before you open it:\n\n${url}`,
     buttons: ["Copy link", "Close"],
@@ -773,7 +773,7 @@ async function runManualUpdateCheck(): Promise<void> {
       // be silently suppressed if the OS permission is denied.
       const choice = await showDialog({
         type: "info",
-        title: "pi-gui",
+        title: "piui",
         message: `Version ${result.latestVersion} is available.`,
         detail: `You have ${result.currentVersion}.`,
         buttons: ["Download", "Later"],
@@ -789,7 +789,7 @@ async function runManualUpdateCheck(): Promise<void> {
     if (result.status === "up-to-date") {
       await showDialog({
         type: "info",
-        title: "pi-gui",
+        title: "piui",
         message: `You're up to date on version ${result.currentVersion}.`,
         buttons: ["OK"],
       });
@@ -798,7 +798,7 @@ async function runManualUpdateCheck(): Promise<void> {
 
     await showDialog({
       type: "warning",
-      title: "pi-gui",
+      title: "piui",
       message: "Could not check for updates right now.",
       detail: result.message,
       buttons: ["OK"],
@@ -807,7 +807,7 @@ async function runManualUpdateCheck(): Promise<void> {
     console.error("pi-gui: manual update check failed:", error);
     await showDialog({
       type: "warning",
-      title: "pi-gui",
+      title: "piui",
       message: "Could not check for updates right now.",
       detail: error instanceof Error ? error.message : String(error),
       buttons: ["OK"],
@@ -917,7 +917,7 @@ if (augmentedPath.changed && !(appTestMode && process.env.PI_APP_TEST_EXACT_PATH
   process.env.PATH = augmentedPath.path;
 }
 
-app.setName("pi");
+app.setName("piui");
 
 const configuredUserDataDir = process.env.PI_APP_USER_DATA_DIR?.trim() || app.getPath("userData");
 app.setPath("userData", configuredUserDataDir);
@@ -1010,13 +1010,13 @@ app
         {
           name: "pi-gui-thread-orchestration",
           displayName: "Thread orchestration",
-          description: "Lets pi start, read and message other pi-gui threads",
+          description: "Lets pi start, read and message other piui threads",
           factory: createOrchestrationRuntimeExtension(orchestrationRuntimeBridge),
         },
         {
           name: "pi-gui-scheduled-tasks",
           displayName: "Scheduled tasks",
-          description: "Lets pi create and update local pi-gui scheduled tasks",
+          description: "Lets pi create and update local piui scheduled tasks",
           factory: createScheduledTaskRuntimeExtension(scheduledTaskRuntimeBridge, (ctx) => {
             try {
               return sessionRefFromExtensionContext(ctx).workspaceId;
@@ -1491,7 +1491,7 @@ async function promptForText(
     maximizable: false,
     fullscreenable: false,
     autoHideMenuBar: process.platform !== "darwin",
-    title: "pi-gui",
+    title: "piui",
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
 

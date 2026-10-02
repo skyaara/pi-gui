@@ -1154,7 +1154,7 @@ export default function App() {
                     >
                       <span className="schema-skew-notice__text">
                         This session was written by a newer version of pi — some content may not
-                        display. Update pi-gui (or open it with the pi CLI) to see everything.
+                        display. Update piui (or open it with the pi CLI) to see everything.
                       </span>
                       <button
                         type="button"

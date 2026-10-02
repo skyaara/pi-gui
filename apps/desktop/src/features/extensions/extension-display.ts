@@ -7,7 +7,7 @@ export function extensionSourceSummary(extension: RuntimeExtensionRecord): strin
   return `${extensionScopeLabel(extension)} · ${extension.sourceInfo.origin}`;
 }
 
-export const PI_GUI_TOOLS_LABEL = "pi-gui tools";
+export const PI_GUI_TOOLS_LABEL = "piui tools";
 export const PI_ADDONS_LABEL = "Built into pi";
 
 /** Extensions pi-gui itself adds to every session; switched on and off app-wide. */

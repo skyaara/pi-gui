@@ -647,7 +647,7 @@ test("keeps a single subscription path when an extension creates a child session
   }
 });
 
-test("switches pi-gui tools off app-wide and keeps them off after a restart", async () => {
+test("switches piui tools off app-wide and keeps them off after a restart", async () => {
   test.setTimeout(90_000);
   const userDataDir = await makeUserDataDir();
   const workspacePath = await makeWorkspace("pi-gui-tools-workspace");
@@ -669,7 +669,7 @@ test("switches pi-gui tools off app-wide and keeps them off after a restart", as
     if (!(await list.isVisible())) {
       await openButton.click();
     }
-    await expect(list.getByRole("heading", { name: /pi-gui tools/ })).toBeVisible();
+    await expect(list.getByRole("heading", { name: /piui tools/ })).toBeVisible();
     return list.getByRole("switch", { name: "Enable Thread orchestration" });
   };
 
@@ -727,7 +727,7 @@ test("lists pi's add-ons as Built into pi and switches them in pi's extensions s
       has: window.getByRole("heading", { name: /Built into pi/ }),
     });
     const piGuiTools = list.locator("section", {
-      has: window.getByRole("heading", { name: /pi-gui tools/ }),
+      has: window.getByRole("heading", { name: /piui tools/ }),
     });
     for (const name of ["MCP servers", "Code mode", "Tool search"]) {
       await expect(addons.getByRole("switch", { name: `Enable ${name}` })).toBeChecked();
