@@ -96,16 +96,8 @@ export function deriveModelOnboardingState(
       hasSelectableModels: true,
       requiresModelSelection: !currentSelectionUsable,
       unselectedModelLabel: "Pick a model",
-      emptyModelTitle: "No default model set",
-      emptyModelDescription: "Pick a model.",
-      notice: currentSelectionUsable
-        ? undefined
-        : {
-            title: "No default model set",
-            description: "Set a default model in Settings > Models.",
-            actionLabel: "Open Settings > Models",
-            actionSection: "models",
-          },
+      emptyModelTitle: "Choose a model",
+      emptyModelDescription: "Choose a model below to start.",
     };
   }
 

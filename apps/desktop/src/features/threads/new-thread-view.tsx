@@ -1,3 +1,4 @@
+import { WorkspacePicker } from "./workspace-picker";
 import {
   useEffect,
   useRef,
@@ -163,20 +164,11 @@ export function NewThreadView({
             <PiLogoMark />
           </div>
           <h1 className="new-thread__title">New thread</h1>
-          <label className="new-thread__workspace-picker">
-            <span className="sr-only">Workspace</span>
-            <select
-              className="new-thread__workspace"
-              value={workspace.id}
-              onChange={(event) => onSelectWorkspace(event.target.value)}
-            >
-              {workspaces.map((entry) => (
-                <option key={entry.id} value={entry.id}>
-                  {entry.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <WorkspacePicker
+            workspace={workspace}
+            workspaces={workspaces}
+            onSelect={onSelectWorkspace}
+          />
         </div>
 
         <div className="new-thread__composer composer">
@@ -313,6 +305,11 @@ function NewThreadComposerFooter({
               modelId={modelId}
               thinkingLevel={thinkingLevel}
               dropdownPlacement="below"
+              selectionHint={
+                !runtime?.settings.defaultModelId
+                  ? "Your first choice becomes the default for new threads."
+                  : undefined
+              }
               showEmptyModelControl
               unselectedModelLabel={modelOnboarding.unselectedModelLabel}
               emptyModelLabel={MODEL_OPTIONS_EMPTY_TITLE}

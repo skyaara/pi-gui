@@ -215,6 +215,21 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     setComposerError(undefined);
   }, []);
 
+  const chooseModel = useCallback(
+    (nextProvider: string, nextModelId: string) => {
+      setProvider(nextProvider);
+      setModelId(nextModelId);
+      if (api && workspace && !runtime?.settings.defaultModelId) {
+        void updateSnapshot(setSnapshot, () =>
+          api.setDefaultModel(workspace.id, nextProvider, nextModelId),
+        ).catch((error: unknown) =>
+          setComposerError(error instanceof Error ? error.message : String(error)),
+        );
+      }
+    },
+    [api, workspace, runtime?.settings.defaultModelId, setSnapshot],
+  );
+
   const slashMenu = useSlashMenu({
     composerDraft: prompt,
     setComposerDraft: updatePrompt,
@@ -233,10 +248,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     updateSnapshot,
     allowTreeCommand: false,
     immediateCommandMode: "prefill",
-    onSelectModelOption: (nextProvider, nextModelId) => {
-      setProvider(nextProvider);
-      setModelId(nextModelId);
-    },
+    onSelectModelOption: chooseModel,
     onSelectThinkingOption: setThinkingLevel,
     onSelectLoginProvider: (providerId) => {
       if (!api || !workspace) {
@@ -489,8 +501,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       mentionMenu,
       setPrompt,
       setEnvironment,
-      setProvider,
-      setModelId,
+      chooseModel,
       setThinkingLevel,
       setPendingWorkspaceId,
       selectWorkspace,
@@ -506,6 +517,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       setComposerError,
     }),
     [
+      chooseModel,
       workspace,
       runtime,
       rootWorkspaceId,

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ChevronDownIcon } from "../../ui/icons";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
   buildModelOptions,
@@ -18,6 +19,7 @@ interface ModelSelectorProps {
   readonly unselectedModelLabel?: string;
   readonly emptyModelLabel?: string;
   readonly emptyModelTitle?: string;
+  readonly selectionHint?: string;
   readonly onSetModel: (provider: string, modelId: string) => void;
   readonly onSetThinking: (level: string) => void;
 }
@@ -35,11 +37,14 @@ export function ModelSelector({
   unselectedModelLabel = "Choose model",
   emptyModelLabel = "Choose model",
   emptyModelTitle = MODEL_OPTIONS_EMPTY_TITLE,
+  selectionHint,
   onSetModel,
   onSetThinking,
 }: ModelSelectorProps) {
   const [open, setOpen] = useState<OpenDropdown>("none");
   const [modelFilter, setModelFilter] = useState("");
+  const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const modelOptions = useMemo(() => buildModelOptions(runtime), [runtime]);
@@ -93,27 +98,98 @@ export function ModelSelector({
     };
   }, [open]);
 
+  useLayoutEffect(() => {
+    if (open === "none") return;
+    const position = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const below = window.innerHeight - rect.bottom - 14;
+      const above = rect.top - 14;
+      const placeBelow =
+        dropdownPlacement === "below"
+          ? below >= 220 || below > above
+          : above < 220 && below > above;
+      const width = Math.min(360, window.innerWidth - 24);
+      setDropdownStyle({
+        position: "fixed",
+        width,
+        minWidth: 0,
+        left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
+        top: placeBelow ? rect.bottom + 6 : undefined,
+        bottom: placeBelow ? "auto" : window.innerHeight - rect.top + 6,
+        maxHeight: Math.max(80, Math.min(360, placeBelow ? below : above)),
+        margin: 0,
+        zIndex: 200,
+      });
+    };
+    position();
+    window.addEventListener("resize", position);
+    window.addEventListener("scroll", position, true);
+    return () => {
+      window.removeEventListener("resize", position);
+      window.removeEventListener("scroll", position, true);
+    };
+  }, [open, dropdownPlacement]);
+
   if (!shouldRenderModelControl && !thinkingLevel) {
     return null;
   }
 
   return (
-    <span className="model-selector" ref={containerRef}>
+    <span
+      className="model-selector"
+      ref={containerRef}
+      onKeyDown={(event) => {
+        if (open === "none") return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen("none");
+          triggerRef.current?.focus();
+          return;
+        }
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        const items = Array.from(
+          containerRef.current?.querySelectorAll<HTMLButtonElement>(".model-selector__item") ?? [],
+        );
+        if (!items.length) return;
+        event.preventDefault();
+        const index = items.indexOf(document.activeElement as HTMLButtonElement);
+        items[
+          index < 0
+            ? event.key === "ArrowDown"
+              ? 0
+              : items.length - 1
+            : (index + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length
+        ]?.focus();
+      }}
+    >
       {shouldRenderModelControl ? (
         <span className="model-selector__anchor">
           <button
             className="model-selector__badge"
             type="button"
             disabled={disabled}
-            onClick={() => setOpen(open === "model" ? "none" : "model")}
+            aria-expanded={open === "model"}
+            aria-haspopup="dialog"
+            onClick={(event) => {
+              triggerRef.current = event.currentTarget;
+              setOpen(open === "model" ? "none" : "model");
+            }}
           >
             {modelBadgeLabel}
+            <ChevronDownIcon />
           </button>
           {open === "model" ? (
             <div
               className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
+              role="dialog"
+              aria-label="Choose model"
+              style={dropdownStyle}
               onWheel={(event) => event.stopPropagation()}
             >
+              {selectionHint ? <div className="model-selector__empty">{selectionHint}</div> : null}
               <div className="model-selector__filter">
                 <input
                   className="model-selector__filter-input"
@@ -138,6 +214,7 @@ export function ModelSelector({
                             onSetModel(option.providerId, option.modelId);
                           }
                           setOpen("none");
+                          triggerRef.current?.focus();
                         }}
                       >
                         <span className="model-selector__item-label">{option.label}</span>
@@ -169,13 +246,20 @@ export function ModelSelector({
             className="model-selector__badge"
             type="button"
             disabled={disabled}
-            onClick={() => setOpen(open === "thinking" ? "none" : "thinking")}
+            aria-expanded={open === "thinking"}
+            onClick={(event) => {
+              triggerRef.current = event.currentTarget;
+              setOpen(open === "thinking" ? "none" : "thinking");
+            }}
           >
             {thinkingLevel}
           </button>
           {open === "thinking" ? (
             <div
               className={`model-selector__dropdown ${dropdownPlacement === "below" ? "model-selector__dropdown--below" : ""}`}
+              role="dialog"
+              aria-label="Thinking level"
+              style={dropdownStyle}
               onWheel={(event) => event.stopPropagation()}
             >
               <div className="model-selector__group-title">Thinking Level</div>

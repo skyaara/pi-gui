@@ -95,13 +95,13 @@ test("new thread reuses composer behaviors for slash commands, image previews, a
   }
 });
 
-test("new thread hides the onboarding notice after picking a thread model", async () => {
+test("new thread can choose and remember its first model without visiting settings", async () => {
   test.setTimeout(60_000);
   const userDataDir = await makeUserDataDir();
   const agentDir = join(userDataDir, "agent");
   const workspacePath = await makeWorkspace("new-thread-no-default-workspace");
   await seedAgentDir(agentDir, { withDefaultModel: false });
-  const harness = await launchDesktop(userDataDir, {
+  let harness = await launchDesktop(userDataDir, {
     agentDir,
     initialWorkspaces: [workspacePath],
     testMode: "background",
@@ -116,7 +116,7 @@ test("new thread hides the onboarding notice after picking a thread model", asyn
     const modelBadge = window.locator(".new-thread__hint .model-selector__badge").first();
 
     await window.getByTestId("new-thread-composer").fill("start a thread without a default");
-    await expect(notice).toContainText("No default model set");
+    await expect(notice).toHaveCount(0);
     await expect(modelBadge).toHaveText("Pick a model");
     await expect(startButton).toBeDisabled();
 
@@ -126,15 +126,32 @@ test("new thread hides the onboarding notice after picking a thread model", asyn
     await expect(dropdown).toContainText("GPT-4o");
     const modelFilter = dropdown.locator(".model-selector__filter-input");
     await expect(modelFilter).toBeFocused();
+    const bounds = await dropdown.boundingBox();
+    const viewport = await window.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.y).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(viewport.height);
+    await window.screenshot({ path: test.info().outputPath("first-model-picker.png") });
     await modelFilter.fill("definitely-no-model");
     await expect(dropdown).toContainText("No matching models");
     await expect(modelBadge).toHaveText("Pick a model");
     await modelFilter.fill("4o");
     await expect(dropdown).toContainText("GPT-4o");
     await expect(dropdown).not.toContainText("GPT-5");
-    await dropdown.getByRole("button", { name: /GPT-4o/ }).click();
+    await modelFilter.press("ArrowDown");
+    await expect(dropdown.getByRole("button", { name: /GPT-4o/ })).toBeFocused();
+    await window.keyboard.press("Enter");
 
     await expect(modelBadge).toHaveText("openai:gpt-4o");
+    await expect
+      .poll(async () => {
+        const state = await getDesktopState(window);
+        return Object.values(state.runtimeByWorkspace).some(
+          (runtime) => runtime.settings.defaultModelId === "gpt-4o",
+        );
+      })
+      .toBe(true);
     await expect(startButton).toBeEnabled();
     await expect(notice).toHaveCount(0);
 
@@ -146,6 +163,14 @@ test("new thread hides the onboarding notice after picking a thread model", asyn
     const composer = window.getByTestId("composer");
     await composer.fill("continue");
     await expect(window.getByTestId("send")).toBeEnabled();
+    await harness.close();
+    harness = await launchDesktop(userDataDir, { agentDir, testMode: "background" });
+    const reopened = await harness.firstWindow();
+    await openNewThread(reopened);
+    await expect(reopened.locator(".new-thread__hint .model-selector__badge").first()).toHaveText(
+      "openai:gpt-4o",
+    );
+    await expect(reopened.getByTestId("model-onboarding-notice")).toHaveCount(0);
   } finally {
     await harness.close();
   }
@@ -253,7 +278,7 @@ test("refreshing after a provider becomes available auto-enables that provider's
     );
 
     await expect(modelBadge).toHaveText("Pick a model");
-    await expect(notice).toContainText("No default model set");
+    await expect(notice).toHaveCount(0);
 
     await modelBadge.click();
     const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
@@ -345,6 +370,38 @@ test("new thread starts once when Enter is pressed twice before it opens", async
     // Give a late second start time to land before asserting it never did.
     await window.waitForTimeout(1_000);
     expect(await sessionCount()).toBe(before + 1);
+  } finally {
+    await harness.close();
+  }
+});
+
+test("workspace picker searches folders and supports keyboard selection and dismissal", async () => {
+  const first = await makeWorkspace("picker-first");
+  const second = await makeWorkspace("picker-second");
+  const harness = await launchDesktop(await makeUserDataDir(), {
+    initialWorkspaces: [first, second],
+    testMode: "background",
+  });
+  try {
+    const page = await harness.firstWindow();
+    await openNewThread(page);
+    const trigger = page.getByRole("button", { name: /^Workspace:/ });
+    await trigger.click();
+    const search = page.getByRole("textbox", { name: "Find workspace" });
+    await expect(search).toBeFocused();
+    await search.fill("picker-second");
+    const option = page.getByRole("option");
+    await expect(option).toHaveCount(1);
+    await search.press("ArrowDown");
+    await expect(option).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(trigger).toContainText("picker-second");
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await page.screenshot({ path: test.info().outputPath("workspace-picker.png") });
+    await search.press("Escape");
+    await expect(search).toHaveCount(0);
+    await expect(trigger).toBeFocused();
   } finally {
     await harness.close();
   }

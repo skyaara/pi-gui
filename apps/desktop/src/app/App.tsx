@@ -1131,10 +1131,7 @@ export default function App() {
                 onChangePrompt={newThread.setPrompt}
                 onSelectEnvironment={newThread.setEnvironment}
                 onSelectWorkspace={newThread.selectWorkspace}
-                onSetModel={(provider, modelId) => {
-                  newThread.setProvider(provider);
-                  newThread.setModelId(modelId);
-                }}
+                onSetModel={newThread.chooseModel}
                 onSetThinking={newThread.setThinkingLevel}
                 extensionFlags={newThread.extensionFlags}
                 onSetExtensionFlag={newThread.setExtensionFlag}
