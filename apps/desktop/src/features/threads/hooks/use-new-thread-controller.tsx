@@ -1,3 +1,4 @@
+import { effectiveModelDiscovery } from "@pi-gui/session-driver/runtime-types";
 import {
   useCallback,
   useEffect,
@@ -86,19 +87,28 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
   const workspace =
     rootWorkspaceOptions.find((entry) => entry.id === rootWorkspaceId) ?? rootWorkspaceOptions[0];
   const runtime = snapshot ? getEffectiveModelRuntime(snapshot, workspace) : undefined;
+  const discovery = effectiveModelDiscovery(runtime);
+  const defaultProvider = discovery?.defaultModel?.providerId ?? runtime?.settings.defaultProvider;
+  const defaultModelId = discovery?.defaultModel?.modelId ?? runtime?.settings.defaultModelId;
   const defaultEnabled = buildModelOptions(runtime).some(
-    (m) =>
-      m.providerId === runtime?.settings.defaultProvider &&
-      m.modelId === runtime?.settings.defaultModelId,
+    (m) => m.providerId === defaultProvider && m.modelId === defaultModelId,
   );
-  const resolvedProvider =
-    provider ?? (defaultEnabled ? runtime?.settings.defaultProvider : undefined);
-  const resolvedModelId =
-    modelId ?? (defaultEnabled ? runtime?.settings.defaultModelId : undefined);
+  const resolvedProvider = provider ?? (defaultEnabled ? defaultProvider : undefined);
+  const resolvedModelId = modelId ?? (defaultEnabled ? defaultModelId : undefined);
   const activeModel = runtime?.models.find(
     (model) => model.providerId === resolvedProvider && model.modelId === resolvedModelId,
   );
-  const resolvedThinkingLevel = resolveThinkingLevel(activeModel, thinkingLevel);
+  const resolvedThinkingLevel = resolveThinkingLevel(
+    activeModel,
+    thinkingLevel ??
+      discovery?.scopedModels?.find(
+        (model) => model.providerId === resolvedProvider && model.modelId === resolvedModelId,
+      )?.thinkingLevel ??
+      (resolvedProvider === discovery?.defaultModel?.providerId &&
+      resolvedModelId === discovery?.defaultModel?.modelId
+        ? discovery?.defaultModel?.thinkingLevel
+        : undefined),
+  );
   const workspaceFlagDefaults = workspace
     ? snapshot?.extensionFlagsByWorkspace[workspace.id]
     : undefined;

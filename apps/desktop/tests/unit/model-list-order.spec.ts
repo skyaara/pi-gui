@@ -81,3 +81,50 @@ test("thinking menu only offers levels discovered by Pi", () => {
   ).toEqual(["minimal", "high", "max"]);
   expect(buildThinkingOptions(model)).toEqual([]);
 });
+
+test("native Pi scope results drive listing even when configured patterns are wildcards", () => {
+  const settings = { ...runtime.settings, enabledModelPatterns: ["beta/*:high"] };
+  const scopedRuntime: RuntimeSnapshot = {
+    ...runtime,
+    settings,
+    modelDiscovery: [
+      {
+        settings,
+        diagnostics: [],
+        scopedModels: [
+          { providerId: "beta", modelId: "oldest", thinkingLevel: "high" },
+          { providerId: "beta", modelId: "newest", thinkingLevel: "high" },
+        ],
+      },
+    ],
+  };
+  expect(buildModelOptions(scopedRuntime).map((model) => model.modelId)).toEqual([
+    "oldest",
+    "newest",
+  ]);
+  expect(
+    buildModelOptions({
+      ...scopedRuntime,
+      modelDiscovery: [{ settings, diagnostics: ["no match"], scopedModels: [] }],
+    }),
+  ).toEqual([]);
+});
+
+test("Pi's resolved default is promoted and searchable without rewriting configured defaults", () => {
+  const settings = { enableSkillCommands: true, enabledModelPatterns: [] };
+  const discoveredRuntime: RuntimeSnapshot = {
+    ...runtime,
+    settings,
+    modelDiscovery: [
+      {
+        settings,
+        diagnostics: [],
+        defaultModel: { providerId: "beta", modelId: "newest", thinkingLevel: "medium" },
+      },
+    ],
+  };
+  const options = buildModelOptions(discoveredRuntime);
+  expect(options[0]?.modelId).toBe("newest");
+  expect(searchModelOptions(options, "default", discoveredRuntime)[0]?.modelId).toBe("newest");
+  expect(discoveredRuntime.settings).toEqual(settings);
+});

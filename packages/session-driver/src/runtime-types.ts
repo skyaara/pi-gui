@@ -126,9 +126,45 @@ export interface ModelSettingsSnapshot {
   readonly enabledModelPatterns: readonly string[];
 }
 
+export interface RuntimeModelDiscovery {
+  readonly settings: Pick<
+    ModelSettingsSnapshot,
+    "defaultProvider" | "defaultModelId" | "defaultThinkingLevel" | "enabledModelPatterns"
+  >;
+  readonly defaultModel?: {
+    readonly providerId: string;
+    readonly modelId: string;
+    readonly thinkingLevel: string;
+  };
+  /** Absent means all available models; an empty list means no scope pattern matched. */
+  readonly scopedModels?: readonly {
+    readonly providerId: string;
+    readonly modelId: string;
+    readonly thinkingLevel?: string;
+  }[];
+  readonly diagnostics: readonly string[];
+}
+
+/** Match discovery to the effective settings, including app-global vs project overrides. */
+export function effectiveModelDiscovery(
+  runtime: RuntimeSnapshot | undefined,
+): RuntimeModelDiscovery | undefined {
+  return runtime?.modelDiscovery?.find(
+    ({ settings }) =>
+      settings.defaultProvider === runtime.settings.defaultProvider &&
+      settings.defaultModelId === runtime.settings.defaultModelId &&
+      settings.defaultThinkingLevel === runtime.settings.defaultThinkingLevel &&
+      settings.enabledModelPatterns.length === runtime.settings.enabledModelPatterns.length &&
+      settings.enabledModelPatterns.every(
+        (pattern, index) => pattern === runtime.settings.enabledModelPatterns[index],
+      ),
+  );
+}
+
 export interface RuntimeSnapshot {
   readonly workspace: WorkspaceRef;
   readonly providers: readonly RuntimeProviderRecord[];
+  readonly modelDiscovery?: readonly RuntimeModelDiscovery[];
   readonly models: readonly RuntimeModelRecord[];
   readonly skills: readonly RuntimeSkillRecord[];
   readonly extensions: readonly RuntimeExtensionRecord[];

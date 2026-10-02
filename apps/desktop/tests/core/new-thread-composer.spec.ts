@@ -162,8 +162,8 @@ test("new thread can choose and remember its first model without visiting settin
 
     await window.getByTestId("new-thread-composer").fill("start a thread without a default");
     await expect(notice).toHaveCount(0);
-    await expect(modelBadge).toHaveText("Pick a model");
-    await expect(startButton).toBeDisabled();
+    await expect(modelBadge).toHaveText("GPT-5");
+    await expect(startButton).toBeEnabled();
 
     await modelBadge.click();
     const dropdown = window.locator(".new-thread__hint .model-selector__dropdown").first();
@@ -192,7 +192,7 @@ test("new thread can choose and remember its first model without visiting settin
     await window.screenshot({ path: test.info().outputPath("first-model-picker.png") });
     await modelFilter.fill("definitely-no-model");
     await expect(dropdown).toContainText("No matching models");
-    await expect(modelBadge).toHaveText("Pick a model");
+    await expect(modelBadge).toHaveText("GPT-5");
     await modelFilter.fill("4o");
     await expect(dropdown).toContainText("GPT-4o");
     await expect(dropdown).not.toContainText("GPT-5");
@@ -287,7 +287,7 @@ test("new thread routes disabled-model recovery to settings models", async () =>
   }
 });
 
-test("refreshing after a provider becomes available auto-enables that provider's models", async () => {
+test("refreshing discovers a newly available provider without configured model defaults", async () => {
   test.setTimeout(60_000);
   const userDataDir = await makeUserDataDir();
   const agentDir = join(userDataDir, "agent");
@@ -295,7 +295,7 @@ test("refreshing after a provider becomes available auto-enables that provider's
   await seedAgentDir(agentDir, {
     withOpenAiAuth: false,
     withDefaultModel: false,
-    enabledModels: ["fake-provider/fake-model"],
+    enabledModels: [],
   });
   const harness = await launchDesktop(userDataDir, {
     agentDir,
@@ -334,7 +334,16 @@ test("refreshing after a provider becomes available auto-enables that provider's
       { workspaceId: selectedWorkspaceId },
     );
 
-    await expect(modelBadge).toHaveText("Pick a model");
+    const refreshedState = await getDesktopState(window);
+    const runtime = refreshedState.runtimeByWorkspace[selectedWorkspaceId!];
+    const resolvedDefault = runtime?.modelDiscovery?.find(
+      (discovery) => discovery.defaultModel,
+    )?.defaultModel;
+    expect(resolvedDefault).toBeDefined();
+    await expect(modelBadge).toHaveAttribute(
+      "aria-label",
+      `${resolvedDefault!.providerId}:${resolvedDefault!.modelId}`,
+    );
     await expect(notice).toHaveCount(0);
 
     await modelBadge.click();

@@ -1,3 +1,4 @@
+import { effectiveModelDiscovery } from "@pi-gui/session-driver/runtime-types";
 // Import only Pi's pure search helper; the terminal entrypoint is Node-only.
 import { fuzzyFilter } from "@earendil-works/pi-tui/dist/fuzzy.js";
 import { resolveRuntimeCommands } from "../../../contracts/composer-commands";
@@ -245,9 +246,10 @@ export function searchModelOptions(
   query: string,
   runtime?: RuntimeSnapshot,
 ): readonly ComposerModelOption[] {
+  const defaultModel = effectiveModelDiscovery(runtime)?.defaultModel;
   const isDefault = (option: ComposerModelOption) =>
-    option.providerId === runtime?.settings.defaultProvider &&
-    option.modelId === runtime?.settings.defaultModelId;
+    option.providerId === (defaultModel?.providerId ?? runtime?.settings.defaultProvider) &&
+    option.modelId === (defaultModel?.modelId ?? runtime?.settings.defaultModelId);
   const filtered = fuzzyFilter([...options], query, (option) => {
     const name = runtime?.models.find(
       (model) => model.providerId === option.providerId && model.modelId === option.modelId,
@@ -354,15 +356,19 @@ export function buildModelOptions(
     return [];
   }
 
-  const enabledPatterns = runtime.settings.enabledModelPatterns;
-  const allAvailable = enabledPatterns.length === 0;
+  const discovery = effectiveModelDiscovery(runtime);
+  const enabledPatterns =
+    discovery?.scopedModels?.map((model) => `${model.providerId}/${model.modelId}`) ??
+    runtime.settings.enabledModelPatterns;
+  const allAvailable = discovery?.scopedModels === undefined && enabledPatterns.length === 0;
   const enabledOrder = new Map(enabledPatterns.map((key, index) => [key, index]));
   const priority = (model: RuntimeSnapshot["models"][number]) => {
     if (model.providerId === currentModel?.providerId && model.modelId === currentModel.modelId)
       return 0;
     if (
-      model.providerId === runtime.settings.defaultProvider &&
-      model.modelId === runtime.settings.defaultModelId
+      model.providerId ===
+        (discovery?.defaultModel?.providerId ?? runtime.settings.defaultProvider) &&
+      model.modelId === (discovery?.defaultModel?.modelId ?? runtime.settings.defaultModelId)
     )
       return 1;
     return 2;

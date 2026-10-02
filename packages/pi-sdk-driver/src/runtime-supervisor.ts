@@ -1,3 +1,4 @@
+import { discoverPiModelSelection } from "./pi-model-discovery.js";
 import { supportsFastMode } from "./fast-mode.js";
 import { clampThinkingLevel, getSupportedThinkingLevels } from "@earendil-works/pi-ai/models";
 import { toAuthInteraction } from "./login-interaction.js";
@@ -8,6 +9,7 @@ import {
   DefaultPackageManager,
   DefaultResourceLoader,
   ModelRuntime,
+  resolveModelScopeWithDiagnostics,
   type PackageSource,
   SettingsManager,
   parseFrontmatter,
@@ -153,7 +155,6 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
     const context = await this.ensureContext(workspace);
     await context.settingsManager.reload();
     await this.reloadResources(context);
-    await this.autoEnableModelsForAuthenticatedProviders(context);
     return this.buildSnapshot(context);
   }
 
@@ -722,8 +723,24 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
       enabledModelPatterns: context.settingsManager.getEnabledModels() ?? [],
     };
 
+    const modelDiscovery = [];
+    for (const manager of [
+      context.settingsManager,
+      SettingsManager.inMemory(context.settingsManager.getGlobalSettings()),
+    ]) {
+      modelDiscovery.push(
+        await discoverPiModelSelection(
+          context.workspace.path,
+          this.agentDir,
+          context.modelRuntime,
+          manager,
+          context.resourceLoader,
+        ),
+      );
+    }
     return {
       workspace: context.workspace,
+      modelDiscovery,
       providers,
       models,
       skills,
@@ -844,10 +861,11 @@ export class RuntimeSupervisor implements RuntimeResourceDriver {
 
     const providers = await this.buildProviderRecords(context);
     const models = await this.buildModelRecords(context);
-    const hasSelectableModels = models.some(
-      (model) =>
-        model.available && currentPatterns.includes(`${model.providerId}/${model.modelId}`),
+    const { scopedModels } = await resolveModelScopeWithDiagnostics(
+      [...currentPatterns],
+      context.modelRuntime,
     );
+    const hasSelectableModels = scopedModels.length > 0;
     const candidateProviderIds =
       providerIds && providerIds.length > 0
         ? providerIds
