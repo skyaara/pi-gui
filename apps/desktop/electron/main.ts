@@ -53,6 +53,7 @@ import { MAIN_DEV_RELOAD_MARKER } from "./dev-reload-main-probe";
 import { NotificationManager } from "./platform/notification-manager";
 import { NotificationPermissionService } from "./platform/notification-permission";
 import { checkForUpdate, initUpdateChecker, openReleasesPage } from "./platform/update-checker";
+import { cloneRepository, repositoryFolderName } from "./platform/clone-repository";
 import { ThemeManager } from "./platform/theme-manager";
 import { windowBackgroundFor } from "../contracts/theme";
 import { TerminalService } from "./platform/terminal-service";
@@ -760,6 +761,22 @@ async function pickWorkspaceViaDialog(
   return runWindowScopedForWindow(window, () => addPickedWorkspace(window, workspacePath));
 }
 
+async function cloneWorkspaceViaDialog(
+  window: BrowserWindow,
+  repository: string,
+): Promise<DesktopAppState> {
+  repositoryFolderName(repository);
+  const result = await dialog.showOpenDialog(window, {
+    properties: ["openDirectory", "createDirectory"],
+    title: "Choose where to clone the repository",
+    buttonLabel: "Clone here",
+    message: "A new folder will be created inside the folder you choose.",
+  });
+  if (result.canceled || !result.filePaths[0]) return stateForWindow(window);
+  const destination = await cloneRepository(repository, result.filePaths[0]);
+  return runWindowScopedForWindow(window, () => addPickedWorkspace(window, destination));
+}
+
 async function runManualUpdateCheck(): Promise<void> {
   const window = mainWindow && canPublishToWindow(mainWindow) ? mainWindow : undefined;
   const showDialog = (options: MessageBoxOptions) =>
@@ -1164,6 +1181,7 @@ app
         theme: themeManager,
         openExternal: openExternalLink,
         pickWorkspace: (window) => pickWorkspaceViaDialog(window),
+        cloneWorkspace: (window, repository) => cloneWorkspaceViaDialog(window, repository),
         createLoginCallbacks: (window) => createRuntimeLoginCallbacks(window),
         probeCustomProviderModels,
         notificationPermission: () => notificationPermissionService,

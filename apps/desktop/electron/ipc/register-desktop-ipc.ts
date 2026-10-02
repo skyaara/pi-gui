@@ -185,6 +185,7 @@ export interface DesktopIpcCapabilities {
   readonly theme: ThemeManager;
   readonly openExternal: (url: string) => Promise<void>;
   readonly pickWorkspace: (window: BrowserWindow) => Promise<DesktopAppState>;
+  readonly cloneWorkspace: (window: BrowserWindow, repository: string) => Promise<DesktopAppState>;
   readonly createLoginCallbacks: (
     window: BrowserWindow,
   ) => Parameters<DesktopAppStore["loginProvider"]>[2];
@@ -322,6 +323,12 @@ export function registerDesktopIpc({
   );
   ipcMain.handle(desktopIpc.pickWorkspace, (event) =>
     capabilities.pickWorkspace(senderWindow(windows, event)),
+  );
+  ipcMain.handle(desktopIpc.cloneWorkspace, (event, rawRepository: unknown) =>
+    capabilities.cloneWorkspace(
+      senderWindow(windows, event),
+      expectNonEmptyString(rawRepository, "repository"),
+    ),
   );
   ipcMain.handle(desktopIpc.selectWorkspace, (event, rawWorkspaceId: unknown) =>
     run(event, () =>

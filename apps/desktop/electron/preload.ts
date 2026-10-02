@@ -209,6 +209,8 @@ contextBridge.exposeInMainWorld("piApp", {
   addWorkspacePath: (workspacePath: string) =>
     ipcRenderer.invoke(desktopIpc.addWorkspacePath, workspacePath) as Promise<DesktopAppState>,
   pickWorkspace: () => ipcRenderer.invoke(desktopIpc.pickWorkspace) as Promise<DesktopAppState>,
+  cloneWorkspace: (repository: string) =>
+    ipcRenderer.invoke(desktopIpc.cloneWorkspace, repository) as Promise<DesktopAppState>,
   selectWorkspace: (workspaceId: string) =>
     ipcRenderer.invoke(desktopIpc.selectWorkspace, workspaceId) as Promise<DesktopAppState>,
   renameWorkspace: (workspaceId: string, displayName: string) =>

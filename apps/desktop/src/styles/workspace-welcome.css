@@ -1,0 +1,133 @@
+.canvas--welcome {
+  display: grid;
+  align-content: center;
+  padding: 40px 28px;
+}
+
+.workspace-welcome {
+  width: min(460px, 100%);
+  margin: 0 auto;
+  display: grid;
+  gap: 24px;
+}
+
+.workspace-welcome__intro h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: var(--font-medium);
+  line-height: var(--leading-snug);
+}
+
+.workspace-welcome__intro p,
+.workspace-welcome__clone p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.workspace-welcome__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.workspace-welcome__action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  text-align: left;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+
+.workspace-welcome__action:hover:not(:disabled) {
+  background: var(--surface-overlay-hover);
+  border-color: var(--line-strong);
+}
+
+.workspace-welcome__action:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.workspace-welcome__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  color: var(--muted-strong);
+}
+
+.workspace-welcome__copy {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+}
+
+.workspace-welcome__copy strong {
+  font-size: 14px;
+  font-weight: var(--font-medium);
+}
+
+.workspace-welcome__copy > span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.workspace-welcome__action > svg {
+  flex-shrink: 0;
+  color: var(--muted-soft);
+}
+
+.workspace-welcome__clone {
+  display: grid;
+  gap: 12px;
+}
+
+.workspace-welcome__clone label {
+  font-size: 13px;
+  font-weight: var(--font-medium);
+}
+
+.workspace-welcome__clone input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+}
+
+.workspace-welcome__form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.workspace-welcome__footer {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted-soft);
+  line-height: 1.6;
+}
+
+.workspace-welcome__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--error-ink);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

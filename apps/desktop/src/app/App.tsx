@@ -51,6 +51,7 @@ import {
   sessionThreadKey,
   type ThreadListEntry,
 } from "../features/threads/thread-groups";
+import { WorkspaceWelcome } from "../features/threads/workspace-welcome";
 import { Sidebar } from "../features/threads/sidebar";
 import { ThreadSwitcher } from "../features/threads/thread-switcher";
 import {
@@ -1134,12 +1135,7 @@ export default function App() {
                 onSubmit={newThread.startThread}
               />
             ) : (
-              <section className="canvas canvas--empty">
-                <div className="empty-panel">
-                  <h1>Open a folder to start</h1>
-                  <p>Add a project folder before creating a new thread.</p>
-                </div>
-              </section>
+              <WorkspaceWelcome api={api} onState={setSnapshot} />
             )
           ) : selectedWorkspace && selectedSession ? (
             <>
@@ -1320,15 +1316,7 @@ export default function App() {
               </div>
             </section>
           ) : (
-            <section className="canvas canvas--empty">
-              <div className="empty-panel">
-                <h1>Open a folder to start</h1>
-                <p>
-                  Add project folders, group sessions under them, and jump between threads from the
-                  sidebar.
-                </p>
-              </div>
-            </section>
+            <WorkspaceWelcome api={api} onState={setSnapshot} />
           )}
         </>
         {sidePanelVisible && selectedWorkspace && selectedSession ? (

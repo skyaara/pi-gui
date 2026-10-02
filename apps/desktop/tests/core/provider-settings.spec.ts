@@ -200,7 +200,7 @@ test("opening the first workspace from the empty state hydrates provider and mod
     await expect(emptyState).toBeVisible();
 
     await stubNextOpenDialog(harness, [workspacePath]);
-    await emptyState.getByRole("button", { name: "Open first folder" }).click();
+    await emptyState.getByRole("button", { name: "Open folder", exact: true }).click();
 
     await expect(emptyState).toHaveCount(0);
     await expect(window.getByTestId("workspace-list")).toContainText(

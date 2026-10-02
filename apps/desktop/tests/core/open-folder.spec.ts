@@ -24,7 +24,7 @@ test("adds a workspace from the empty state button using a stubbed folder select
     await expect(window.getByTestId("empty-state")).toBeVisible();
 
     await stubNextOpenDialog(harness, [workspacePath]);
-    await window.getByRole("button", { name: "Open first folder" }).click();
+    await window.getByRole("button", { name: "Open folder", exact: true }).click();
 
     await expect
       .poll(

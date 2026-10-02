@@ -124,6 +124,7 @@ export const desktopIpc = {
   clipboardImagePasted: "pi-gui:clipboard-image-pasted",
   addWorkspacePath: "pi-gui:add-workspace-path",
   pickWorkspace: "pi-gui:pick-workspace",
+  cloneWorkspace: "piui:clone-workspace",
   selectWorkspace: "pi-gui:select-workspace",
   renameWorkspace: "pi-gui:rename-workspace",
   removeWorkspace: "pi-gui:remove-workspace",
@@ -706,6 +707,7 @@ export interface PiDesktopApi {
   getPathForFile(file: File): string;
   addWorkspacePath(path: string): Promise<DesktopAppState>;
   pickWorkspace(): Promise<DesktopAppState>;
+  cloneWorkspace(repository: string): Promise<DesktopAppState>;
   selectWorkspace(workspaceId: string): Promise<DesktopAppState>;
   renameWorkspace(workspaceId: string, displayName: string): Promise<DesktopAppState>;
   removeWorkspace(workspaceId: string): Promise<DesktopAppState>;

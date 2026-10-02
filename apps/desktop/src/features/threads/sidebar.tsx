@@ -465,56 +465,38 @@ export function Sidebar(props: SidebarProps) {
         </div>
       </div>
 
-      <div className="sidebar__section">
-        <div className="section__head">
-          <span>Threads</span>
-          <div className="section__tools">
-            <ThreadGroupingControl
-              grouping={threadGrouping}
-              onChange={(grouping) => {
-                void updateSnapshot(setSnapshot, () => api.setThreadGrouping(grouping)).catch(
-                  (error: unknown) => {
-                    console.error("[renderer] setThreadGrouping failed", error);
-                  },
-                );
-              }}
-            />
-            <button
-              aria-label="Open folder"
-              className="icon-button"
-              type="button"
-              onClick={() => {
-                void updateSnapshot(setSnapshot, () => api.pickWorkspace()).catch(
-                  (error: unknown) => {
-                    console.error("[renderer] pickWorkspace failed", error);
-                  },
-                );
-              }}
-            >
-              <FolderIcon />
-            </button>
+      {visibleWorkspaces.length > 0 ? (
+        <div className="sidebar__section">
+          <div className="section__head">
+            <span>Threads</span>
+            <div className="section__tools">
+              <ThreadGroupingControl
+                grouping={threadGrouping}
+                onChange={(grouping) => {
+                  void updateSnapshot(setSnapshot, () => api.setThreadGrouping(grouping)).catch(
+                    (error: unknown) => {
+                      console.error("[renderer] setThreadGrouping failed", error);
+                    },
+                  );
+                }}
+              />
+              <button
+                aria-label="Open folder"
+                className="icon-button"
+                type="button"
+                onClick={() => {
+                  void updateSnapshot(setSnapshot, () => api.pickWorkspace()).catch(
+                    (error: unknown) => {
+                      console.error("[renderer] pickWorkspace failed", error);
+                    },
+                  );
+                }}
+              >
+                <FolderIcon />
+              </button>
+            </div>
           </div>
-        </div>
 
-        {visibleWorkspaces.length === 0 ? (
-          <div className="empty-state" data-testid="empty-state">
-            <h2>No folders yet</h2>
-            <p>Open a project folder to start building a workspace and session list.</p>
-            <button
-              className="button button--primary"
-              type="button"
-              onClick={() => {
-                void updateSnapshot(setSnapshot, () => api.pickWorkspace()).catch(
-                  (error: unknown) => {
-                    console.error("[renderer] pickWorkspace failed", error);
-                  },
-                );
-              }}
-            >
-              Open first folder
-            </button>
-          </div>
-        ) : (
           <DndContext
             sensors={sensors}
             collisionDetection={headerCollision}
@@ -668,8 +650,8 @@ export function Sidebar(props: SidebarProps) {
               </DragOverlay>
             </ThreadShortcutContext.Provider>
           </DndContext>
-        )}
-      </div>
+        </div>
+      ) : null}
     </aside>
   );
 }
