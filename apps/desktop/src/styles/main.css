@@ -1942,7 +1942,7 @@
   gap: var(--space-2);
 }
 
-/* Settings: the content owns the gutter; title and cards share one column. */
+/* Settings headings align with the inset text inside cards. */
 .canvas.settings-canvas {
   padding: 0;
   overflow: visible;
@@ -1957,13 +1957,15 @@
   flex-direction: row;
   align-items: center;
   min-height: var(--sidebar-first-control-height);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
+  padding-inline: 17px;
 }
 
 .settings-view .view-header__title {
-  font-size: var(--text-lg);
-  line-height: 24px;
-  font-weight: var(--font-semibold);
+  color: var(--muted-strong);
+  font-size: var(--text-base);
+  line-height: 20px;
+  font-weight: var(--font-normal);
 }
 
 .settings-grid {
@@ -1990,7 +1992,7 @@
   font-size: 13px;
   color: var(--muted);
   font-weight: var(--font-normal);
-  padding-inline: 16px;
+  padding-inline: 17px;
 }
 
 .settings-section__description {
