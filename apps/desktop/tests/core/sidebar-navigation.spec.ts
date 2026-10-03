@@ -24,7 +24,7 @@ test("sidebar destinations stay in the app and folder onboarding returns to the 
         "page",
       );
       await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
-      await expect(page.getByTestId("topbar")).toContainText(title);
+      await expect(page.locator(".topbar")).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Toggle side panel" })).toHaveCount(0);
       const openFolder = page.getByRole("button", { name: "Open folder", exact: true });
       await expect(openFolder).toBeVisible();

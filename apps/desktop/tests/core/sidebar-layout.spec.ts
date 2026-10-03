@@ -29,15 +29,15 @@ test("folder rows start a new thread in that folder", async () => {
       await window.locator(".workspace-row__select", { hasText: basename(other) }).click();
       await expect(window.getByTestId("new-thread-composer")).toBeVisible();
       await expect(workspacePicker).toHaveText(basename(other));
-      await expect(window.getByTestId("topbar").locator(".topbar__workspace")).toHaveText(
-        basename(other),
-      );
+      await expect(
+        window.getByTestId("composer-workspace").getByRole("button", { name: /^Workspace:/ }),
+      ).toHaveText(basename(other));
       await window.getByRole("button", { name: `New thread in ${basename(path)}` }).click();
       await expect(window.getByTestId("new-thread-composer")).toBeVisible();
       await expect(workspacePicker).toHaveText(basename(path));
-      await expect(window.getByTestId("topbar").locator(".topbar__workspace")).toHaveText(
-        basename(path),
-      );
+      await expect(
+        window.getByTestId("composer-workspace").getByRole("button", { name: /^Workspace:/ }),
+      ).toHaveText(basename(path));
     }
   } finally {
     await harness.close();

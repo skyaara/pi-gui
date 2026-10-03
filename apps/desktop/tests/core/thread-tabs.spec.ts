@@ -117,7 +117,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     );
     await page.screenshot({ path: test.info().outputPath("narrow-tabs.png") });
     await harness.electronApp.evaluate(({ BrowserWindow }) => {
-      BrowserWindow.getAllWindows()[0]?.setContentSize(1600, 900);
+      BrowserWindow.getAllWindows()[0]?.setContentSize(1800, 900);
     });
     await expect(page.getByRole("button", { name: "Scroll tabs left", exact: true })).toHaveCount(
       0,

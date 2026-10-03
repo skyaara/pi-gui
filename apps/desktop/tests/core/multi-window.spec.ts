@@ -283,10 +283,8 @@ test("selects an empty workspace from the sidebar row", async () => {
         workspacePath: betaPath,
         sessionTitle: "",
       });
-    await expect(window.locator(".topbar__workspace")).toContainText(basename(betaPath));
-    await expect(
-      window.getByRole("heading", { name: basename(betaPath), exact: true }),
-    ).toBeVisible();
+    await expect(window.getByTestId("composer-workspace")).toContainText(basename(betaPath));
+    await expect(window.getByTestId("new-thread-composer")).toBeVisible();
   } finally {
     await harness.close();
   }

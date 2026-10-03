@@ -16,11 +16,9 @@ import { DesktopStartupSurface, toStartupSurfaceState } from "./desktop-recovery
 import { buildFileWorkbenchContexts } from "./file-workbench-contexts";
 import { canTogglePrimarySidebar } from "./app-shell-utils";
 import { useDesktopCommands } from "./use-desktop-commands";
-import { useRunningLabel } from "../features/conversation/hooks/use-running-label";
 import { useTimelineViewport } from "../features/conversation/hooks/use-timeline-viewport";
 import { buildDisplayTimelineItems } from "../features/conversation/timeline-turns";
 import { useTurnChanges } from "../features/conversation/hooks/use-turn-changes";
-import { formatRelativeTime } from "../lib/string-utils";
 import { restoreTopmostDialogFocus } from "../ui/dialog-focus";
 import { ComposerPanel } from "../features/conversation/composer-panel";
 import { DiffPanel } from "../features/workbench/diff-panel";
@@ -64,7 +62,8 @@ import {
 } from "../features/threads/thread-switcher-order";
 import { useThreadSwitcher } from "../features/threads/hooks/use-thread-switcher";
 import { SidebarToggleButton } from "../features/threads/sidebar-toggle-button";
-import { Topbar } from "./topbar";
+import { ThreadTabActions } from "./thread-tab-actions";
+import { MoreIcon } from "../ui/icons";
 import { TerminalPanel } from "../features/workbench/terminal-panel";
 import { ConversationTimeline } from "../features/conversation/conversation-timeline";
 import { ScheduledTasksView } from "../features/scheduled-tasks/scheduled-tasks-view";
@@ -210,9 +209,6 @@ export default function App() {
   });
   const queuedComposerMessages = snapshot?.queuedComposerMessages ?? [];
   const editingQueuedMessageId = snapshot?.editingQueuedMessageId;
-  const runningLabel = useRunningLabel(
-    selectedSession?.status === "running" ? selectedSession.runningSince : undefined,
-  );
   const selectedSessionKey =
     selectedWorkspace && selectedSession ? `${selectedWorkspace.id}:${selectedSession.id}` : "";
   const threadTabs = useThreadTabs(snapshot);
@@ -1021,6 +1017,49 @@ export default function App() {
         <ThreadTabs
           tabs={threadTabs.tabs}
           selectedKey={snapshot.activeView === "threads" ? selectedSessionKey : ""}
+          title={snapshot.activeView === "threads" ? displayedSessionTitle : undefined}
+          actions={
+            <ThreadTabActions
+              keyboardShortcuts={snapshot.keyboardShortcuts}
+              api={api}
+              tools={sidePanelAvailable ? workbench : undefined}
+              panelAvailable={sidePanelAvailable}
+              panelVisible={sidePanelVisible}
+              onTogglePanel={commands.toggleSidePanel}
+            >
+              {snapshot.activeView === "threads" && selectedWorkspace && selectedSession ? (
+                <>
+                  <div
+                    className="chat-header__menu-wrap"
+                    ref={
+                      threadMenu.openMenu?.surface === "header" ? threadMenu.menuWrapRef : undefined
+                    }
+                  >
+                    <button
+                      aria-haspopup="menu"
+                      aria-expanded={threadMenu.openMenu?.surface === "header"}
+                      aria-label="Thread actions"
+                      className="icon-button"
+                      data-testid="thread-header-menu"
+                      type="button"
+                      onClick={threadMenu.toggleHeaderMenu}
+                    >
+                      <MoreIcon />
+                    </button>
+                    {threadMenu.openMenu?.surface === "header" && selectedThreadActions ? (
+                      <ThreadActionsMenu
+                        actions={selectedThreadActions}
+                        className="chat-header__menu"
+                      />
+                    ) : null}
+                  </div>
+                </>
+              ) : null}
+            </ThreadTabActions>
+          }
+          onMaximize={() => {
+            void api.toggleWindowMaximize().catch(console.error);
+          }}
           onSelect={handleSelectSession}
           onNewThread={() =>
             newThread.openSurface(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
@@ -1034,53 +1073,6 @@ export default function App() {
             }
           }}
         />
-        <Topbar
-          keyboardShortcuts={snapshot.keyboardShortcuts}
-          activeView={showNewThread ? "new-thread" : snapshot.activeView}
-          rootWorkspace={showNewThread ? (newThread.workspace ?? rootWorkspace) : rootWorkspace}
-          selectedWorkspace={selectedWorkspace}
-          selectedWorktree={selectedWorktree}
-          api={api}
-          tools={sidePanelAvailable ? workbench : undefined}
-          panelAvailable={sidePanelAvailable}
-          panelVisible={sidePanelVisible}
-          onTogglePanel={commands.toggleSidePanel}
-          sessionTitle={
-            snapshot.activeView === "threads" && selectedSession ? displayedSessionTitle : undefined
-          }
-        >
-          {snapshot.activeView === "threads" && selectedWorkspace && selectedSession ? (
-            <>
-              <div className="chat-header__status">
-                {selectedSession.status === "running"
-                  ? runningLabel
-                  : formatRelativeTime(selectedSession.updatedAt)}
-              </div>
-              <div
-                className="chat-header__menu-wrap"
-                ref={threadMenu.openMenu?.surface === "header" ? threadMenu.menuWrapRef : undefined}
-              >
-                <button
-                  aria-haspopup="menu"
-                  aria-expanded={threadMenu.openMenu?.surface === "header"}
-                  aria-label="Thread actions"
-                  className="icon-button"
-                  data-testid="thread-header-menu"
-                  type="button"
-                  onClick={threadMenu.toggleHeaderMenu}
-                >
-                  …
-                </button>
-                {threadMenu.openMenu?.surface === "header" && selectedThreadActions ? (
-                  <ThreadActionsMenu
-                    actions={selectedThreadActions}
-                    className="chat-header__menu"
-                  />
-                ) : null}
-              </div>
-            </>
-          ) : null}
-        </Topbar>
 
         {snapshot.startupDiagnostics.length > 0 ? (
           <div className="startup-diagnostics" role="status" data-testid="startup-diagnostics">
@@ -1230,6 +1222,7 @@ export default function App() {
               ) : null}
               <ComposerPanel
                 key={selectedSessionKey}
+                workspace={selectedWorkspace}
                 preparingTaskDraft={extensionHostActions.preparingTaskDraft}
                 activeSlashCommand={slashMenu.activeSlashFlow?.command}
                 activeSlashCommandMeta={slashMenu.activeSlashFlow?.command?.description}

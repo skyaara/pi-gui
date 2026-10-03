@@ -49,7 +49,7 @@ Inspect the current application state.
   );
 }
 
-test("supports keyboard shortcuts, slash menus, and topbar controls through the user surface", async () => {
+test("supports keyboard shortcuts, slash menus, and tab-strip controls through the user surface", async () => {
   test.setTimeout(60_000);
   const userDataDir = await makeUserDataDir();
   const agentDir = join(userDataDir, "agent");
@@ -166,22 +166,22 @@ test("supports keyboard shortcuts, slash menus, and topbar controls through the 
     await expect(window.getByTestId("send")).toBeDisabled();
 
     const appRegions = await window.evaluate(() => {
-      const topbar = document.querySelector<HTMLElement>("[data-testid='topbar']");
-      const actionButton = document.querySelector<HTMLElement>(".topbar__actions button");
+      const tabStrip = document.querySelector<HTMLElement>(".thread-tabs");
+      const actionButton = document.querySelector<HTMLElement>(".thread-tab-actions button");
       return {
-        topbar: topbar ? getComputedStyle(topbar).getPropertyValue("-webkit-app-region") : "",
+        tabStrip: tabStrip ? getComputedStyle(tabStrip).getPropertyValue("-webkit-app-region") : "",
         actionButton: actionButton
           ? getComputedStyle(actionButton).getPropertyValue("-webkit-app-region")
           : "",
       };
     });
-    expect(appRegions.topbar).toBe("drag");
+    expect(appRegions.tabStrip).toBe("drag");
     expect(appRegions.actionButton).toBe("no-drag");
 
     const maximizedBefore = await harness.electronApp.evaluate(({ BrowserWindow }) => {
       return BrowserWindow.getAllWindows()[0]?.isMaximized() ?? false;
     });
-    await window.getByTestId("topbar").dblclick({ position: { x: 140, y: 12 } });
+    await window.locator(".thread-tabs").dblclick({ position: { x: 100, y: 2 } });
     await expect
       .poll(() =>
         harness.electronApp.evaluate(

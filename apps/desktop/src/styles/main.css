@@ -23,10 +23,6 @@
   grid-template-columns: minmax(0, 1fr) min(var(--workbench-width, 440px), 65%);
 }
 
-.main--with-side-panel > .topbar {
-  grid-column: 1;
-}
-
 .main--with-side-panel > .composer {
   grid-column: 1;
 }
@@ -1743,7 +1739,7 @@
   background: var(--sidebar-glass);
 }
 
-.enable-transparency .topbar {
+.enable-transparency .thread-tabs {
   background: var(--surface-glass) !important;
   backdrop-filter: var(--glass-blur) var(--glass-saturation);
 }
@@ -3310,7 +3306,6 @@
     box-shadow: var(--shadow-lg);
   }
 
-  .topbar,
   .composer,
   .canvas {
     padding-left: 18px;
@@ -3327,10 +3322,6 @@
   .tree-modal__footer {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .topbar__actions {
-    justify-content: flex-start;
   }
 }
 

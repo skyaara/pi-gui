@@ -126,7 +126,7 @@ test("adds singleton tool tabs, closes to a neighbor, and keeps an empty chooser
     const window = await harness.firstWindow();
     await selectSession(window, TASK_A);
     await expect(window.getByTestId("workbench")).toHaveCount(0);
-    const header = window.getByTestId("topbar");
+    const header = window.locator(".thread-tabs");
     await header.getByRole("button", { name: "Show Review", exact: true }).click();
     await expectActiveTool(window, "Review");
     await header.getByRole("button", { name: "Show Files", exact: true }).click();
@@ -457,7 +457,9 @@ test("keeps one resizable width across tools, chooser, tasks, and restart", asyn
     expect(Math.abs(add.y - toggle.y)).toBeLessThan(2);
     expect(title.y).toBeLessThan(48);
     expect(toggle.x).toBeGreaterThan(add.x);
-    await expect(window.getByTestId("topbar").getByRole("heading", { name: TASK_A })).toBeVisible();
+    await expect(
+      window.locator(".thread-tabs").getByRole("heading", { name: TASK_A }),
+    ).toBeVisible();
     await window.getByTestId("thread-header-menu").click();
     await expect(window.locator('[data-thread-action="scheduled-task"]')).toBeVisible();
     await window.getByTestId("thread-header-menu").click();

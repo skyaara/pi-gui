@@ -24,7 +24,7 @@ test("settings and composer keep aligned containers and a consistent type scale"
     // Outlines are diagnostic only: they do not participate in layout or ship in the UI.
     await page.addStyleTag({
       content: `
-      .sidebar, .topbar, .secondary-surface__sidebar, .secondary-surface__content { outline: 1px dotted #c46020; outline-offset: -2px; }
+      .sidebar, .thread-tabs, .secondary-surface__sidebar, .secondary-surface__content { outline: 1px dotted #c46020; outline-offset: -2px; }
       .new-thread, .composer__surface, .view-header, .settings-group, .theme-mode-tiles { outline: 1px dotted #178a99; outline-offset: -2px; }
       .settings-row__label, .settings-row__control, .secondary-surface__back, .secondary-surface__search, .secondary-surface__nav { outline: 1px dotted #9466c2; outline-offset: -1px; }
     `,

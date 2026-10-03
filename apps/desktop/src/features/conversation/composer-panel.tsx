@@ -14,6 +14,7 @@ import type {
   QueuedComposerMessage,
   SessionExtensionNoticeRecord,
   SessionRecord,
+  WorkspaceRecord,
 } from "../../../contracts/desktop-state";
 import type { MentionOption } from "./hooks/use-mention-menu";
 import { ArrowUpIcon, PlusIcon, StopSquareIcon } from "../../ui/icons";
@@ -23,6 +24,7 @@ import type {
   ComposerSlashOption,
   ComposerSlashOptionEmptyState,
 } from "./composer-commands";
+import { ComposerWorkspace } from "./composer-workspace";
 import { ComposerSurface } from "./composer-surface";
 import { AnnotationChip } from "./annotations/annotation-chip";
 import type { TranscriptAnnotations } from "./annotations/use-transcript-annotations";
@@ -38,6 +40,7 @@ import { ExtensionFlagsBadge } from "../threads/extension-flags-selector";
 import type { ExtensionDockModel } from "../extensions/extension-session-ui";
 
 interface ComposerPanelProps {
+  readonly workspace: WorkspaceRecord;
   readonly preparingTaskDraft?: boolean;
   readonly selectedSession: SessionRecord;
   readonly lastError?: string;
@@ -100,6 +103,7 @@ interface ComposerPanelProps {
 }
 
 export function ComposerPanel({
+  workspace,
   preparingTaskDraft = false,
   selectedSession,
   lastError,
@@ -217,6 +221,7 @@ export function ComposerPanel({
           }
           footer={
             <div className="composer__footer">
+              <ComposerWorkspace workspace={workspace} />
               <div className="composer__footer-row">
                 <div className="composer__config">
                   <ModelSelector

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { WorkspaceRecord } from "../../../contracts/desktop-state";
-import { CheckIcon, ChevronDownIcon } from "../../ui/icons";
+import { CheckIcon, ChevronDownIcon, FolderIcon } from "../../ui/icons";
 
 export function WorkspacePicker({
   workspace,
@@ -80,6 +80,7 @@ export function WorkspacePicker({
           setQuery("");
         }}
       >
+        <FolderIcon />
         <span>{workspace.name}</span>
         <ChevronDownIcon />
       </button>

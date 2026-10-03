@@ -94,9 +94,13 @@ test("creates and selects a worktree-backed workspace from the desktop UI", asyn
       throw new Error("Expected the selected workspace to be the newly created worktree");
     }
 
-    await expect(window.locator(".topbar__session")).toContainText(worktreeWorkspace.name);
-    await expect(window.locator(".empty-panel")).toContainText("Create a thread for this folder");
-    await expect(window.locator(".empty-panel")).not.toContainText("/Users/");
+    await expect(window.getByTestId("new-thread-composer")).toBeVisible();
+    await createNamedThread(window, "Worktree context", { workspaceName: worktreeWorkspace.name });
+    await expect(window.getByTestId("composer-workspace")).toContainText(worktreeWorkspace.name);
+    await expect(window.getByTestId("composer-workspace")).toHaveAttribute(
+      "title",
+      worktreeWorkspace.path,
+    );
 
     await window
       .getByRole("complementary")

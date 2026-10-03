@@ -10,6 +10,15 @@ directories:
 files:
   - out/**/*
   - package.json
+  # Pi 1.0 requires these nested versions; the collector otherwise uses older roots.
+  - from: ../../node_modules/@earendil-works/pi-ai/node_modules/openai
+    to: node_modules/@earendil-works/pi-ai/node_modules/openai
+    filter:
+      - "**/*"
+  - from: ../../node_modules/@earendil-works/pi-coding-agent/node_modules/hosted-git-info
+    to: node_modules/@earendil-works/pi-coding-agent/node_modules/hosted-git-info
+    filter:
+      - "**/*"
   # The pnpm collector drops this nested version in the hoisted layout.
   # Keep retry 0.12 for Pi's lockfile code; other consumers require root 0.13.
   - from: ../../node_modules/proper-lockfile/node_modules/retry

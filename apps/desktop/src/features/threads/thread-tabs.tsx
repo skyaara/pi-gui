@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { WorkspaceSessionTarget } from "../../../contracts/desktop-state";
 import { ChevronRightIcon, CloseIcon, PlusIcon } from "../../ui/icons";
 import { threadTabKey } from "./hooks/use-thread-tabs";
@@ -16,12 +16,18 @@ export function ThreadTabs({
   onSelect,
   onClose,
   onNewThread,
+  actions,
+  title,
+  onMaximize,
 }: {
   tabs: readonly ThreadTab[];
   selectedKey: string;
   onSelect(target: WorkspaceSessionTarget): void;
   onClose(target: WorkspaceSessionTarget): void;
   onNewThread(): void;
+  actions?: ReactNode;
+  title?: string;
+  onMaximize(): void;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
@@ -62,7 +68,14 @@ export function ThreadTabs({
       behavior: "smooth",
     });
   return (
-    <div className="thread-tabs">
+    <div
+      className="thread-tabs"
+      onDoubleClick={(event) => {
+        if (!(event.target instanceof Element) || event.target.closest("button")) return;
+        onMaximize();
+      }}
+    >
+      {title && <h1 className="chat-header__title sr-only">{title}</h1>}
       {overflow && (
         <button
           className="thread-tabs__arrow thread-tabs__arrow--left"
@@ -166,6 +179,7 @@ export function ThreadTabs({
       >
         <PlusIcon />
       </button>
+      <div className="thread-tabs__actions">{actions}</div>
     </div>
   );
 }

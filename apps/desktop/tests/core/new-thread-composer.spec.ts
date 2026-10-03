@@ -76,7 +76,7 @@ test("new thread reuses composer behaviors for slash commands, image previews, a
     await openNewThread(window);
 
     const composer = window.getByTestId("new-thread-composer");
-    await expect(window.getByRole("heading", { name: /^What should we build in/ })).toBeVisible();
+    await expect(window.getByRole("heading", { name: /^What should we build/ })).toBeVisible();
     await expect(composer).toBeFocused();
     await expect(composer).toHaveAttribute(
       "placeholder",

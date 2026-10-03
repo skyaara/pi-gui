@@ -85,18 +85,18 @@ test("toggles the diff panel from the keyboard shortcut and renders changed file
     const window = await harness.firstWindow();
     await createNamedThread(window, "Diff test");
 
-    const topbarActions = window.locator(".topbar__actions");
-    await expect(topbarActions.locator(".topbar__icon")).toHaveCount(1);
-    await expect(topbarActions.getByLabel("Toggle side panel")).toBeVisible();
-    await expect(topbarActions.getByLabel("Toggle side panel")).toHaveAttribute(
+    const threadActions = window.locator(".thread-tab-actions");
+    await expect(threadActions.locator(".thread-tab-actions__icon")).toHaveCount(1);
+    await expect(threadActions.getByLabel("Toggle side panel")).toBeVisible();
+    await expect(threadActions.getByLabel("Toggle side panel")).toHaveAttribute(
       "aria-pressed",
       "false",
     );
-    await expect(topbarActions.getByLabel("Toggle terminal")).toHaveCount(0);
-    await expect(topbarActions.getByLabel("Toggle review")).toHaveCount(0);
-    await expect(topbarActions.getByLabel("Toggle files")).toHaveCount(0);
-    await expect(topbarActions.getByLabel(/prompt navigation/i)).toHaveCount(0);
-    await expect(topbarActions.getByLabel(/Evidence|Workbench|Open folder/i)).toHaveCount(0);
+    await expect(threadActions.getByLabel("Toggle terminal")).toHaveCount(0);
+    await expect(threadActions.getByLabel("Toggle review")).toHaveCount(0);
+    await expect(threadActions.getByLabel("Toggle files")).toHaveCount(0);
+    await expect(threadActions.getByLabel(/prompt navigation/i)).toHaveCount(0);
+    await expect(threadActions.getByLabel(/Evidence|Workbench|Open folder/i)).toHaveCount(0);
 
     // A task without a saved layout starts with the side workspace closed.
     const diffPanel = window.locator(".diff-panel");

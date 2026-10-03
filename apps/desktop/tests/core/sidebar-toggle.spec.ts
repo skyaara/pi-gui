@@ -19,8 +19,8 @@ interface SidebarLayout {
   readonly mainRight: number;
   readonly mainWidth: number;
   readonly toggleRight: number;
-  readonly topbarLeft: number;
-  readonly topbarRight: number;
+  readonly tabStripLeft: number;
+  readonly tabStripRight: number;
 }
 
 async function expectSidebarCollapsed(window: Page, collapsed: boolean): Promise<void> {
@@ -39,31 +39,31 @@ async function readSidebarLayout(window: Page): Promise<SidebarLayout | null> {
   return window.evaluate(() => {
     const main = document.querySelector<HTMLElement>(".main");
     const toggle = document.querySelector<HTMLElement>("[data-testid='sidebar-toggle']");
-    const topbar = document.querySelector<HTMLElement>(".topbar");
-    if (!main || !toggle || !topbar) {
+    const tabStrip = document.querySelector<HTMLElement>(".thread-tabs__strip");
+    if (!main || !toggle || !tabStrip) {
       return null;
     }
     const mainRect = main.getBoundingClientRect();
     const toggleRect = toggle.getBoundingClientRect();
-    const topbarRect = topbar.getBoundingClientRect();
+    const tabStripRect = tabStrip.getBoundingClientRect();
     return {
       viewportWidth: globalThis.window.innerWidth,
       mainLeft: mainRect.left,
       mainRight: mainRect.right,
       mainWidth: mainRect.width,
       toggleRight: toggleRect.right,
-      topbarLeft: topbarRect.left,
-      topbarRight: topbarRect.right,
+      tabStripLeft: tabStripRect.left,
+      tabStripRight: tabStripRect.right,
     };
   });
 }
 
-async function expectToggleClearOfTopbarDragRegion(window: Page): Promise<void> {
+async function expectToggleClearOfTabStripDragRegion(window: Page): Promise<void> {
   const layout = await readSidebarLayout(window);
   if (!layout) {
-    throw new Error("Expected main, sidebar toggle, and topbar to be present");
+    throw new Error("Expected main, sidebar toggle, and tabStrip to be present");
   }
-  expect(layout.toggleRight).toBeLessThanOrEqual(layout.topbarLeft);
+  expect(layout.toggleRight).toBeLessThanOrEqual(layout.tabStripLeft);
 }
 
 async function setElectronWindowSize(
@@ -141,7 +141,7 @@ test("toggles and persists the primary sidebar from the button and keyboard shor
 
     await toggle.click();
     await expectSidebarCollapsed(window, true);
-    await expectToggleClearOfTopbarDragRegion(window);
+    await expectToggleClearOfTabStripDragRegion(window);
     const collapsedMainBox = await window.locator(".main").boundingBox();
     expect(collapsedMainBox).not.toBeNull();
     expect(collapsedMainBox?.x ?? 999).toBeLessThan(expandedMainBox?.x ?? 0);
@@ -224,7 +224,7 @@ test("toggles and persists the primary sidebar from the button and keyboard shor
     await waitForWorkspaceByPath(window, workspacePath);
     await expectSidebarCollapsed(window, true);
     await expect(window.getByTestId("sidebar-toggle")).toBeVisible();
-    await expectToggleClearOfTopbarDragRegion(window);
+    await expectToggleClearOfTabStripDragRegion(window);
     await window.getByTestId("sidebar-toggle").click();
     await expectSidebarCollapsed(window, false);
   } finally {
@@ -260,21 +260,21 @@ test("keeps collapsed sidebar out of narrow windows and reopens from the button"
 
     await window.keyboard.press(desktopShortcut("B"));
     await expectSidebarCollapsed(window, true);
-    await expectToggleClearOfTopbarDragRegion(window);
+    await expectToggleClearOfTabStripDragRegion(window);
     await writeProofScreenshot(window, "narrow-sidebar-collapsed.png");
 
     const collapsedLayout = await readSidebarLayout(window);
     if (!collapsedLayout) {
       throw new Error(
-        "Expected collapsed narrow layout to include main, topbar, and sidebar toggle",
+        "Expected collapsed narrow layout to include main, tabStrip, and sidebar toggle",
       );
     }
     expect(collapsedLayout.viewportWidth).toBeLessThanOrEqual(NARROW_WINDOW_WIDTH);
     expect(collapsedLayout.mainLeft).toBeLessThanOrEqual(1);
     expect(collapsedLayout.mainRight).toBeGreaterThanOrEqual(collapsedLayout.viewportWidth - 1);
     expect(collapsedLayout.mainWidth).toBeGreaterThanOrEqual(collapsedLayout.viewportWidth - 1);
-    expect(collapsedLayout.topbarLeft).toBeGreaterThanOrEqual(collapsedLayout.toggleRight);
-    expect(collapsedLayout.topbarRight).toBeLessThanOrEqual(collapsedLayout.mainRight);
+    expect(collapsedLayout.tabStripLeft).toBeGreaterThanOrEqual(collapsedLayout.toggleRight);
+    expect(collapsedLayout.tabStripRight).toBeLessThanOrEqual(collapsedLayout.mainRight);
 
     await window.getByTestId("sidebar-toggle").click();
     await expectSidebarCollapsed(window, false);

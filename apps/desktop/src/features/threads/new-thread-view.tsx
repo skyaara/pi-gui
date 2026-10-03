@@ -6,6 +6,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type RefObject,
+  type ReactNode,
 } from "react";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import type { ExtensionFlagValues } from "@pi-gui/session-driver";
@@ -23,6 +24,7 @@ import {
   type ComposerSlashOption,
   type ComposerSlashOptionEmptyState,
 } from "../conversation/composer-commands";
+import { ComposerWorkspace } from "../conversation/composer-workspace";
 import { ComposerSurface } from "../conversation/composer-surface";
 import { ModelOnboardingNoticeBanner } from "../settings/model-onboarding-notice";
 import type {
@@ -167,27 +169,8 @@ export function NewThreadView({
       <div className="new-thread">
         <div className="new-thread__hero">
           <h1 className="new-thread__title">
-            {workspace.isStandalone ? "What should we work on?" : "What should we build in "}
-            {!workspace.isStandalone ? (
-              <>
-                <WorkspacePicker
-                  workspace={workspace}
-                  workspaces={workspaces}
-                  onSelect={onSelectWorkspace}
-                  onSelectStandalone={onSelectStandalone}
-                />
-                ?
-              </>
-            ) : null}
+            {workspace.isStandalone ? "What should we work on?" : "What should we build?"}
           </h1>
-          {workspace.isStandalone ? (
-            <WorkspacePicker
-              workspace={workspace}
-              workspaces={workspaces}
-              onSelect={onSelectWorkspace}
-              onSelectStandalone={onSelectStandalone}
-            />
-          ) : null}
           {workspace.isStandalone ? (
             <p className="new-thread__storage">Files saved in {workspace.path}</p>
           ) : null}
@@ -239,6 +222,39 @@ export function NewThreadView({
               textareaPlaceholder="Ask anything, @mention files, or / for commands and skills"
               footer={
                 <NewThreadComposerFooter
+                  workspaceContext={
+                    <ComposerWorkspace
+                      workspace={workspace}
+                      controls={
+                        !workspace.isStandalone ? (
+                          <label className="new-thread__checkout">
+                            <WorktreeIcon />
+                            <select
+                              aria-label="Workspace mode"
+                              value={environment}
+                              onChange={(event) =>
+                                onSelectEnvironment(
+                                  event.target.value === "worktree" ? "worktree" : "local",
+                                )
+                              }
+                            >
+                              <option value="local">Current checkout</option>
+                              <option value="worktree">New worktree</option>
+                            </select>
+                          </label>
+                        ) : (
+                          <span>No project</span>
+                        )
+                      }
+                    >
+                      <WorkspacePicker
+                        workspace={workspace}
+                        workspaces={workspaces}
+                        onSelect={onSelectWorkspace}
+                        onSelectStandalone={onSelectStandalone}
+                      />
+                    </ComposerWorkspace>
+                  }
                   runtime={runtime}
                   provider={provider}
                   modelId={modelId}
@@ -258,28 +274,6 @@ export function NewThreadView({
               }
             />
           </div>
-          <div className="new-thread__context-strip">
-            {!workspace.isStandalone ? (
-              <label className="new-thread__checkout">
-                <WorktreeIcon />
-                <select
-                  aria-label="Workspace mode"
-                  value={environment}
-                  onChange={(event) =>
-                    onSelectEnvironment(event.target.value === "worktree" ? "worktree" : "local")
-                  }
-                >
-                  <option value="local">Current checkout</option>
-                  <option value="worktree">New worktree</option>
-                </select>
-              </label>
-            ) : (
-              <span>No project</span>
-            )}
-            <span className="new-thread__branch" title={workspace.path}>
-              {workspace.branchName ?? workspace.name}
-            </span>
-          </div>
         </div>
       </div>
     </section>
@@ -287,6 +281,7 @@ export function NewThreadView({
 }
 
 interface NewThreadComposerFooterProps {
+  readonly workspaceContext: ReactNode;
   readonly runtime?: RuntimeSnapshot;
   readonly provider: string | undefined;
   readonly modelId: string | undefined;
@@ -305,6 +300,7 @@ interface NewThreadComposerFooterProps {
 }
 
 function NewThreadComposerFooter({
+  workspaceContext,
   runtime,
   provider,
   modelId,
@@ -324,6 +320,7 @@ function NewThreadComposerFooter({
   return (
     <>
       <div className="composer__footer">
+        {workspaceContext}
         <div className="composer__footer-row">
           <div className="composer__hint new-thread__hint">
             <ModelSelector

@@ -65,7 +65,7 @@ test("model and effort menus remain usable above a transparent composer", async 
       await expect(menu).toHaveCount(0);
       await expect(trigger).toBeFocused();
       await trigger.click();
-      await window.getByTestId("topbar").click();
+      await window.locator(".thread-tabs").click();
       await expect(menu).toHaveCount(0);
     }
     await window.screenshot({ path: test.info().outputPath("transparent-model-controls.png") });

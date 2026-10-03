@@ -7,6 +7,7 @@
   min-width: 0;
   padding: 6px 10px 0;
   border-bottom: 1px solid var(--border-light);
+  background: var(--main);
   -webkit-app-region: drag;
 }
 
@@ -108,10 +109,10 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 .main--with-thread-tabs {
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
 }
 .main--with-thread-tabs.main--with-startup-diagnostics {
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
 }
 .main--with-thread-tabs.main--with-side-panel > .side-panel {
   grid-row: 2 / -1;
@@ -119,13 +120,46 @@
 .shell--sidebar-collapsed .thread-tabs {
   padding-left: var(--titlebar-collapsed-main-padding-left);
 }
-.shell--sidebar-collapsed .main--with-thread-tabs .topbar {
-  margin-left: 0;
-  padding-left: 16px;
-}
 
 @media (max-width: 980px) {
   .main--with-thread-tabs.main--with-side-panel > .side-panel {
-    top: 100px;
+    top: 48px;
   }
+}
+
+.thread-tabs__actions {
+  margin-left: auto;
+  flex: none;
+}
+.thread-tab-actions,
+.thread-tab-actions__tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.thread-tab-actions {
+  color: var(--muted-strong);
+  -webkit-app-region: no-drag;
+}
+.thread-tab-actions__tool,
+.thread-tab-actions__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+}
+.thread-tab-actions button[aria-pressed="true"] {
+  background: var(--overlay-hover);
+  color: var(--text-strong);
+}
+.thread-tab-actions__tooltip {
+  left: auto;
+  right: 0;
+  transform: translateY(-2px);
+}
+.thread-tab-actions__tooltip-wrap:hover .thread-tab-actions__tooltip,
+.thread-tab-actions__tooltip-wrap:focus-within .thread-tab-actions__tooltip {
+  transform: none;
 }

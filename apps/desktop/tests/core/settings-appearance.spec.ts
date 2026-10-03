@@ -51,7 +51,7 @@ test("toggles and restores window transparency", async () => {
         .poll(() => elementCssProperty(window, ".sidebar", "background-color"))
         .toBe(await resolveColor(window, expected["--sidebar-glass"]!));
       await expect
-        .poll(() => elementCssProperty(window, ".topbar", "background-color"))
+        .poll(() => elementCssProperty(window, ".thread-tabs", "background-color"))
         .toBe(await resolveColor(window, expected["--surface-glass"]!));
       const threads = window.getByRole("button", { name: "Threads", exact: true });
       await threads.click();
@@ -263,7 +263,7 @@ async function expectSameDesign(window: Page): Promise<void> {
   const surfaces: readonly (readonly [selector: string, property: string, token: string])[] = [
     [".main", "background-color", "var(--main)"],
     [".sidebar", "background-color", "var(--sidebar)"],
-    [".topbar", "background-color", "var(--main)"],
+    [".thread-tabs", "background-color", "var(--main)"],
     [".sidebar__new", "background-color", "transparent"],
     [".session-row--active", "background-color", "var(--sidebar-row-active)"],
     [".composer__surface", "background-color", "var(--composer-surface)"],
