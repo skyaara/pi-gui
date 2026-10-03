@@ -64,6 +64,15 @@ test("minimal header and composer retain working Pi controls", async () => {
     });
     await expect(page.getByTestId("transcript")).toContainText("What is connected");
     await page.getByTestId("composer").fill("Continue with the remaining screens");
+    await page.getByRole("button", { name: "Open connectors", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "MCP servers", exact: true })).toBeVisible();
+    await expect(page.getByTestId("mcp-servers-empty")).toBeVisible();
+    await page.getByRole("button", { name: "Back to app", exact: true }).click();
+    await expect(page.getByTestId("composer")).toHaveValue("Continue with the remaining screens");
+    await page.getByRole("button", { name: "Open skills", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Skills", exact: true })).toBeVisible();
+    await page.locator(".sidebar").getByRole("button", { name: "Threads", exact: true }).click();
+
     await page.locator('.composer .model-selector__badge[aria-haspopup="dialog"]').click();
     const modelMenu = page.getByRole("dialog", { name: "Choose model", exact: true });
     await expect(modelMenu).toBeVisible();
@@ -102,7 +111,27 @@ test("minimal header and composer retain working Pi controls", async () => {
     await page.getByRole("button", { name: "Back to app", exact: true }).click();
     await page.getByRole("button", { name: "New thread", exact: true }).click();
     await expect(page.getByTestId("new-thread-composer")).toBeVisible();
+
+    const attach = (await page
+      .getByRole("button", { name: "Attach files", exact: true })
+      .boundingBox())!;
+    const skills = (await page
+      .getByRole("button", { name: "Open skills", exact: true })
+      .boundingBox())!;
+    expect(attach.height).toBe(skills.height);
+    expect(attach.width).toBe(attach.height);
+    expect(Math.abs(attach.y - skills.y)).toBeLessThan(1);
+    await expect(page.getByRole("button", { name: "Open skills", exact: true })).toHaveText(
+      /Skills \(\d+\)/,
+    );
     await page.screenshot({ path: test.info().outputPath("new-session.png") });
+    await page.getByRole("button", { name: "Open connectors", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "MCP servers", exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Back to app", exact: true }).click();
+    await expect(page.getByTestId("new-thread-composer")).toBeVisible();
+    await page.getByRole("button", { name: "Open skills", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Skills", exact: true })).toBeVisible();
+
     for (const label of ["Automations", "Skills", "Extensions"]) {
       await page.locator(".sidebar").getByRole("button", { name: label, exact: true }).click();
       await expect(page.getByRole("heading", { name: label, exact: true })).toBeVisible();

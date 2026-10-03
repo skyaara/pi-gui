@@ -32,7 +32,7 @@
   border-right-color: var(--line);
 }
 .sidebar__top {
-  padding: 48px 12px 28px;
+  padding: 42px 12px 14px;
 }
 .sidebar__nav {
   display: grid;
@@ -121,13 +121,7 @@
   min-height: 26px;
   padding: 6px;
 }
-.sidebar__resources .sidebar__nav-item > span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
+
 .main,
 .main--with-thread-tabs {
   background: var(--main);
@@ -239,29 +233,6 @@
 }
 .environment-rail__status-dot--failed {
   background: var(--error);
-}
-.thread-tabs {
-  height: 38px;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px 0 24px;
-  border: 0;
-  background: var(--main);
-}
-.thread-tabs__item {
-  height: 31px;
-  min-width: 92px;
-  flex: 0 1 170px;
-  max-width: 220px;
-  border-radius: 3px;
-}
-.thread-tabs__item--selected,
-.thread-tabs__item--selected:hover {
-  background: var(--surface-muted);
-  box-shadow: none;
-}
-.thread-tabs__tab {
-  font-size: 12px;
 }
 .canvas--thread {
   padding-top: 0;
@@ -377,7 +348,14 @@
 }
 .composer__attach {
   width: 28px;
+  min-width: 28px;
   height: 28px;
+  min-height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
   border: 1px solid var(--line-strong);
   border-radius: 4px;
 }
@@ -897,22 +875,10 @@
 }
 
 /* Quiet pastel accents retain the selected theme's readable ink. */
-.thread-tabs {
-  padding: 0 12px;
-  gap: 5px;
-}
-.thread-tabs__actions {
-  margin-left: auto;
-  flex: none;
-}
-.thread-tabs__item--selected,
-.thread-tabs__item--selected:hover,
 .session-row--active {
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
 }
-.thread-tabs__item--selected {
-  box-shadow: inset 0 -2px color-mix(in srgb, var(--accent) 35%, transparent);
-}
+
 .sidebar__footer {
   justify-content: flex-start;
 }
@@ -1009,4 +975,45 @@
   height: auto;
   overflow: visible;
   clip-path: none;
+}
+
+.sidebar__resources {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+}
+.sidebar__resources .sidebar__nav-item {
+  width: 100%;
+  min-height: 29px;
+  padding: 5px 7px;
+  gap: 10px;
+}
+.sidebar__section .workspace-list {
+  gap: 6px;
+}
+.workspace-group,
+.session-list {
+  align-content: start;
+}
+.new-thread__hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.composer__feature-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  white-space: nowrap;
+}
+.composer__connector-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted-soft);
+}
+.composer__resource-count {
+  color: var(--muted);
 }

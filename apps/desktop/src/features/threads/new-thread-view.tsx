@@ -1,3 +1,4 @@
+import { ComposerResourceControls } from "../conversation/composer-resource-controls";
 import { WorkspacePicker } from "./workspace-picker";
 import {
   useEffect,
@@ -35,6 +36,8 @@ import { ModelSelector } from "../conversation/model-selector";
 import { ExtensionFlagsSelector } from "./extension-flags-selector";
 
 interface NewThreadViewProps {
+  readonly onOpenSkills: () => void;
+  readonly onOpenConnectors: () => void;
   readonly workspaces: readonly WorkspaceRecord[];
   readonly selectedWorkspaceId: string;
   readonly runtime?: RuntimeSnapshot;
@@ -86,6 +89,8 @@ interface NewThreadViewProps {
 }
 
 export function NewThreadView({
+  onOpenSkills,
+  onOpenConnectors,
   workspaces,
   selectedWorkspaceId,
   runtime,
@@ -251,6 +256,8 @@ export function NewThreadView({
               textareaPlaceholder="Ask anything, @mention files, or / for commands and skills"
               footer={
                 <NewThreadComposerFooter
+                  onOpenSkills={onOpenSkills}
+                  onOpenConnectors={onOpenConnectors}
                   runtime={runtime}
                   provider={provider}
                   modelId={modelId}
@@ -277,6 +284,8 @@ export function NewThreadView({
 }
 
 interface NewThreadComposerFooterProps {
+  readonly onOpenSkills: () => void;
+  readonly onOpenConnectors: () => void;
   readonly runtime?: RuntimeSnapshot;
   readonly provider: string | undefined;
   readonly modelId: string | undefined;
@@ -295,6 +304,8 @@ interface NewThreadComposerFooterProps {
 }
 
 function NewThreadComposerFooter({
+  onOpenSkills,
+  onOpenConnectors,
   runtime,
   provider,
   modelId,
@@ -335,6 +346,11 @@ function NewThreadComposerFooter({
               onSetThinking={onSetThinking}
               fastMode={fastMode}
               onSetFastMode={onSetFastMode}
+            />
+            <ComposerResourceControls
+              skillCount={runtime?.skills.filter((skill) => skill.enabled).length ?? 0}
+              onOpenSkills={onOpenSkills}
+              onOpenConnectors={onOpenConnectors}
             />
             <ExtensionFlagsSelector
               runtime={runtime}

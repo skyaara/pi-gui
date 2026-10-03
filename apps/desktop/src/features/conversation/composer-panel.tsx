@@ -1,3 +1,4 @@
+import { ComposerResourceControls } from "./composer-resource-controls";
 import {
   type ClipboardEvent,
   type Dispatch,
@@ -40,7 +41,7 @@ import type { ExtensionDockModel } from "../extensions/extension-session-ui";
 
 interface ComposerPanelProps {
   readonly onOpenSkills: () => void;
-  readonly onOpenExtensions: () => void;
+  readonly onOpenConnectors: () => void;
   readonly onOpenShortcuts: () => void;
   readonly preparingTaskDraft?: boolean;
   readonly selectedSession: SessionRecord;
@@ -105,7 +106,7 @@ interface ComposerPanelProps {
 
 export function ComposerPanel({
   onOpenSkills,
-  onOpenExtensions,
+  onOpenConnectors,
   onOpenShortcuts,
   preparingTaskDraft = false,
   selectedSession,
@@ -240,22 +241,11 @@ export function ComposerPanel({
                     onSetFastMode={onSetFastMode}
                   />
                   <ExtensionFlagsBadge values={extensionFlags} />
-                  <button
-                    className="composer__feature-control"
-                    type="button"
-                    aria-label="Open extensions"
-                    onClick={onOpenExtensions}
-                  >
-                    Extensions
-                  </button>
-                  <button
-                    className="composer__feature-control"
-                    type="button"
-                    aria-label="Open skills"
-                    onClick={onOpenSkills}
-                  >
-                    Skills
-                  </button>
+                  <ComposerResourceControls
+                    skillCount={runtime?.skills.filter((skill) => skill.enabled).length ?? 0}
+                    onOpenSkills={onOpenSkills}
+                    onOpenConnectors={onOpenConnectors}
+                  />
                   <button
                     className="composer__feature-control"
                     type="button"

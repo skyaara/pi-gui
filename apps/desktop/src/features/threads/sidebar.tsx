@@ -466,7 +466,7 @@ export function Sidebar(props: SidebarProps) {
             <SearchIcon />
             <span>Search</span>
             <kbd>⌘K</kbd>
-          </button>{" "}
+          </button>
           <div className="sidebar__resources">
             <button
               title="Skills"

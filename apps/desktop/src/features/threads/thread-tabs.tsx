@@ -103,7 +103,6 @@ export function ThreadTabs({
         role="tablist"
         aria-label="Open threads"
         ref={strip}
-        style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 240 }}
         onScroll={measure}
         onWheel={(event) => {
           if (overflow && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {

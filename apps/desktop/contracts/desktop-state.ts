@@ -439,7 +439,7 @@ export function createEmptyDesktopAppState(): DesktopAppState {
     themeMode: "system",
     themePresetId: "default",
     sidebarCollapsed: false,
-    threadGrouping: "time",
+    threadGrouping: "workspace",
     collapsedWorkspaceIds: [],
     enableTransparency: false,
     startupDiagnostics: [],

@@ -1067,6 +1067,8 @@ export default function App() {
           ) : showNewThread ? (
             rootWorkspaceOptions.length > 0 ? (
               <NewThreadView
+                onOpenSkills={() => openSkills(newThread.workspace?.id)}
+                onOpenConnectors={() => openSettings(newThread.workspace?.id, "mcp")}
                 workspaces={rootWorkspaceOptions}
                 selectedWorkspaceId={newThread.rootWorkspaceId || rootWorkspaceOptions[0]?.id || ""}
                 runtime={newThread.runtime}
@@ -1203,9 +1205,7 @@ export default function App() {
                 onOpenSkills={() =>
                   openSkills(selectedWorkspace.rootWorkspaceId ?? selectedWorkspace.id)
                 }
-                onOpenExtensions={() =>
-                  openExtensions(selectedWorkspace.rootWorkspaceId ?? selectedWorkspace.id)
-                }
+                onOpenConnectors={() => openSettings(selectedWorkspace.id, "mcp")}
                 onOpenShortcuts={() => openSettings(selectedWorkspace.id, "shortcuts")}
                 preparingTaskDraft={extensionHostActions.preparingTaskDraft}
                 activeSlashCommand={slashMenu.activeSlashFlow?.command}

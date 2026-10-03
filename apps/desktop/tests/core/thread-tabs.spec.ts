@@ -25,6 +25,21 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
     const tabs = page.getByRole("tablist", { name: "Open threads" });
     const firstTab = tabs.getByRole("tab", { name: "First thread", exact: true });
     const secondTab = tabs.getByRole("tab", { name: "Second thread", exact: true });
+    await expect(page.locator(".recency-thread-group")).toHaveCount(0);
+    const sidebar = page.getByTestId("workspace-list");
+    await expect(sidebar.getByRole("button", { name: "First thread", exact: true })).toHaveCount(1);
+    await expect(sidebar.getByRole("button", { name: "Second thread", exact: true })).toHaveCount(
+      1,
+    );
+    const lastTab = await secondTab.locator("..").boundingBox();
+    const newButton = await page
+      .getByRole("button", { name: "New thread tab", exact: true })
+      .boundingBox();
+    expect(newButton!.x - (lastTab!.x + lastTab!.width)).toBeLessThanOrEqual(8);
+    expect(
+      Math.abs(newButton!.y + newButton!.height / 2 - (lastTab!.y + lastTab!.height / 2)),
+    ).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: test.info().outputPath("project-tabs.png") });
     await firstTab.click();
     await page.getByTestId("composer").fill("First draft");
     await secondTab.click();

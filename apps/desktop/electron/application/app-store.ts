@@ -2259,7 +2259,7 @@ export class DesktopAppStore {
       themeMode: persisted.themeMode ?? this.state.themeMode,
       themePresetId: persisted.themePresetId ?? this.state.themePresetId,
       sidebarCollapsed: persisted.sidebarCollapsed ?? this.state.sidebarCollapsed,
-      threadGrouping: persisted.threadGrouping ?? "time",
+      threadGrouping: persisted.threadGrouping ?? "workspace",
       collapsedWorkspaceIds: persisted.collapsedWorkspaceIds ?? [],
       enableTransparency: persisted.enableTransparency ?? this.state.enableTransparency,
       orchestrationChildren: persisted.orchestrationChildren ?? [],

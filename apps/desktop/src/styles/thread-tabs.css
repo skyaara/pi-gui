@@ -2,12 +2,12 @@
   grid-column: 1 / -1;
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 44px;
+  gap: 4px;
+  height: 38px;
   min-width: 0;
   padding: 6px 10px 0;
-  border-bottom: 1px solid var(--border-light);
-  background: var(--surface);
+  border-bottom: 0;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface-muted));
   -webkit-app-region: drag;
 }
 
@@ -16,7 +16,8 @@
   align-items: flex-end;
   gap: 1px;
   min-width: 0;
-  flex: 1;
+  flex: 0 1 auto;
+  width: max-content;
   height: 100%;
   overflow-x: auto;
   scrollbar-width: none;
@@ -28,11 +29,11 @@
 .thread-tabs__item {
   display: flex;
   align-items: center;
-  flex: 1 0 140px;
-  max-width: 240px;
+  flex: 0 0 200px;
+  max-width: 200px;
   min-width: 140px;
-  height: 36px;
-  border-radius: 10px 10px 0 0;
+  height: 32px;
+  border-radius: 7px 7px 0 0;
   color: var(--muted);
   border: 0;
 }
@@ -93,6 +94,9 @@
 .thread-tabs button:hover {
   background: var(--overlay-hover);
 }
+.thread-tabs .thread-tabs__tab:hover {
+  background: transparent;
+}
 .thread-tabs button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
@@ -114,7 +118,7 @@
 .thread-tabs__new,
 .thread-tabs__split,
 .thread-tabs__arrow {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .thread-tabs__dot {
   width: 6px;
@@ -141,12 +145,13 @@
 
 @media (max-width: 980px) {
   .main--with-thread-tabs.main--with-side-panel > .side-panel {
-    top: 44px;
+    top: 38px;
   }
 }
 
 .thread-tabs__actions {
   margin-left: auto;
+  margin-bottom: 2px;
   flex: none;
 }
 .thread-tab-actions,

@@ -129,32 +129,6 @@
   font-weight: 600;
 }
 
-.thread-tabs {
-  height: 40px;
-  align-items: center;
-  padding: 4px 10px;
-  background: var(--main);
-}
-.thread-tabs__strip {
-  align-items: center;
-}
-.thread-tabs__item {
-  height: 30px;
-  min-width: 120px;
-  flex-basis: 150px;
-  border-radius: 7px;
-}
-.thread-tabs__item--selected,
-.thread-tabs__item--selected:hover {
-  background: var(--surface);
-  box-shadow: var(--elevation-hairline);
-}
-.thread-tabs__new,
-.thread-tabs__split,
-.thread-tabs__arrow {
-  margin-bottom: 0;
-}
-
 .thread-tabs__strip--fade-start {
   mask-image: linear-gradient(to right, transparent, black 18px, black);
 }
