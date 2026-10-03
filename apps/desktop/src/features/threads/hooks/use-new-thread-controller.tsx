@@ -261,6 +261,11 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     (workspaceId?: string) => {
       if (hasOpenTab || prompt.trim() || attachments.length > 0) {
         setHasOpenTab(true);
+        // A folder's New thread action targets that folder even when the tab
+        // already exists. Keep its draft while changing the target workspace.
+        if (workspaceId && rootWorkspaceOptions.some((entry) => entry.id === workspaceId)) {
+          setRootWorkspaceId(workspaceId);
+        }
         resumeSurface();
         return;
       }
