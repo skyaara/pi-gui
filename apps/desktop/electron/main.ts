@@ -9,6 +9,7 @@ import {
   nativeTheme,
   net,
   protocol,
+  screen,
   shell,
   type MenuItemConstructorOptions,
   type MessageBoxOptions,
@@ -704,6 +705,41 @@ function createAppWindow(sourceView?: DesktopAppViewState): BrowserWindow {
   return window;
 }
 
+function splitWindow(source: BrowserWindow): void {
+  const area = screen.getDisplayMatching(source.getBounds()).workArea;
+  const leftWidth = Math.floor(area.width / 2);
+  const rightWidth = area.width - leftWidth;
+  if (leftWidth < 560 || rightWidth < 560) {
+    void dialog
+      .showMessageBox(source, {
+        type: "info",
+        message: "This display is too narrow for two PiUI windows.",
+        detail: "A display at least 1120 pixels wide is needed to place them side by side.",
+      })
+      .catch(console.error);
+    return;
+  }
+  const tile = () => {
+    if (source.isDestroyed()) return;
+    const sibling = createAppWindow(windowOwner.viewForWindow(source));
+    if (source.isMaximized()) source.unmaximize();
+    if (source.isMinimized()) source.restore();
+    source.setBounds({ x: area.x, y: area.y, width: leftWidth, height: area.height });
+    sibling.setBounds({
+      x: area.x + leftWidth,
+      y: area.y,
+      width: rightWidth,
+      height: area.height,
+    });
+  };
+  if (source.isFullScreen()) {
+    source.once("leave-full-screen", tile);
+    source.setFullScreen(false);
+  } else {
+    tile();
+  }
+}
+
 function canPublishToWindow(window: BrowserWindow): boolean {
   return (
     !window.isDestroyed() && !window.webContents.isDestroyed() && !window.webContents.isCrashed()
@@ -1225,6 +1261,7 @@ app
         notificationPermission: () => notificationPermissionService,
         terminal: getTerminalService,
         optionalTerminal: () => terminalService,
+        splitWindow,
         setShortcutRecording: (window, recording) => {
           if (recording) shortcutRecordingWindows.add(window.webContents.id);
           else shortcutRecordingWindows.delete(window.webContents.id);

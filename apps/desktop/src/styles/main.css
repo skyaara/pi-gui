@@ -46,10 +46,9 @@
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  /* The transcript scroller spans the full canvas so its scrollbar sits on the
-   * panel edge; fixed chrome keeps the centered column via --thread-column. */
+  /* Keep the scrollbar on the pane edge and use the width left by the gutters. */
   --thread-gutter: 24px;
-  --thread-column: min(var(--chat-max-width), 100% - 2 * var(--thread-gutter));
+  --thread-column: calc(100% - 2 * var(--thread-gutter));
   padding-inline: 0;
 }
 
@@ -77,6 +76,7 @@
   position: relative;
   display: grid;
   gap: 12px;
+  width: 100%;
 }
 
 .composer__menus {

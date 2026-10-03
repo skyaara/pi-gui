@@ -12,9 +12,7 @@
   gap: 16px;
   min-width: 0;
   width: 100%;
-  /* Constrained measure so prose lines stay readable instead of floating on a
-   * too-wide canvas. Column is centered; rows keep their own inner caps. */
-  max-width: var(--transcript-measure, var(--chat-max-width));
+  max-width: 100%;
   margin-inline: auto;
 }
 

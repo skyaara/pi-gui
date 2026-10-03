@@ -130,6 +130,9 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
       .locator(".thread-tabs__item")
       .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().top));
     expect(new Set(rows).size).toBe(1);
+    const canvas = (await page.locator(".canvas--thread").boundingBox())!;
+    const composer = (await page.locator(".composer__surface").boundingBox())!;
+    expect(composer.width).toBeGreaterThan(canvas.width - 80);
     await page.getByRole("button", { name: "Toggle sidebar", exact: true }).click();
     await expect(page.locator(".sidebar")).toHaveCount(0);
     const toggleBounds = await page
@@ -138,6 +141,54 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     const stripBounds = await strip.boundingBox();
     expect(stripBounds!.x).toBeGreaterThan(toggleBounds!.x + toggleBounds!.width);
     await page.screenshot({ path: test.info().outputPath("wide-tabs.png") });
+  } finally {
+    await harness.close();
+  }
+});
+
+test("split windows keep their own thread tabs and selected conversations", async () => {
+  const workspace = await makeWorkspace("split-window-tabs");
+  const harness = await launchDesktop(await makeUserDataDir(), {
+    initialWorkspaces: [workspace],
+    testMode: "background",
+  });
+  try {
+    const left = await harness.firstWindow();
+    await createNamedThread(left, "Left thread");
+    await createNamedThread(left, "Right thread");
+    const newWindow = harness.electronApp.waitForEvent("window");
+    await left.getByRole("button", { name: "Split into two windows" }).click();
+    const right = await newWindow;
+    const leftTabs = left.getByRole("tablist", { name: "Open threads" });
+    const rightTabs = right.getByRole("tablist", { name: "Open threads" });
+    await expect(rightTabs.getByRole("tab", { name: "Right thread" })).toBeVisible();
+    await leftTabs.getByRole("tab", { name: "Left thread" }).click();
+    await expect(leftTabs.getByRole("tab", { name: "Left thread" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(rightTabs.getByRole("tab", { name: "Right thread" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(rightTabs.getByRole("tab")).toHaveCount(1);
+    await left.getByTestId("composer").fill("Draft in left window");
+    await right.getByTestId("composer").fill("Draft in right window");
+    await expect(left.getByTestId("composer")).toHaveValue("Draft in left window");
+    await expect(right.getByTestId("composer")).toHaveValue("Draft in right window");
+    const singleTab = (await rightTabs.getByRole("tab", { name: "Right thread" }).boundingBox())!;
+    expect(singleTab.width).toBeLessThanOrEqual(240);
+    const bounds = await harness.electronApp.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows()
+        .map((window) => window.getBounds())
+        .sort((a, b) => a.x - b.x),
+    );
+    expect(bounds).toHaveLength(2);
+    expect(bounds[0]!.x + bounds[0]!.width).toBe(bounds[1]!.x);
+    expect(bounds[0]!.y).toBe(bounds[1]!.y);
+    expect(bounds[0]!.height).toBe(bounds[1]!.height);
+    await left.screenshot({ path: test.info().outputPath("split-left.png") });
+    await right.screenshot({ path: test.info().outputPath("split-right.png") });
   } finally {
     await harness.close();
   }

@@ -968,6 +968,7 @@ export default function App() {
   const showNewThread =
     snapshot.activeView === "new-thread" ||
     (snapshot.activeView === "threads" && selectedWorkspace && !selectedSession);
+  const splitWindow = () => void api.splitWindow().catch(console.error);
 
   return (
     <div className={shellClassName}>
@@ -1067,9 +1068,8 @@ export default function App() {
               ) : null}
             </ThreadTabActions>
           }
-          onMaximize={() => {
-            void api.toggleWindowMaximize().catch(console.error);
-          }}
+          onMaximize={() => void api.toggleWindowMaximize().catch(console.error)}
+          onSplitWindow={selectedSession && !showNewThread ? splitWindow : undefined}
           onSelect={handleSelectSession}
           onNewThread={() =>
             newThread.openSurface(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)

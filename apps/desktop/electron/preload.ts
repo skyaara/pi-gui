@@ -606,6 +606,7 @@ contextBridge.exposeInMainWorld("piApp", {
       stagingSourcePath,
     ) as Promise<void>,
   toggleWindowMaximize: () => ipcRenderer.invoke(desktopIpc.toggleWindowMaximize) as Promise<void>,
+  splitWindow: () => ipcRenderer.invoke(desktopIpc.splitWindow) as Promise<void>,
   openExternal: (url: string) => ipcRenderer.invoke(desktopIpc.openExternal, url) as Promise<void>,
   getThemeMode: () =>
     ipcRenderer.invoke(desktopIpc.getThemeMode) as Promise<"system" | "light" | "dark">,

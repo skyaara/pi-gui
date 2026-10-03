@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import type { WorkspaceSessionTarget } from "../../../contracts/desktop-state";
-import { ChevronRightIcon, CloseIcon, PlusIcon } from "../../ui/icons";
+import { ChevronRightIcon, CloseIcon, PlusIcon, SplitWindowIcon } from "../../ui/icons";
 import { threadTabKey } from "./hooks/use-thread-tabs";
 
 interface ThreadTab extends WorkspaceSessionTarget {
@@ -16,6 +16,7 @@ export function ThreadTabs({
   onSelect,
   onClose,
   onNewThread,
+  onSplitWindow,
   actions,
   title,
   onMaximize,
@@ -29,6 +30,7 @@ export function ThreadTabs({
   onSelect(target: WorkspaceSessionTarget): void;
   onClose(target: WorkspaceSessionTarget): void;
   onNewThread(): void;
+  onSplitWindow?(): void;
   actions?: ReactNode;
   title?: string;
   onMaximize(): void;
@@ -99,7 +101,7 @@ export function ThreadTabs({
         role="tablist"
         aria-label="Open threads"
         ref={strip}
-        style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 164 }}
+        style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 240 }}
         onScroll={measure}
         onWheel={(event) => {
           if (overflow && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
@@ -228,6 +230,16 @@ export function ThreadTabs({
       >
         <PlusIcon />
       </button>
+      {onSplitWindow && (
+        <button
+          className="thread-tabs__split"
+          aria-label="Split into two windows"
+          title="Split into two windows"
+          onClick={onSplitWindow}
+        >
+          <SplitWindowIcon />
+        </button>
+      )}
       <div className="thread-tabs__actions">{actions}</div>
     </div>
   );

@@ -203,6 +203,7 @@ export interface DesktopIpcCapabilities {
   readonly setTerminalFocused: (webContentsId: number, focused: boolean) => void;
   readonly setSidePanelFocused: (webContentsId: number, focused: boolean) => void;
   readonly setTransparency: (enabled: boolean) => void;
+  readonly splitWindow: (window: BrowserWindow) => void;
   readonly pickComposerAttachments: (
     window: BrowserWindow,
     existing?: readonly ComposerAttachment[],
@@ -989,6 +990,13 @@ export function registerDesktopIpc({
       window.maximize();
     }
   });
+  handleMainFrame(
+    desktopIpc.splitWindow,
+    () => undefined,
+    (_input, { window }) => {
+      capabilities.splitWindow(window);
+    },
+  );
 }
 
 function registerTerminalIpc(windows: WindowOwner, capabilities: DesktopIpcCapabilities): void {

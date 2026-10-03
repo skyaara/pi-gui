@@ -13,6 +13,7 @@ import {
   ChatCircle,
   Check,
   Clock,
+  ColumnsPlusRight,
   Copy,
   Cpu,
   DotsSixVertical,
@@ -58,6 +59,7 @@ export const TerminalIcon = decorativeIcon(TerminalWindow);
 export const BrowserPreviewIcon = decorativeIcon(Browser);
 export const SidebarToggleIcon = decorativeIcon(SidebarSimple);
 export const SidePanelIcon = decorativeIcon(SidebarSimple, "regular", true);
+export const SplitWindowIcon = decorativeIcon(ColumnsPlusRight);
 export const MaximizeIcon = decorativeIcon(ArrowsOutSimple);
 export const MinimizeIcon = decorativeIcon(ArrowsInSimple);
 export const CloseIcon = decorativeIcon(X);
