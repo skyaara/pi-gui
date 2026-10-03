@@ -17,6 +17,7 @@ import type {
 } from "../../../contracts/desktop-state";
 import type { MentionOption } from "../conversation/hooks/use-mention-menu";
 import { ArrowUpIcon, WorktreeIcon, PlusIcon } from "../../ui/icons";
+import { Button } from "../../ui/button";
 import {
   MODEL_OPTIONS_EMPTY_TITLE,
   type ComposerSlashCommand,
@@ -364,23 +365,25 @@ function NewThreadComposerFooter({
                 event.currentTarget.value = "";
               }}
             />
-            <button
+            <Button
               aria-label="Attach files"
-              className="icon-button composer__attach"
+              className="composer__attach"
+              size="icon"
+              variant="ghost"
               type="button"
               onClick={() => fileInputRef.current?.click()}
             >
               <PlusIcon />
-            </button>
-            <button
+            </Button>
+            <Button
               aria-label="Start thread"
-              className="button button--primary button--cta-icon"
+              size="icon"
               type="button"
               disabled={!hasContent || modelOnboarding.requiresModelSelection}
               onClick={onSubmit}
             >
               <ArrowUpIcon />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

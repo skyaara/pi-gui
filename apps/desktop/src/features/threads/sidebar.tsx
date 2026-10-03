@@ -61,6 +61,7 @@ import {
 } from "../../ui/icons";
 import { THREAD_SHORTCUT_SLOT_COUNT, type PiDesktopApi } from "../../../contracts/ipc";
 import { PaneResizeHandle, type PaneWidthBounds } from "../../ui/pane-resize-handle";
+import { Button } from "../../ui/button";
 import { usePersistedPaneWidth } from "../../ui/use-persisted-pane-width";
 import type { WorkspaceMenuState } from "./hooks/use-workspace-menu";
 import type { ThreadMenuState } from "./hooks/use-thread-actions";
@@ -417,19 +418,26 @@ export function Sidebar(props: SidebarProps) {
       <div className="sidebar__top">
         <div className="sidebar__brand">piui</div>
         <div className="sidebar__toolbar">
-          <button className="sidebar__search" type="button" onClick={onSearchThreads}>
+          <Button
+            className="sidebar__search"
+            variant="ghost"
+            type="button"
+            onClick={onSearchThreads}
+          >
             <SearchIcon />
             <span>Search</span>
-          </button>
-          <button
+          </Button>
+          <Button
             className="sidebar__new"
+            size="icon"
+            variant="ghost"
             type="button"
             aria-label="New thread"
             title="New thread"
             onClick={() => onNewThread()}
           >
             <PencilIcon />
-          </button>
+          </Button>
         </div>
       </div>
 

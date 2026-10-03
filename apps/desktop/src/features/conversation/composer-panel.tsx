@@ -18,6 +18,7 @@ import type {
 } from "../../../contracts/desktop-state";
 import type { MentionOption } from "./hooks/use-mention-menu";
 import { ArrowUpIcon, PlusIcon, StopSquareIcon } from "../../ui/icons";
+import { Button } from "../../ui/button";
 import type {
   ComposerSlashCommand,
   ComposerSlashCommandSection,
@@ -241,18 +242,20 @@ export function ComposerPanel({
                   <ContextMeter usage={usage} />
                 </div>
                 <div className="composer__actions">
-                  <button
+                  <Button
                     aria-label="Attach files"
-                    className="icon-button composer__attach"
+                    className="composer__attach"
+                    size="icon"
+                    variant="ghost"
                     type="button"
                     onClick={onPickAttachments}
                   >
                     <PlusIcon />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     aria-label={primaryActionIsStop ? "Stop run" : "Send message"}
-                    className="button button--primary button--cta-icon"
                     data-testid="send"
+                    size="icon"
                     type="button"
                     disabled={
                       !primaryActionIsStop &&
@@ -261,7 +264,7 @@ export function ComposerPanel({
                     onClick={onSubmit}
                   >
                     {primaryActionIsStop ? <StopSquareIcon /> : <ArrowUpIcon />}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -274,15 +277,15 @@ export function ComposerPanel({
             Preparing task… Your current draft is saved before opening it.
           </p>
           {selectedSession.status === "running" ? (
-            <button
+            <Button
               aria-label="Stop run"
-              className="button button--primary button--cta-icon"
               data-testid="stop-while-preparing-task"
+              size="icon"
               onClick={onStop}
               type="button"
             >
               <StopSquareIcon />
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : null}

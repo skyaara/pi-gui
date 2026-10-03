@@ -1,0 +1,301 @@
+/* Compact shadcn-style renderer layer. Keep colors mapped to the active Pi theme. */
+:root {
+  --chat-max-width: 48rem;
+  --radius-panel: 9px;
+  --radius-composer: 10px;
+  --radius-2xl: 10px;
+  --shadow-composer: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.ui-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.ui-button--default {
+  background: var(--button-primary-bg);
+  border-color: var(--button-primary-border);
+  color: var(--button-primary-ink);
+}
+
+.ui-button--default:hover:not(:disabled) {
+  background: var(--button-primary-hover-bg);
+  border-color: var(--button-primary-hover-border);
+}
+
+.ui-button--secondary {
+  background: var(--surface-muted);
+  color: var(--text-strong);
+}
+
+.ui-button--ghost {
+  background: transparent;
+  color: var(--muted-strong);
+}
+
+.ui-button--outline {
+  background: var(--surface);
+  border-color: var(--border-default);
+  color: var(--text-strong);
+}
+
+.ui-button--secondary:hover:not(:disabled),
+.ui-button--ghost:hover:not(:disabled),
+.ui-button--outline:hover:not(:disabled) {
+  background: var(--overlay-hover);
+  color: var(--text-strong);
+}
+
+.ui-button--sm {
+  min-height: 28px;
+  padding-inline: 9px;
+  font-size: 12px;
+}
+.ui-button--icon {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+.ui-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ui-button:focus {
+  outline: none;
+  box-shadow: none;
+}
+.ui-button--ghost:focus-visible {
+  background: var(--overlay-hover);
+}
+.ui-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.shell {
+  --sidebar-width: 224px;
+}
+.sidebar {
+  background: var(--sidebar-navigation-surface);
+}
+.sidebar__top,
+.sidebar__section,
+.sidebar__footer {
+  padding-inline: 10px;
+}
+.sidebar__nav-item {
+  min-height: 29px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+.sidebar__nav-item--active,
+.sidebar__nav-item--active:hover {
+  background: var(--sidebar-row-active);
+  border-color: transparent;
+}
+.enable-transparency .thread-tabs {
+  background: var(--surface-glass) !important;
+}
+.sidebar__search.ui-button {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  min-width: 0;
+}
+.sidebar__new.ui-button {
+  flex: 0 0 32px;
+}
+.section__head {
+  margin-bottom: 5px;
+  padding-inline: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.thread-tabs {
+  height: 40px;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--main);
+}
+.thread-tabs__strip {
+  align-items: center;
+}
+.thread-tabs__item {
+  height: 30px;
+  min-width: 120px;
+  flex-basis: 150px;
+  border-radius: 7px;
+}
+.thread-tabs__item--selected,
+.thread-tabs__item--selected:hover {
+  background: var(--surface);
+  box-shadow: var(--elevation-hairline);
+}
+.thread-tabs__new,
+.thread-tabs__split,
+.thread-tabs__arrow {
+  margin-bottom: 0;
+}
+
+.composer {
+  padding: 8px 18px 16px;
+}
+.composer__surface {
+  padding: 11px 12px 9px;
+  box-shadow: var(--shadow-composer);
+}
+.composer__editor {
+  gap: 4px;
+}
+.composer textarea {
+  font-size: 13px;
+  max-height: 180px;
+}
+.composer__bar {
+  margin-top: 5px;
+}
+.composer__footer {
+  gap: 4px;
+}
+.composer__footer-row {
+  gap: 8px;
+}
+.composer__config {
+  gap: 3px;
+}
+.composer__actions {
+  gap: 4px;
+}
+.composer__actions .ui-button--default {
+  border-radius: 7px;
+}
+.composer__attachments {
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.canvas--thread {
+  --thread-gutter: 18px;
+}
+.timeline {
+  gap: 12px;
+}
+.timeline-pane--thread {
+  padding-top: 10px;
+}
+.timeline-item__bubble {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.timeline-tool {
+  border-radius: 8px;
+}
+.timeline-jump {
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.canvas.canvas--new-thread {
+  padding: 20px 24px;
+}
+.new-thread__hero {
+  padding-bottom: 18px;
+  gap: 4px;
+}
+.new-thread__hero h1 {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.settings-view {
+  width: min(720px, 100%);
+}
+.settings-grid {
+  gap: 12px;
+}
+.settings-section {
+  gap: 7px;
+}
+.settings-group {
+  border-radius: 9px;
+}
+.settings-group:not(.resource-empty) > :first-child {
+  border-radius: 9px 9px 0 0;
+}
+.settings-group:not(.resource-empty) > :last-child {
+  border-radius: 0 0 9px 9px;
+}
+.settings-group:not(.resource-empty) > :only-child {
+  border-radius: 9px;
+}
+.settings-row {
+  min-height: 44px;
+  padding: 9px 13px;
+  gap: 14px;
+}
+.settings-row__title {
+  font-size: 13px;
+}
+.settings-row__description {
+  font-size: 12px;
+}
+.settings-segmented {
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+.settings-segmented__option {
+  min-height: 26px;
+  border-radius: 6px;
+}
+.settings-segmented__option[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: var(--elevation-hairline);
+}
+.settings-select-control select {
+  height: 30px;
+  border-radius: 7px;
+}
+
+.slash-menu,
+.mention-menu,
+.workspace-menu,
+.model-selector__panel,
+.command-palette {
+  border-radius: 9px;
+  border-color: var(--border-default);
+  box-shadow: var(--elevation-popover);
+}
+
+@media (max-width: 700px) {
+  .shell {
+    --sidebar-width: 200px;
+  }
+  .composer {
+    padding-inline: 10px;
+  }
+  .canvas--thread {
+    --thread-gutter: 10px;
+  }
+}
