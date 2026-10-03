@@ -198,20 +198,23 @@ export default function Page() {
         />
 
         <section className="hero">
-          <div className="container">
+          <div className="container hero__intro">
+            <span className="hero__watermark" aria-hidden="true">
+              piui
+            </span>
             <a className="hero__badge" href={RELEASES_URL}>
               <span className="status-dot" aria-hidden="true" />
               Your agent. A whole new workspace.
               <span aria-hidden="true">↗</span>
             </a>
             <h1>
-              Less switching.
-              <br />
-              More <span className="hero__accent">shipping.</span>
+              A little less switching.
+              <br />A lot more <span className="hero__accent hero__handwritten">shipping.</span>
             </h1>
             <p className="hero__lede">
-              A thoughtful desktop home for the pi coding agent. Run agents in parallel, review
-              their changes, and take your next idea from prompt to shipped.
+              A thoughtful desktop home for the pi coding agent.{" "}
+              <strong>Agents that work alongside you,</strong> in parallel threads, with your models
+              and your tools. From the first prompt to the final diff.
             </p>
             <div className="hero__actions">
               <DownloadButton className="button button--primary" />
@@ -223,6 +226,14 @@ export default function Page() {
               Free & open source <span>·</span> macOS, Linux & Windows <span>·</span> Bring your own
               model
             </p>
+            <img
+              className="hero__sketch"
+              src="/workspace-sketch.svg"
+              width={420}
+              height={320}
+              alt=""
+              aria-hidden="true"
+            />
           </div>
           <div className="container container--wide">
             <div className="preview-label">
@@ -281,9 +292,9 @@ export default function Page() {
             <div className="section-heading">
               <p className="eyebrow">A little less friction</p>
               <h2>
-                From first thought
+                Building is the job.
                 <br />
-                to final diff.
+                <span className="hero__accent">Everything else is in the way.</span>
               </h2>
               <p>Everything you need. Right where you need it.</p>
             </div>
@@ -316,7 +327,11 @@ export default function Page() {
         <section className="grid-section">
           <div className="container">
             <p className="eyebrow centered">Small details. Big difference.</p>
-            <h2 className="section-title">Fits your flow. Not the other way around.</h2>
+            <h2 className="section-title">
+              Your workflow.
+              <br />
+              <span className="hero__accent">Just a little more possible.</span>
+            </h2>
             <div className="feature-grid">
               {features.map((feature, index) => (
                 <div key={feature.title} className="feature-grid__item">
@@ -373,8 +388,9 @@ export default function Page() {
           <div className="container">
             <p className="eyebrow">Less overhead. More headway.</p>
             <h2>
-              Good ideas deserve
-              <br />a great workspace<span className="hero__accent">.</span>
+              Your next big idea.
+              <br />
+              <span className="hero__accent">Make room for it.</span>
             </h2>
             <div className="hero__actions">
               <DownloadButton className="button button--primary" />
