@@ -54,6 +54,8 @@ import {
 import { WorkspaceWelcome } from "../features/threads/workspace-welcome";
 import { Sidebar } from "../features/threads/sidebar";
 import { ThreadSwitcher } from "../features/threads/thread-switcher";
+import { ThreadTabs } from "../features/threads/thread-tabs";
+import { threadTabKey, useThreadTabs } from "../features/threads/hooks/use-thread-tabs";
 import {
   loadThreadSwitcherOrder,
   orderThreadSwitcherEntries,
@@ -213,6 +215,7 @@ export default function App() {
   );
   const selectedSessionKey =
     selectedWorkspace && selectedSession ? `${selectedWorkspace.id}:${selectedSession.id}` : "";
+  const threadTabs = useThreadTabs(snapshot);
   const workbenchTarget = useMemo(
     () =>
       selectedWorkspace && selectedSession
@@ -741,6 +744,8 @@ export default function App() {
     // The composer is keyed by session: focus only after its new node commits.
     // An IPC completion can precede that commit and focus the outgoing node.
     if (snapshot?.activeView !== "threads" || !selectedSessionKey) return;
+    // Arrow-key tab navigation keeps focus on the strip for the next key press.
+    if (document.activeElement?.closest('[role="tablist"]')) return;
     if (!restoreTopmostDialogFocus()) composerRef.current?.focus();
   }, [selectedSessionKey, snapshot?.activeView]);
 
@@ -768,6 +773,7 @@ export default function App() {
     : undefined;
   const mainClassName = [
     "main",
+    "main--with-thread-tabs",
     sidePanelVisible ? "main--with-side-panel" : "",
     snapshot.startupDiagnostics.length > 0 ? "main--with-startup-diagnostics" : "",
   ]
@@ -793,11 +799,16 @@ export default function App() {
   };
 
   const handleSelectSession = (target: { workspaceId: string; sessionId: string }) => {
+    threadTabs.open(target);
     // Flush any debounced draft write before the active session changes, otherwise the pending
     // write for the current session is lost (and would land on the wrong session if deferred).
     flushComposerDraft();
     viewport.savePosition();
-    if (target.workspaceId === selectedWorkspace?.id && target.sessionId === selectedSession?.id)
+    if (
+      target.workspaceId === selectedWorkspace?.id &&
+      target.sessionId === selectedSession?.id &&
+      !document.activeElement?.closest('[role="tablist"]')
+    )
       focusComposer();
     void updateSnapshot(setSnapshot, () => api.selectSession(target)).catch((error: unknown) => {
       console.error("[renderer] selectSession failed", error);
@@ -1007,6 +1018,22 @@ export default function App() {
       ) : null}
 
       <main className={mainClassName} style={workbenchWidth.style}>
+        <ThreadTabs
+          tabs={threadTabs.tabs}
+          selectedKey={snapshot.activeView === "threads" ? selectedSessionKey : ""}
+          onSelect={handleSelectSession}
+          onNewThread={() =>
+            newThread.openSurface(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
+          }
+          onClose={(target) => {
+            const next = threadTabs.close(target);
+            if (snapshot.activeView === "threads" && threadTabKey(target) === selectedSessionKey) {
+              if (next) handleSelectSession(next);
+              else
+                newThread.openSurface(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id);
+            }
+          }}
+        />
         <Topbar
           keyboardShortcuts={snapshot.keyboardShortcuts}
           activeView={showNewThread ? "new-thread" : snapshot.activeView}
