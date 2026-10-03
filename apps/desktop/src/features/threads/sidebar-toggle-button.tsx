@@ -25,13 +25,14 @@ export function SidebarToggleButton({
         aria-pressed={!collapsed}
         className="icon-button sidebar-toggle__button"
         data-testid="sidebar-toggle"
+        title={collapsed ? "Show sidebar" : "Hide sidebar"}
         type="button"
         onClick={onToggle}
       >
         <SidebarToggleIcon />
       </button>
       <span className="shortcut-tooltip sidebar-toggle__tooltip" role="tooltip">
-        <span>Toggle sidebar</span>
+        <span>{collapsed ? "Show sidebar" : "Hide sidebar"}</span>
         {shortcut ? <kbd>{shortcut}</kbd> : null}
       </span>
     </div>

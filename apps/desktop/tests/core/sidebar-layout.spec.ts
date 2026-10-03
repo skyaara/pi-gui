@@ -1,11 +1,51 @@
-import { basename } from "node:path";
+import { mkdir } from "node:fs/promises";
+import { basename, join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 import {
+  createSessionViaIpc,
   launchDesktop,
   makeUserDataDir,
   makeWorkspace,
   waitForWorkspaceByPath,
 } from "../helpers/electron-app";
+
+test("selected threads use a compact row and the sidebar controls stay discoverable", async () => {
+  const userDataDir = await makeUserDataDir();
+  const workspace = await makeWorkspace("sidebar-compact-row");
+  const harness = await launchDesktop(userDataDir, { initialWorkspaces: [workspace] });
+
+  try {
+    const window = await harness.firstWindow();
+    await waitForWorkspaceByPath(window, workspace);
+    await createSessionViaIpc(window, workspace, "A selected conversation with a long title");
+    await window
+      .locator(".session-row__select", { hasText: "A selected conversation with a long title" })
+      .click();
+
+    const selected = window.locator(".session-row--active");
+    await expect(selected).toBeVisible();
+    const row = await selected.boundingBox();
+    expect(row).not.toBeNull();
+    expect(row!.height).toBeLessThanOrEqual(32);
+    await expect(window.getByTestId("sidebar-toggle")).toHaveAttribute("title", "Hide sidebar");
+    const resizeHandle = window.getByRole("separator", { name: "Sidebar width" });
+    const handle = await resizeHandle.boundingBox();
+    expect(handle?.width).toBeGreaterThanOrEqual(8);
+    await window.mouse.move(500, 300);
+    const proofDir = process.env.PI_APP_SIDEBAR_PROOF_DIR;
+    if (proofDir) {
+      await mkdir(proofDir, { recursive: true });
+      await window.screenshot({ path: join(proofDir, "compact-sidebar.png") });
+    }
+
+    await window.getByTestId("sidebar-toggle").click();
+    await expect(window.getByTestId("sidebar-toggle")).toHaveAttribute("title", "Show sidebar");
+    await window.getByTestId("sidebar-toggle").click();
+    await expect(selected).toBeVisible();
+  } finally {
+    await harness.close();
+  }
+});
 
 test("folder rows start a new thread in that folder", async () => {
   test.setTimeout(60_000);

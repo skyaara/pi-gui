@@ -67,6 +67,7 @@
   width: var(--titlebar-toggle-size);
   height: var(--titlebar-toggle-size);
   border-radius: var(--radius-lg);
-  color: var(--muted-soft);
+  color: var(--muted-strong);
   background: var(--surface-overlay-muted);
+  border-color: var(--border-light);
 }

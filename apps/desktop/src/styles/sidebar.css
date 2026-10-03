@@ -1,5 +1,5 @@
 .shell {
-  --sidebar-width: 260px;
+  --sidebar-width: 240px;
   --titlebar-toggle-left: 86px;
   --titlebar-toggle-size: 30px;
   --titlebar-toggle-main-gap: 16px;
@@ -297,7 +297,7 @@
 
 .workspace-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .workspace-group {
@@ -633,9 +633,9 @@
 }
 
 .session-row {
-  padding: 6px 8px;
+  padding: 2px 6px;
   border-radius: var(--radius-md);
-  min-height: 32px;
+  min-height: 30px;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 2px;
   position: relative;
@@ -991,24 +991,41 @@
   }
 }
 
-/* Sits over the sidebar's right border; the sidebar owns its own width. */
+/* A generous drag target with a quiet visible grip on the sidebar edge. */
 .sidebar__resize-handle {
   -webkit-app-region: no-drag;
   position: absolute;
   top: 0;
   bottom: 0;
   right: 0;
-  width: 4px;
+  width: 8px;
   z-index: 30;
   cursor: col-resize;
   touch-action: none;
 }
 
+.sidebar__resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  width: 2px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--border-heavy);
+  transform: translateY(-50%);
+}
+
 .sidebar__resize-handle:hover,
 .sidebar__resize-handle:focus-visible,
 .sidebar__resize-handle[data-resizing="true"] {
-  background: var(--surface-muted);
-  box-shadow: inset -2px 0 var(--accent);
+  background: var(--overlay-hover);
+}
+
+.sidebar__resize-handle:hover::after,
+.sidebar__resize-handle:focus-visible::after,
+.sidebar__resize-handle[data-resizing="true"]::after {
+  background: var(--accent);
 }
 
 .shell:has(.sidebar__resize-handle[data-resizing="true"]) {
