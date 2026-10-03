@@ -9,7 +9,7 @@
 
 .new-thread {
   position: relative;
-  width: 100%;
+  width: min(var(--chat-max-width), 100%);
   margin: auto;
 }
 
@@ -110,7 +110,7 @@
 }
 
 .new-thread__composer {
-  width: 100%;
+  width: min(var(--chat-max-width), 100%);
   margin: 0 auto;
 }
 

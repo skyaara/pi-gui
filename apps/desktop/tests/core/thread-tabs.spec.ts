@@ -132,7 +132,14 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     expect(new Set(rows).size).toBe(1);
     const canvas = (await page.locator(".canvas--thread").boundingBox())!;
     const composer = (await page.locator(".composer__surface").boundingBox())!;
-    expect(composer.width).toBeGreaterThan(canvas.width - 80);
+    const maxWidth = await page.evaluate(
+      () =>
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--chat-max-width"),
+        ) * Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+    );
+    expect(composer.width).toBeLessThanOrEqual(maxWidth + 1);
+    expect(Math.abs(composer.x + composer.width / 2 - canvas.x - canvas.width / 2)).toBeLessThan(1);
     await page.getByRole("button", { name: "Toggle sidebar", exact: true }).click();
     await expect(page.locator(".sidebar")).toHaveCount(0);
     const toggleBounds = await page

@@ -12,7 +12,8 @@
   gap: 16px;
   min-width: 0;
   width: 100%;
-  max-width: 100%;
+  /* Constrained measure so prose lines stay readable on a wide canvas. */
+  max-width: var(--transcript-measure, var(--chat-max-width));
   margin-inline: auto;
 }
 

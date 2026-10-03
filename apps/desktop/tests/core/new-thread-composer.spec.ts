@@ -43,6 +43,13 @@ test("empty projects open the composer on startup, folder selection, and restart
     const canvas = await window.locator(".canvas--new-thread").boundingBox();
     expect(geometry).not.toBeNull();
     expect(canvas).not.toBeNull();
+    const maxWidth = await window.evaluate(
+      () =>
+        Number.parseFloat(
+          getComputedStyle(document.documentElement).getPropertyValue("--chat-max-width"),
+        ) * Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+    );
+    expect(geometry!.width).toBeLessThanOrEqual(maxWidth + 1);
     expect(
       Math.abs(geometry!.y + geometry!.height / 2 - (canvas!.y + canvas!.height / 2)),
     ).toBeLessThan(4);
