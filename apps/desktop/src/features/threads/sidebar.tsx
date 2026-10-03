@@ -828,11 +828,6 @@ function WorkspaceFolderContent(
             <span className="workspace-row__icon-folder">
               <FolderIcon />
             </span>
-            {collapsible ? (
-              <span className="workspace-row__icon-chevron">
-                {collapsed ? <ChevronRightIcon /> : <ChevronDownIcon />}
-              </span>
-            ) : null}
           </span>
           <span className="workspace-row__name">{workspace.name}</span>
         </button>

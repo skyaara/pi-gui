@@ -2221,9 +2221,6 @@ packages:
   '@types/node@24.12.2':
     resolution: {integrity: sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==}
 
-  '@types/node@26.6.2':
-    resolution: {integrity: sha512-X1P21scMv4zGKLYqjdGjaKa7COa0RKVYYZZN/NfvLQ1JegxFhdhpZG/Lyn8AXx6CDUavKAd11v6BvfpkDByK8g==}
-
   '@types/plist@3.0.5':
     resolution: {integrity: sha512-E6OCaRmAe4WDmWNsL/9RMqdkkzDCY1etutkflWk4c+AcjDU07Pcz1fQwTX0TQz+Pxqn9i4L1TU3UFpjnrcDgxA==}
 
@@ -4694,9 +4691,6 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici-types@8.9.0:
-    resolution: {integrity: sha512-KTDyRTYX8sWmKXAikPHHSyc63CRPETMctyjKFupcC6OBLXT3xsN0e9aF7m+mIXutFWpUXuedtowG7iLOzp0kQg==}
-
   undici@8.10.2:
     resolution: {integrity: sha512-/y4/bH9YNU5hi9NIrpOuvGXFcxrj3CMrV+/AYpowAYTpHn8gX/XPFjNy766FPoYY0miQhdW977JFWKGNhBdwyQ==}
     engines: {node: '>=22.19.0'}
@@ -6997,7 +6991,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -7012,10 +7006,6 @@ snapshots:
   '@types/node@24.12.2':
     dependencies:
       undici-types: 7.16.0
-
-  '@types/node@26.6.2':
-    dependencies:
-      undici-types: 8.9.0
 
   '@types/plist@3.0.5':
     dependencies:
@@ -8568,7 +8558,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 26.6.2
+      '@types/node': 24.12.2
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -9497,7 +9487,7 @@ snapshots:
       '@protobufjs/path': 1.1.2
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.2
-      '@types/node': 22.19.15
+      '@types/node': 24.12.2
       long: 5.3.2
 
   proxy-agent-negotiate@1.1.0: {}
@@ -10023,8 +10013,6 @@ snapshots:
   undici-types@6.21.0: {}
 
   undici-types@7.16.0: {}
-
-  undici-types@8.9.0: {}
 
   undici@8.10.2: {}
 

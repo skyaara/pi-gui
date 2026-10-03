@@ -506,6 +506,7 @@
 }
 .secondary-surface {
   grid-template-columns: 260px minmax(0, 1fr);
+  background: var(--main);
 }
 .secondary-surface__sidebar {
   padding: 48px 12px 16px;
@@ -531,8 +532,7 @@
   min-height: 48px;
 }
 .scheduled-tasks-view,
-.canvas--new-thread,
-.settings-view {
+.canvas--new-thread {
   background: var(--main);
 }
 .sidebar__nav-item,
