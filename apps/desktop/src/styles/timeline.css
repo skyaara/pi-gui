@@ -219,7 +219,7 @@
 
 .timeline-item__bubble {
   width: fit-content;
-  max-width: min(680px, 90%);
+  max-width: 100%;
   min-width: 0;
   padding: 12px 16px;
   border-radius: 20px;

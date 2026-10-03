@@ -223,6 +223,8 @@
   justify-items: end;
   gap: 4px;
   min-width: 0;
+  /* Limit against the row, not the bubble's shrink-to-fit parent. */
+  max-width: min(680px, 90%);
 }
 
 .timeline-item__scheduled-origin {
