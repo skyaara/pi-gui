@@ -23,12 +23,18 @@ test("minimal header and composer retain working Pi controls", async () => {
     await createNamedThread(page, "Alpha", { workspaceName: basename(first) });
     await createNamedThread(page, "Bravo", { workspaceName: basename(second) });
     const row = page.locator(".thread-tabs");
-    await page.getByTitle("Open threads", { exact: true }).click();
     const tabs = page.getByRole("tablist", { name: "Open threads" });
     await tabs.getByRole("tab", { name: "Alpha", exact: true }).click();
     await page.keyboard.press("Escape");
-    await expect(page.getByRole("heading", { name: "Alpha", exact: true })).toBeVisible();
-    await expect(row.locator(".thread-heading__project")).toHaveText(basename(first));
+    await expect(tabs).toBeVisible();
+    await expect(page.locator(".sidebar__footer button")).toHaveCount(1);
+    await expect(
+      page.locator(".sidebar__footer").getByRole("button", { name: "Settings" }),
+    ).toBeVisible();
+    await expect(tabs.getByRole("tab", { name: "Alpha", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     const environment = page.getByRole("complementary", { name: "Environment" });
     await expect(environment).toBeVisible();
     await environment.getByRole("button", { name: "Changes" }).click();
@@ -58,6 +64,17 @@ test("minimal header and composer retain working Pi controls", async () => {
     });
     await expect(page.getByTestId("transcript")).toContainText("What is connected");
     await page.getByTestId("composer").fill("Continue with the remaining screens");
+    await page.locator('.composer .model-selector__badge[aria-haspopup="dialog"]').click();
+    const modelMenu = page.getByRole("dialog", { name: "Choose model", exact: true });
+    await expect(modelMenu).toBeVisible();
+    await expect(modelMenu.getByRole("navigation")).toHaveCount(0);
+    await modelMenu.getByRole("textbox", { name: "Search models" }).fill("no-such-pi-model");
+    await expect(modelMenu).toContainText("No matching models");
+    await modelMenu.getByRole("textbox", { name: "Search models" }).fill("");
+    await page.screenshot({ path: test.info().outputPath("model-picker.png") });
+    await page.keyboard.press("Escape");
+    await expect(modelMenu).toHaveCount(0);
+
     for (const width of [1920, 1280, 800]) {
       await harness.electronApp.evaluate(({ BrowserWindow }, nextWidth) => {
         BrowserWindow.getAllWindows()[0]?.setContentSize(nextWidth, 1080);

@@ -42,20 +42,6 @@ export function ThreadTabs({
   onCloseDraft?(): void;
 }) {
   const strip = useRef<HTMLDivElement>(null);
-  const switcher = useRef<HTMLDetailsElement>(null);
-  useEffect(() => {
-    const close = (event: PointerEvent) => {
-      if (
-        switcher.current &&
-        event.target instanceof Node &&
-        !switcher.current.contains(event.target)
-      ) {
-        switcher.current.open = false;
-      }
-    };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, []);
   const [overflow, setOverflow] = useState(false);
   const [edges, setEdges] = useState({ start: true, end: true });
   const measure = () => {
@@ -101,189 +87,162 @@ export function ThreadTabs({
         onMaximize();
       }}
     >
-      <div className="thread-heading">
-        <h1 className="chat-header__title">{title ?? "Pi"}</h1>
-        {tabs.find((tab) => threadTabKey(tab) === selectedKey)?.workspaceName ? (
-          <span className="thread-heading__project">
-            {tabs.find((tab) => threadTabKey(tab) === selectedKey)?.workspaceName}
-          </span>
-        ) : null}
-      </div>
-      <div className="thread-tabs__actions">{actions}</div>
-      <details
-        className="thread-tab-picker"
-        ref={switcher}
-        onKeyDown={(event) => {
-          if (event.key === "Escape" && switcher.current) {
-            switcher.current.open = false;
-            switcher.current.querySelector("summary")?.focus();
+      {title && <h1 className="chat-header__title sr-only">{title}</h1>}
+      {overflow && (
+        <button
+          className="thread-tabs__arrow thread-tabs__arrow--left"
+          aria-label="Scroll tabs left"
+          disabled={edges.start}
+          onClick={() => scroll(-1)}
+        >
+          <ChevronRightIcon />
+        </button>
+      )}
+      <div
+        className={`thread-tabs__strip${overflow && !edges.start ? " thread-tabs__strip--fade-start" : ""}${overflow && !edges.end ? " thread-tabs__strip--fade-end" : ""}`}
+        role="tablist"
+        aria-label="Open threads"
+        ref={strip}
+        style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 240 }}
+        onScroll={measure}
+        onWheel={(event) => {
+          if (overflow && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            event.currentTarget.scrollLeft += event.deltaY;
           }
         }}
       >
-        <summary aria-label="Open threads" title="Open threads">
-          <SplitWindowIcon />
-        </summary>
-        <div className="thread-tab-picker__popover">
-          {overflow && (
-            <button
-              className="thread-tabs__arrow thread-tabs__arrow--left"
-              aria-label="Scroll tabs left"
-              disabled={edges.start}
-              onClick={() => scroll(-1)}
+        {tabs.map((tab, index) => {
+          const key = threadTabKey(tab);
+          const selected = key === selectedKey;
+          return (
+            <div
+              key={key}
+              className={`thread-tabs__item${selected ? " thread-tabs__item--selected" : ""}`}
+              onAuxClick={(event) => {
+                if (event.button === 1) {
+                  event.preventDefault();
+                  onClose(tab);
+                }
+              }}
             >
-              <ChevronRightIcon />
-            </button>
-          )}
-          <div
-            className={`thread-tabs__strip${overflow && !edges.start ? " thread-tabs__strip--fade-start" : ""}${overflow && !edges.end ? " thread-tabs__strip--fade-end" : ""}`}
-            role="tablist"
-            aria-label="Open threads"
-            ref={strip}
-            style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 172 }}
-            onScroll={measure}
-            onWheel={(event) => {
-              if (overflow && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-                event.currentTarget.scrollLeft += event.deltaY;
-              }
-            }}
-          >
-            {tabs.map((tab, index) => {
-              const key = threadTabKey(tab);
-              const selected = key === selectedKey;
-              return (
-                <div
-                  key={key}
-                  className={`thread-tabs__item${selected ? " thread-tabs__item--selected" : ""}`}
-                  onAuxClick={(event) => {
-                    if (event.button === 1) {
-                      event.preventDefault();
-                      onClose(tab);
-                    }
-                  }}
-                >
-                  <button
-                    role="tab"
-                    className="thread-tabs__tab"
-                    aria-selected={selected}
-                    tabIndex={selected || (!selectedKey && index === 0) ? 0 : -1}
-                    title={`${tab.title} · ${tab.workspaceName}`}
-                    onClick={() => onSelect(tab)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Delete") {
-                        event.preventDefault();
-                        onClose(tab);
-                        return;
-                      }
-                      const tabCount = tabs.length + (draftOpen ? 1 : 0);
-                      const next =
-                        event.key === "ArrowRight"
-                          ? (index + 1) % tabCount
-                          : event.key === "ArrowLeft"
-                            ? (index + tabCount - 1) % tabCount
-                            : event.key === "Home"
-                              ? 0
-                              : event.key === "End"
-                                ? tabCount - 1
-                                : -1;
-                      if (next < 0) return;
-                      event.preventDefault();
-                      strip.current
-                        ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                        [next]?.focus();
-                      if (next === tabs.length) onSelectDraft?.();
-                      else onSelect(tabs[next]!);
-                    }}
-                  >
-                    {(tab.running || tab.unseen) && (
-                      <span
-                        className={`thread-tabs__dot${tab.running ? " thread-tabs__dot--running" : ""}`}
-                        aria-label={tab.running ? "Running" : "Unread"}
-                      />
-                    )}
-                    <span className="thread-tabs__label">{tab.title}</span>
-                  </button>
-                  <button
-                    className="thread-tabs__close"
-                    aria-label={`Close tab ${tab.title}`}
-                    onClick={() => onClose(tab)}
-                  >
-                    <CloseIcon />
-                  </button>
-                </div>
-              );
-            })}
-            {draftOpen && (
-              <div
-                className={`thread-tabs__item${draftSelected ? " thread-tabs__item--selected" : ""}`}
-              >
-                <button
-                  role="tab"
-                  aria-selected={draftSelected}
-                  className="thread-tabs__tab"
-                  tabIndex={draftSelected || tabs.length === 0 ? 0 : -1}
-                  onClick={onSelectDraft}
-                  onKeyDown={(event) => {
-                    if (event.key === "Delete") {
-                      event.preventDefault();
-                      onCloseDraft?.();
-                      return;
-                    }
-                    const next =
-                      event.key === "ArrowLeft"
-                        ? tabs.length - 1
-                        : event.key === "ArrowRight" || event.key === "Home"
-                          ? 0
-                          : -1;
-                    if (next < 0 || !tabs[next]) return;
+              <button
+                role="tab"
+                className="thread-tabs__tab"
+                aria-selected={selected}
+                tabIndex={selected || (!selectedKey && index === 0) ? 0 : -1}
+                title={`${tab.title} · ${tab.workspaceName}`}
+                onClick={() => onSelect(tab)}
+                onKeyDown={(event) => {
+                  if (event.key === "Delete") {
                     event.preventDefault();
-                    strip.current
-                      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
-                      [next]?.focus();
-                    onSelect(tabs[next]!);
-                  }}
-                >
-                  <span className="thread-tabs__label">New thread</span>
-                </button>
-                <button
-                  className="thread-tabs__close"
-                  aria-label="Close new thread tab"
-                  onClick={onCloseDraft}
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-            )}
-          </div>
-          {overflow && (
-            <button
-              className="thread-tabs__arrow"
-              aria-label="Scroll tabs right"
-              disabled={edges.end}
-              onClick={() => scroll(1)}
-            >
-              <ChevronRightIcon />
-            </button>
-          )}
-          <button
-            className="thread-tabs__new"
-            aria-label="New thread tab"
-            title="New thread"
-            onClick={onNewThread}
+                    onClose(tab);
+                    return;
+                  }
+                  const tabCount = tabs.length + (draftOpen ? 1 : 0);
+                  const next =
+                    event.key === "ArrowRight"
+                      ? (index + 1) % tabCount
+                      : event.key === "ArrowLeft"
+                        ? (index + tabCount - 1) % tabCount
+                        : event.key === "Home"
+                          ? 0
+                          : event.key === "End"
+                            ? tabCount - 1
+                            : -1;
+                  if (next < 0) return;
+                  event.preventDefault();
+                  strip.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+                  if (next === tabs.length) onSelectDraft?.();
+                  else onSelect(tabs[next]!);
+                }}
+              >
+                {(tab.running || tab.unseen) && (
+                  <span
+                    className={`thread-tabs__dot${tab.running ? " thread-tabs__dot--running" : ""}`}
+                    aria-label={tab.running ? "Running" : "Unread"}
+                  />
+                )}
+                <span className="thread-tabs__label">{tab.title}</span>
+              </button>
+              <button
+                className="thread-tabs__close"
+                aria-label={`Close tab ${tab.title}`}
+                onClick={() => onClose(tab)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+          );
+        })}
+        {draftOpen && (
+          <div
+            className={`thread-tabs__item${draftSelected ? " thread-tabs__item--selected" : ""}`}
           >
-            <PlusIcon />
-          </button>
-          {onSplitWindow && (
             <button
-              className="thread-tabs__split"
-              aria-label={splitActive ? "Close split pane" : "Split editor"}
-              title={splitActive ? "Close split pane" : "Split editor"}
-              onClick={onSplitWindow}
+              role="tab"
+              aria-selected={draftSelected}
+              className="thread-tabs__tab"
+              tabIndex={draftSelected || tabs.length === 0 ? 0 : -1}
+              onClick={onSelectDraft}
+              onKeyDown={(event) => {
+                if (event.key === "Delete") {
+                  event.preventDefault();
+                  onCloseDraft?.();
+                  return;
+                }
+                const next =
+                  event.key === "ArrowLeft"
+                    ? tabs.length - 1
+                    : event.key === "ArrowRight" || event.key === "Home"
+                      ? 0
+                      : -1;
+                if (next < 0 || !tabs[next]) return;
+                event.preventDefault();
+                strip.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+                onSelect(tabs[next]!);
+              }}
             >
-              <SplitWindowIcon />
+              <span className="thread-tabs__label">New thread</span>
             </button>
-          )}
-        </div>
-      </details>
+            <button
+              className="thread-tabs__close"
+              aria-label="Close new thread tab"
+              onClick={onCloseDraft}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        )}
+      </div>
+      {overflow && (
+        <button
+          className="thread-tabs__arrow"
+          aria-label="Scroll tabs right"
+          disabled={edges.end}
+          onClick={() => scroll(1)}
+        >
+          <ChevronRightIcon />
+        </button>
+      )}
+      <button
+        className="thread-tabs__new"
+        aria-label="New thread tab"
+        title="New thread"
+        onClick={onNewThread}
+      >
+        <PlusIcon />
+      </button>
+      {onSplitWindow && (
+        <button
+          className="thread-tabs__split"
+          aria-label={splitActive ? "Close split pane" : "Split editor"}
+          title={splitActive ? "Close split pane" : "Split editor"}
+          onClick={onSplitWindow}
+        >
+          <SplitWindowIcon />
+        </button>
+      )}
+      <div className="thread-tabs__actions">{actions}</div>
     </div>
   );
 }

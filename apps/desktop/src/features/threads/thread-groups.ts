@@ -14,6 +14,7 @@ export interface ThreadEnvironmentMeta {
 }
 
 export interface ThreadListEntry {
+  readonly children?: readonly ThreadListEntry[];
   readonly folderId: string;
   readonly workspaceId: string;
   readonly session: SessionRecord;
@@ -55,7 +56,8 @@ export interface ThreadSidebarModel {
 }
 
 export function buildThreadSidebarModel(state: DesktopAppState): ThreadSidebarModel {
-  const entries = collectThreadEntries(state);
+  const allEntries = collectThreadEntries(state);
+  const entries = nestChildThreads(allEntries, state);
   const pinnedThreads = entries
     .filter((entry) => !entry.session.archivedAt && Boolean(entry.session.pinnedAt))
     .sort((left, right) => comparePinnedThreads(left, right, state.pinnedSessionOrder));
@@ -65,7 +67,7 @@ export function buildThreadSidebarModel(state: DesktopAppState): ThreadSidebarMo
   const archivedThreads = entries
     .filter((entry) => Boolean(entry.session.archivedAt))
     .sort((left, right) => compareByRecency(left.session, right.session));
-  const recencyOrder = entries
+  const recencyOrder = allEntries
     .filter((entry) => !entry.session.archivedAt)
     .sort((left, right) => compareByRecency(left.session, right.session));
 
@@ -84,6 +86,41 @@ export function buildThreadSidebarModel(state: DesktopAppState): ThreadSidebarMo
     archivedThreads,
     recencyOrder,
   };
+}
+
+function nestChildThreads(entries: ThreadListEntry[], state: DesktopAppState): ThreadListEntry[] {
+  const byKey = new Map(entries.map((entry) => [sessionThreadKey(entry), entry]));
+  const parents = new Map<string, string>();
+  for (const child of state.orchestrationChildren) {
+    const childKey = `${child.childWorkspaceId}:${child.childSessionId}`;
+    const parentKey = `${child.parentWorkspaceId}:${child.parentSessionId}`;
+    const entry = byKey.get(childKey);
+    const parent = byKey.get(parentKey);
+    if (
+      !entry ||
+      !parent ||
+      entry.session.archivedAt ||
+      entry.session.pinnedAt ||
+      parent.session.archivedAt
+    )
+      continue;
+    let ancestor: string | undefined = parentKey;
+    while (ancestor && ancestor !== childKey) ancestor = parents.get(ancestor);
+    if (!ancestor) parents.set(childKey, parentKey);
+  }
+  const children = new Map<string, ThreadListEntry[]>();
+  for (const entry of entries) {
+    const parent = parents.get(sessionThreadKey(entry));
+    if (parent) children.set(parent, [...(children.get(parent) ?? []), entry]);
+  }
+  const nest = (entry: ThreadListEntry): ThreadListEntry => ({
+    ...entry,
+    children: children
+      .get(sessionThreadKey(entry))
+      ?.sort((a, b) => compareByRecency(a.session, b.session))
+      .map(nest),
+  });
+  return entries.filter((entry) => !parents.has(sessionThreadKey(entry))).map(nest);
 }
 
 function listFolders(state: DesktopAppState): readonly WorkspaceRecord[] {
@@ -248,11 +285,15 @@ export function visibleThreadShortcutOrder(
               expandedHistory.has(recencyHistoryExpansionKey(section.bucket)),
             ).visible,
         );
+  const flatten = (entry: ThreadListEntry): ThreadListEntry[] => [
+    entry,
+    ...(entry.children ?? []).flatMap(flatten),
+  ];
   return [
     ...options.model.pinnedThreads,
     ...unpinned,
     ...(options.archivedOpen ? options.model.archivedThreads : []),
-  ];
+  ].flatMap(flatten);
 }
 
 export function comparePinnedThreads(

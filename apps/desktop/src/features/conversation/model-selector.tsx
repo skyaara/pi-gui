@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { CheckIcon, ChevronDownIcon, LightningIcon, ModelIcon, SearchIcon } from "../../ui/icons";
+import { CheckIcon, ChevronDownIcon, LightningIcon, SearchIcon } from "../../ui/icons";
 import type { RuntimeSnapshot } from "@pi-gui/session-driver/runtime-types";
 import {
   buildModelOptions,
@@ -58,7 +58,6 @@ export function ModelSelector({
 }: ModelSelectorProps) {
   const [open, setOpen] = useState<OpenDropdown>("none");
   const [modelFilter, setModelFilter] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState<string | undefined>();
   const searchRef = useRef<HTMLInputElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownStyle, setDropdownStyle] = useState<CSSProperties>({});
@@ -74,19 +73,7 @@ export function ModelSelector({
     [modelOptions, modelFilter, runtime],
   );
 
-  const providers = useMemo(
-    () => [...new Set(modelOptions.map((option) => option.providerId))],
-    [modelOptions],
-  );
-  const groupedModels = useMemo(
-    () =>
-      groupByProvider(
-        filteredModels.filter(
-          (option) => !selectedProvider || option.providerId === selectedProvider,
-        ),
-      ),
-    [filteredModels, selectedProvider],
-  );
+  const groupedModels = useMemo(() => groupByProvider(filteredModels), [filteredModels]);
   const activeModel = runtime?.models.find(
     (model) => model.providerId === provider && model.modelId === modelId,
   );
@@ -109,7 +96,6 @@ export function ModelSelector({
   useEffect(() => {
     if (open === "none") {
       setModelFilter("");
-      setSelectedProvider(undefined);
       return undefined;
     }
 
@@ -149,10 +135,7 @@ export function ModelSelector({
         dropdownPlacement === "below"
           ? below >= 220 || below > above
           : above < 220 && below > above;
-      const width = Math.min(
-        open === "model" && showModelDetails ? 380 : 300,
-        window.innerWidth - 24,
-      );
+      const width = Math.min(open === "model" ? 320 : 260, window.innerWidth - 24);
       setDropdownStyle({
         position: "fixed",
         width,
@@ -239,65 +222,26 @@ export function ModelSelector({
                   style={dropdownStyle}
                   onWheel={(event) => event.stopPropagation()}
                 >
-                  <div
-                    className={`model-selector__layout${showModelDetails ? "" : " model-selector__layout--compact"}`}
-                  >
-                    {showModelDetails ? (
-                      <nav className="model-selector__providers" aria-label="Model providers">
-                        <button
-                          type="button"
-                          className="model-selector__provider"
-                          aria-label="All providers"
-                          aria-pressed={!selectedProvider}
-                          title="All providers"
-                          onClick={() => {
-                            setSelectedProvider(undefined);
-                            searchRef.current?.focus();
-                          }}
-                        >
-                          <ModelIcon />
-                        </button>
-                        {providers.map((providerId) => (
-                          <button
-                            key={providerId}
-                            type="button"
-                            className="model-selector__provider"
-                            aria-label={providerLabel(providerId)}
-                            aria-pressed={selectedProvider === providerId}
-                            title={providerLabel(providerId)}
-                            onClick={() => {
-                              setSelectedProvider(providerId);
-                              searchRef.current?.focus();
-                            }}
-                          >
-                            <ProviderIcon provider={providerId} />
-                          </button>
-                        ))}
-                      </nav>
-                    ) : null}
+                  <div className="model-selector__layout">
                     <div className="model-selector__content">
-                      {showModelDetails ? (
-                        <div className="model-selector__filter">
-                          <SearchIcon />
-                          <input
-                            ref={searchRef}
-                            className="model-selector__filter-input"
-                            aria-label="Search models"
-                            placeholder="Search models..."
-                            value={modelFilter}
-                            onChange={(event) => setModelFilter(event.target.value)}
-                            autoFocus
-                          />
-                        </div>
-                      ) : null}
+                      <div className="model-selector__filter">
+                        <SearchIcon />
+                        <input
+                          ref={searchRef}
+                          className="model-selector__filter-input"
+                          aria-label="Search models"
+                          placeholder="Search models..."
+                          value={modelFilter}
+                          onChange={(event) => setModelFilter(event.target.value)}
+                          autoFocus
+                        />
+                      </div>
                       <div className="model-selector__results">
                         {groupedModels.map((group, index) => (
                           <div key={`${group.provider}:${index}`}>
-                            {showModelDetails ? (
-                              <div className="model-selector__group-title">
-                                {providerLabel(group.provider)}
-                              </div>
-                            ) : null}
+                            <div className="model-selector__group-title">
+                              {providerLabel(group.provider)}
+                            </div>
                             {group.items.map((option) => {
                               const isActive =
                                 option.providerId === provider && option.modelId === modelId;
@@ -322,7 +266,9 @@ export function ModelSelector({
                                     <span className="model-selector__item-label">
                                       {model?.label ?? option.modelId}
                                     </span>
-                                    {showModelDetails ? (
+                                    {showModelDetails &&
+                                    model?.label &&
+                                    model.label !== option.modelId ? (
                                       <span className="model-selector__item-meta">
                                         {option.modelId}
                                       </span>
@@ -337,7 +283,7 @@ export function ModelSelector({
                         {groupedModels.length === 0 ? (
                           <div className="model-selector__empty">
                             {noMatchingModels
-                              ? "No matching models. Try a different search or provider."
+                              ? "No matching models. Try a different search."
                               : emptyModelTitle}
                           </div>
                         ) : null}

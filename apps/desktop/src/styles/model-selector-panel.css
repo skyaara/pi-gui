@@ -1,4 +1,4 @@
-/* Adapted from T3 Code's provider rail and model list (MIT).
+/* Adapted from T3 Code's model list (MIT).
  * Provider/model identities and availability continue to come from Pi. */
 .model-selector {
   display: inline-flex;
@@ -69,50 +69,6 @@
   display: flex;
   min-height: 0;
   height: 344px;
-}
-.model-selector__layout--compact {
-  height: auto;
-  max-height: inherit;
-}
-.model-selector__providers {
-  width: 46px;
-  flex: none;
-  padding: 6px 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  border-right: 1px solid var(--border-default);
-  overflow-y: auto;
-}
-.model-selector__provider {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  min-height: 34px;
-  border-radius: var(--radius-md);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--muted);
-}
-.model-selector__provider:hover,
-.model-selector__provider:focus-visible {
-  background: var(--overlay-hover);
-}
-.model-selector__provider[aria-pressed="true"] {
-  color: var(--text-strong);
-  background: var(--surface-muted);
-}
-.model-selector__provider[aria-pressed="true"]::after {
-  content: "";
-  position: absolute;
-  right: -5px;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 3px 0 0 3px;
-  background: var(--accent);
 }
 .model-selector__content {
   display: flex;

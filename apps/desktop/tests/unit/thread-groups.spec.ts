@@ -384,3 +384,59 @@ test("caps a history list at five until it is expanded", () => {
   expect(threadHistoryPreview(threads, true).visible).toEqual(threads);
   expect(threadHistoryPreview(threads.slice(0, 5), false).overflow).toBe(false);
 });
+
+test("child threads nest once, retain keyboard order, and stay reachable when their parent is archived", () => {
+  const updatedAt = isoDaysAgo(0);
+  const relation = {
+    id: "worker",
+    parentWorkspaceId: "alpha",
+    parentSessionId: "parent",
+    childWorkspaceId: "alpha",
+    childSessionId: "child",
+    title: "Worker",
+    goal: "Review",
+    status: "running" as const,
+    latestTranscript: "",
+    transcript: [],
+    evidence: [],
+    createdAt: updatedAt,
+    updatedAt,
+  };
+  const makeState = (
+    parentExtra: Partial<SessionRecord> = {},
+    childExtra: Partial<SessionRecord> = {},
+  ) =>
+    state(
+      [
+        workspace("alpha", "Alpha", [
+          session("parent", "Parent", { updatedAt, ...parentExtra }),
+          session("child", "Child", { updatedAt, ...childExtra }),
+        ]),
+      ],
+      { orchestrationChildren: [relation] },
+    );
+  const model = buildThreadSidebarModel(makeState());
+  expect(model.workspaceGroups[0]!.threads.map((entry) => entry.session.id)).toEqual(["parent"]);
+  expect(model.workspaceGroups[0]!.threads[0]!.children?.map((entry) => entry.session.id)).toEqual([
+    "child",
+  ]);
+  expect(
+    visibleThreadShortcutOrder({ model, grouping: "workspace" }).map((entry) => entry.session.id),
+  ).toEqual(["parent", "child"]);
+  const archivedParent = buildThreadSidebarModel(makeState({ archivedAt: updatedAt }));
+  expect(archivedParent.workspaceGroups[0]!.threads.map((entry) => entry.session.id)).toEqual([
+    "child",
+  ]);
+  const pinnedChild = buildThreadSidebarModel(makeState({}, { pinnedAt: updatedAt }));
+  expect(pinnedChild.pinnedThreads.map((entry) => entry.session.id)).toEqual(["child"]);
+  expect(pinnedChild.workspaceGroups[0]!.threads[0]!.children).toBeUndefined();
+  const cyclic = makeState();
+  const cyclicModel = buildThreadSidebarModel({
+    ...cyclic,
+    orchestrationChildren: [
+      relation,
+      { ...relation, id: "reverse", parentSessionId: "child", childSessionId: "parent" },
+    ],
+  });
+  expect(visibleThreadShortcutOrder({ model: cyclicModel, grouping: "workspace" })).toHaveLength(2);
+});

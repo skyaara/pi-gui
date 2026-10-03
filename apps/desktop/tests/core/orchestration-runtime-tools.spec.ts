@@ -150,6 +150,31 @@ test("create_child_thread returns after a slow worker starts, before its turn co
       `.session-row[data-session-id="${child?.childSessionId}"] .session-row__status--running`,
     );
     await expect(childRunningIndicator).toBeVisible();
+    const nestedThreads = window.getByRole("group", {
+      name: "Subagents of Parent orchestration thread",
+      exact: true,
+    });
+    const childRow = nestedThreads.locator(`[data-session-id="${child!.childSessionId}"]`);
+    await expect(childRow).toBeVisible();
+    const iconBounds = (await childRunningIndicator.boundingBox())!;
+    const titleBounds = (await childRow.locator(".session-row__title").boundingBox())!;
+    expect(
+      Math.abs(iconBounds.y + iconBounds.height / 2 - titleBounds.y - titleBounds.height / 2),
+    ).toBeLessThan(2);
+
+    await expect(
+      window.locator(`.session-row[data-session-id="${child!.childSessionId}"]`),
+    ).toHaveCount(1);
+    await childRow.locator(".session-row__select").click();
+    await expect
+      .poll(async () => (await getDesktopState(window)).selectedSessionId)
+      .toBe(child!.childSessionId);
+    await window
+      .locator(`.session-row[data-session-id="${parentRef.sessionId}"] .session-row__select`)
+      .click();
+    await expect(subagents).toBeVisible();
+    await window.screenshot({ path: test.info().outputPath("nested-subagents.png") });
+
     if (proofDir) {
       await window.screenshot({
         path: join(proofDir, "orchestration-child-running.png"),

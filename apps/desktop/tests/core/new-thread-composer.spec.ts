@@ -171,7 +171,7 @@ test("new thread can choose and remember its first model without visiting settin
     await expect(dropdown).toContainText("GPT-5");
     await expect(dropdown).toContainText("GPT-4o");
     await expect(dropdown.locator(".model-selector__item-label")).toHaveText(["GPT-5", "GPT-4o"]);
-    await expect(dropdown.getByRole("textbox")).toHaveCount(0);
+    await expect(dropdown.getByRole("textbox", { name: "Search models" })).toBeVisible();
     await expect(dropdown.getByRole("navigation", { name: "Model providers" })).toHaveCount(0);
     const bounds = await dropdown.boundingBox();
     const viewport = await window.evaluate(() => ({ width: innerWidth, height: innerHeight }));
