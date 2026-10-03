@@ -165,7 +165,9 @@ function Logo() {
   return (
     <a className="logo" href="#top" aria-label="pi-gui home">
       <img src="/icon.svg" alt="" width={24} height={24} />
-      <span>pi-gui</span>
+      <span>
+        piui<span className="logo__dot">.</span>
+      </span>
     </a>
   );
 }
@@ -178,7 +180,7 @@ export default function Page() {
           <Logo />
           <nav className="nav__links" aria-label="Main">
             <a href="#features">Features</a>
-            <a href="#install">Install</a>
+            <a href="#install">Download</a>
             <a href="#faq">FAQ</a>
             <a href={GITHUB_URL} className="nav__github">
               <GitHubIcon />
@@ -198,13 +200,18 @@ export default function Page() {
         <section className="hero">
           <div className="container">
             <a className="hero__badge" href={RELEASES_URL}>
-              Free and open source for macOS, Linux and Windows
-              <span aria-hidden="true">→</span>
+              <span className="status-dot" aria-hidden="true" />
+              Your agent. A whole new workspace.
+              <span aria-hidden="true">↗</span>
             </a>
-            <h1>The desktop app for the pi coding agent</h1>
+            <h1>
+              Less switching.
+              <br />
+              More <span className="hero__accent">shipping.</span>
+            </h1>
             <p className="hero__lede">
-              Run agents in parallel threads, in your checkout or their own worktrees. Review every
-              change, then ship it without leaving the window.
+              A thoughtful desktop home for the pi coding agent. Run agents in parallel, review
+              their changes, and take your next idea from prompt to shipped.
             </p>
             <div className="hero__actions">
               <DownloadButton className="button button--primary" />
@@ -212,16 +219,34 @@ export default function Page() {
                 View on GitHub
               </a>
             </div>
-            <p className="hero__note">Free and open source. Built on pi.</p>
+            <p className="hero__note">
+              Free & open source <span>·</span> macOS, Linux & Windows <span>·</span> Bring your own
+              model
+            </p>
           </div>
           <div className="container container--wide">
+            <div className="preview-label">
+              <span>
+                <span className="status-dot" /> ONE WORKSPACE. ALL YOUR WORK.
+              </span>
+              <span>BUILT ON PI ↗</span>
+            </div>
             <div className="frame frame--hero">
+              <div className="window-bar" aria-hidden="true">
+                <div className="window-dots">
+                  <i />
+                  <i />
+                  <i />
+                </div>
+                <span>piui — your next big thing</span>
+                <span>⌘ K</span>
+              </div>
               <video
                 autoPlay
                 loop
                 muted
                 playsInline
-                preload="auto"
+                preload="metadata"
                 poster="/media/hero-poster.webp"
                 width={1920}
                 height={1200}
@@ -234,15 +259,43 @@ export default function Page() {
           </div>
         </section>
 
+        <section className="principles container" aria-label="At a glance">
+          <p>
+            Built for the way
+            <br />
+            <strong>you actually work.</strong>
+          </p>
+          <div>
+            <span>01 /</span> Parallel by default
+          </div>
+          <div>
+            <span>02 /</span> Your models, your choice
+          </div>
+          <div>
+            <span>03 /</span> Open source, always
+          </div>
+        </section>
+
         <section id="features" className="showcase">
           <div className="container">
+            <div className="section-heading">
+              <p className="eyebrow">A little less friction</p>
+              <h2>
+                From first thought
+                <br />
+                to final diff.
+              </h2>
+              <p>Everything you need. Right where you need it.</p>
+            </div>
             {showcase.map((item, index) => (
               <article
                 key={item.title}
                 className={`showcase__row${index % 2 === 1 ? " showcase__row--flip" : ""}`}
               >
                 <div className="showcase__copy">
-                  <p className="eyebrow">{item.eyebrow}</p>
+                  <p className="eyebrow">
+                    <span className="section-number">0{index + 1}</span> {item.eyebrow}
+                  </p>
                   <h2>{item.title}</h2>
                   <p>{item.body}</p>
                 </div>
@@ -262,10 +315,14 @@ export default function Page() {
 
         <section className="grid-section">
           <div className="container">
-            <h2 className="section-title">And the rest of the workflow</h2>
+            <p className="eyebrow centered">Small details. Big difference.</p>
+            <h2 className="section-title">Fits your flow. Not the other way around.</h2>
             <div className="feature-grid">
-              {features.map((feature) => (
+              {features.map((feature, index) => (
                 <div key={feature.title} className="feature-grid__item">
+                  <span className="feature-symbol" aria-hidden="true">
+                    {["↗", "◷", "⌘", "◇", "≡", "⑂", "◉", "◐"][index]}
+                  </span>
                   <h3>{feature.title}</h3>
                   <p>{feature.body}</p>
                 </div>
@@ -276,7 +333,8 @@ export default function Page() {
 
         <section id="install" className="install">
           <div className="container">
-            <h2 className="section-title">Install pi-gui</h2>
+            <p className="eyebrow centered">Make yourself at home</p>
+            <h2 className="section-title">Your next project starts here.</h2>
             <p className="section-lede">
               Download the latest build from <a href={RELEASES_URL}>GitHub Releases</a>, or install
               with Homebrew on macOS. Then connect a provider under Settings, add a project folder
@@ -313,7 +371,11 @@ export default function Page() {
 
         <section className="closing">
           <div className="container">
-            <h2>Give pi a desktop</h2>
+            <p className="eyebrow">Less overhead. More headway.</p>
+            <h2>
+              Good ideas deserve
+              <br />a great workspace<span className="hero__accent">.</span>
+            </h2>
             <div className="hero__actions">
               <DownloadButton className="button button--primary" />
               <a className="button button--secondary" href={GITHUB_URL}>
@@ -326,7 +388,10 @@ export default function Page() {
 
       <footer className="footer">
         <div className="footer__inner">
-          <Logo />
+          <div>
+            <Logo />
+            <p className="footer__note">A desktop home for pi. Free, open, and yours.</p>
+          </div>
           <nav className="footer__links" aria-label="Footer">
             <a href={GITHUB_URL}>GitHub</a>
             <a href={RELEASES_URL}>Releases</a>
