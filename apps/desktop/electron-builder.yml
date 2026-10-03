@@ -33,6 +33,10 @@ files:
       - "**/*"
 
 extraResources:
+  - from: src/assets/fonts
+    to: licenses/fonts
+    filter:
+      - "*-LICENSE.txt"
   - from: ../../third-party/t3-code-LICENSE
     to: licenses/t3-code-LICENSE
   - from: resources/icon.png

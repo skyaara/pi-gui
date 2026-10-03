@@ -1,4 +1,3 @@
-import { t3ThemeTokens } from "./t3-theme";
 import type { ThemePresetId } from "./desktop-state";
 
 /*
@@ -60,15 +59,15 @@ export interface ThemePreset {
 export const themePresets: readonly ThemePreset[] = [
   {
     id: "default",
-    name: "Default",
-    description: "T3 Code’s neutral desktop palette.",
+    name: "PiUI",
+    description: "Clean neutral surfaces with a green accent.",
     variants: {
       light: {
-        seed: seed("#fcfcfc", "#27272a", "#1b4ed8", "#2ea043", "#c45666", "#d97706"),
+        seed: seed("#ffffff", "#181818", "#16833b", "#458b42", "#cf4436", "#9b701b"),
         syntaxTheme: "github-light-default",
       },
       dark: {
-        seed: seed("#0a0a0a", "#f5f5f5", "#346bf1", "#40c977", "#e05467", "#d97706"),
+        seed: seed("#171717", "#eeeeee", "#5cbb77", "#6fab78", "#e54048", "#e3992a"),
         syntaxTheme: "github-dark-default",
       },
     },
@@ -295,7 +294,63 @@ export function deriveThemeTokens(seedValue: ThemeSeed, variant: ResolvedTheme):
 
 export function themeTokensFor(presetId: ThemePresetId, variant: ResolvedTheme): ThemeTokens {
   const tokens = deriveThemeTokens(themePreset(presetId).variants[variant].seed, variant);
-  return presetId === "default" ? { ...tokens, ...t3ThemeTokens[variant] } : tokens;
+  if (presetId !== "default") return tokens;
+  return {
+    ...tokens,
+    ...(variant === "dark"
+      ? {
+          "--window": "#171717",
+          "--sidebar": "#1b1b1b",
+          "--sidebar-navigation-surface": "#1b1b1b",
+          "--sidebar-control-surface": "#292929",
+          "--sidebar-row-active": "#303030",
+          "--sidebar-row-hover": "#262626",
+          "--main": "#171717",
+          "--surface": "#1b1b1b",
+          "--surface-muted": "#282828",
+          "--composer-surface": "#171717",
+          "--line": "#333333",
+          "--line-strong": "#555555",
+          "--text-strong": "#eeeeee",
+          "--muted": "#a3a3a3",
+          "--muted-strong": "#bdbdbd",
+          "--muted-soft": "#929292",
+          "--muted-subtle": "#929292",
+          "--muted-icon": "#929292",
+          "--accent": "#5cbb77",
+          "--button-primary-bg": "#5cbb77",
+          "--button-primary-border": "#5cbb77",
+          "--button-primary-ink": "#101010",
+          "--button-primary-hover-bg": "#78ce90",
+          "--button-primary-hover-border": "#78ce90",
+        }
+      : {
+          "--window": "#ffffff",
+          "--sidebar": "#fafafa",
+          "--sidebar-navigation-surface": "#fafafa",
+          "--sidebar-control-surface": "#ededed",
+          "--sidebar-row-active": "#e5e5e5",
+          "--sidebar-row-hover": "#eeeeee",
+          "--main": "#ffffff",
+          "--surface": "#ffffff",
+          "--surface-muted": "#ececec",
+          "--composer-surface": "#ffffff",
+          "--line": "#e8e8e8",
+          "--line-strong": "#bcbcbc",
+          "--text-strong": "#181818",
+          "--muted": "#666666",
+          "--muted-strong": "#555555",
+          "--muted-soft": "#767676",
+          "--muted-subtle": "#767676",
+          "--muted-icon": "#767676",
+          "--accent": "#16833b",
+          "--button-primary-bg": "#16833b",
+          "--button-primary-border": "#16833b",
+          "--button-primary-ink": "#ffffff",
+          "--button-primary-hover-bg": "#116b30",
+          "--button-primary-hover-border": "#116b30",
+        }),
+  };
 }
 
 /** The colour behind the whole window, for the native window background. */

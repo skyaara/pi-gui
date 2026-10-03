@@ -15,7 +15,7 @@ test("sidebar destinations stay in the app and folder onboarding returns to the 
     for (const [label, title] of [
       ["Skills", "Skills"],
       ["Extensions", "Extensions"],
-      ["Scheduled", "Scheduled tasks"],
+      ["Automations", "Automations"],
     ]) {
       await page.getByRole("button", { name: label, exact: true }).click();
       await expect(page.locator(".sidebar")).toBeVisible();
@@ -49,7 +49,7 @@ test("sidebar destinations stay in the app and folder onboarding returns to the 
     );
     await expect(page.getByRole("button", { name: "Refresh", exact: true })).toBeEnabled();
     await page.screenshot({ path: test.info().outputPath("skills-navigation.png") });
-    await page.getByRole("button", { name: "Scheduled", exact: true }).click();
+    await page.getByRole("button", { name: "Automations", exact: true }).click();
     await expect(page.getByTestId("scheduled-task-create")).toBeEnabled();
     await page.getByRole("button", { name: "Threads", exact: true }).click();
     await expect(page.getByTestId("skills-surface")).toHaveCount(0);

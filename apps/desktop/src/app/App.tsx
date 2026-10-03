@@ -14,6 +14,8 @@ import {
 import { updateSnapshot, useDesktopAppState } from "./desktop-app-state";
 import { DesktopStartupSurface, toStartupSurfaceState } from "./desktop-recovery";
 import { buildFileWorkbenchContexts } from "./file-workbench-contexts";
+import { EnvironmentRail } from "./environment-rail";
+import { SubagentPanel } from "../features/conversation/subagent-panel";
 import { canTogglePrimarySidebar } from "./app-shell-utils";
 import { useDesktopCommands } from "./use-desktop-commands";
 import { useTimelineViewport } from "../features/conversation/hooks/use-timeline-viewport";
@@ -25,10 +27,7 @@ import { DiffPanel } from "../features/workbench/diff-panel";
 import type { DiffPanelFileRequest } from "../features/workbench/diff-panel-types";
 import { FileWorkbench } from "../features/workbench/file-workbench";
 import { useWorkbench } from "../features/workbench/use-workbench";
-import {
-  ExtensionViewPanel,
-  type ExtensionViewTheme,
-} from "../features/extensions/extension-view-panel";
+import { ExtensionViewPanel } from "../features/extensions/extension-view-panel";
 import { useExtensionViews } from "../features/extensions/use-extension-views";
 import { useExtensionCardActions } from "../features/extensions/use-extension-card-actions";
 import { useExtensionHostActions } from "../features/extensions/use-extension-host-actions";
@@ -89,7 +88,7 @@ import { PinnedCards, usePinnedCards } from "../features/extensions/pinned-cards
 import { TreeModal } from "../features/conversation/tree-modal";
 import { ForkModal } from "../features/conversation/fork-modal";
 import { getEffectiveModelRuntime } from "../features/settings/model-settings";
-import { applyTheme, getActiveTheme, useActiveTheme } from "../ui/active-theme";
+import { useDesktopTheme } from "./use-desktop-theme";
 import { deriveWorkspaceContext } from "./workspace-context";
 import { useTreeForkModals } from "../features/conversation/hooks/use-tree-fork-modals";
 import { useComposerDraftSync } from "../features/conversation/hooks/use-composer-draft-sync";
@@ -110,7 +109,6 @@ export default function App() {
   const [settingsWorkspaceId, setSettingsWorkspaceId] = useState("");
   const [skillsWorkspaceId, setSkillsWorkspaceId] = useState("");
   const [extensionsWorkspaceId, setExtensionsWorkspaceId] = useState("");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark" | null>(null);
   const [dockExpandedBySession, setDockExpandedBySession] = useState<Record<string, string>>({});
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
   const timelinePaneRef = useRef<HTMLDivElement | null>(null);
@@ -125,51 +123,7 @@ export default function App() {
   const api = window.piApp;
   const splitPane = useSplitPane(api, secondaryPane, snapshot);
 
-  useEffect(() => {
-    const piApi = window.piApp;
-    if (!piApi) return;
-
-    void piApi
-      .getResolvedTheme()
-      .then((theme) => {
-        setResolvedTheme(theme);
-      })
-      .catch((error: unknown) => {
-        console.error("[renderer] getResolvedTheme failed", error);
-        // Keep the variant painted at startup so preset changes still apply.
-        setResolvedTheme((current) => current ?? getActiveTheme().variant);
-      });
-
-    const unsub = piApi.onThemeChanged((theme) => {
-      setResolvedTheme(theme);
-    });
-
-    return unsub;
-  }, []);
-
-  useEffect(() => {
-    const themePresetId = snapshot?.themePresetId;
-    if (!resolvedTheme || !themePresetId) return;
-    applyTheme(themePresetId, resolvedTheme);
-  }, [resolvedTheme, snapshot?.themePresetId]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle(
-      "enable-transparency",
-      snapshot?.enableTransparency ?? false,
-    );
-  }, [snapshot?.enableTransparency]);
-
-  const activeTheme = useActiveTheme();
-  const extensionViewTheme = useMemo<ExtensionViewTheme>(
-    () => ({
-      mode: activeTheme.variant,
-      background: activeTheme.tokens["--main"] ?? "",
-      foreground: activeTheme.tokens["--text"] ?? "",
-      accent: activeTheme.tokens["--accent"] ?? "",
-    }),
-    [activeTheme],
-  );
+  const extensionViewTheme = useDesktopTheme(snapshot?.themePresetId, snapshot?.enableTransparency);
 
   const {
     activeWorktrees,
@@ -774,6 +728,7 @@ export default function App() {
     "main",
     "main--with-thread-tabs",
     sidePanelVisible ? "main--with-side-panel" : "",
+    sidePanelAvailable && !sidePanelVisible ? "main--with-environment" : "",
     snapshot.startupDiagnostics.length > 0 ? "main--with-startup-diagnostics" : "",
   ]
     .filter(Boolean)
@@ -1213,6 +1168,26 @@ export default function App() {
                     }
                     scheduledOrigins={scheduledOrigins}
                     annotations={transcriptAnnotations}
+                    footer={
+                      <SubagentPanel
+                        children={snapshot.orchestrationChildren.filter(
+                          (child) =>
+                            child.parentWorkspaceId === selectedWorkspace.id &&
+                            child.parentSessionId === selectedSession.id,
+                        )}
+                        onOpenThread={(child) =>
+                          handleSelectSession({
+                            workspaceId: child.childWorkspaceId,
+                            sessionId: child.childSessionId,
+                          })
+                        }
+                        onFollowUp={async (childThreadId, text) => {
+                          await updateSnapshot(setSnapshot, () =>
+                            api.sendChildThreadFollowUp({ childThreadId, text }),
+                          );
+                        }}
+                      />
+                    }
                     platform={api?.platform ?? "linux"}
                   />
                 </div>
@@ -1225,7 +1200,13 @@ export default function App() {
               ) : null}
               <ComposerPanel
                 key={selectedSessionKey}
-                workspace={selectedWorkspace}
+                onOpenSkills={() =>
+                  openSkills(selectedWorkspace.rootWorkspaceId ?? selectedWorkspace.id)
+                }
+                onOpenExtensions={() =>
+                  openExtensions(selectedWorkspace.rootWorkspaceId ?? selectedWorkspace.id)
+                }
+                onOpenShortcuts={() => openSettings(selectedWorkspace.id, "shortcuts")}
                 preparingTaskDraft={extensionHostActions.preparingTaskDraft}
                 activeSlashCommand={slashMenu.activeSlashFlow?.command}
                 activeSlashCommandMeta={slashMenu.activeSlashFlow?.command?.description}
@@ -1412,6 +1393,13 @@ export default function App() {
               })
             ) : null}
           </Workbench>
+        ) : null}
+        {sidePanelAvailable && !sidePanelVisible && selectedWorkspace && selectedSession ? (
+          <EnvironmentRail
+            workspace={selectedWorkspace}
+            session={selectedSession}
+            onOpenTool={workbench.openTool}
+          />
         ) : null}
       </main>
       {splitPane.active && !secondaryPane ? (

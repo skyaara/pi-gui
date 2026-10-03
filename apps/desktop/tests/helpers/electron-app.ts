@@ -1766,7 +1766,7 @@ export async function openNewThread(window: Page): Promise<void> {
     return;
   }
   const button = window
-    .locator(".sidebar__toolbar")
+    .locator(".sidebar__top")
     .getByRole("button", { name: "New thread", exact: true });
   await expect(button).toBeVisible({ timeout: 15_000 });
   await expect(button).toBeEnabled({ timeout: 15_000 });

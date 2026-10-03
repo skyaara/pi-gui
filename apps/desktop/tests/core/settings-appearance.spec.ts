@@ -55,14 +55,15 @@ test("toggles and restores window transparency", async () => {
         .toBe(await resolveColor(window, expected["--surface-glass"]!));
       const threads = window.getByRole("button", { name: "Threads", exact: true });
       await threads.click();
+      await window.mouse.move(500, 40);
       await expect(threads).toHaveAttribute("aria-current", "page");
       await expect
         .poll(() => elementCssProperty(window, ".sidebar__nav-item--active", "background-color"))
-        .toBe(await resolveColor(window, expected["--sidebar-row-active"]!));
-      await window.getByRole("button", { name: "Scheduled", exact: true }).hover();
+        .toBe("rgba(0, 0, 0, 0)");
+      await window.getByRole("button", { name: "Automations", exact: true }).hover();
       await expect
         .poll(() => elementCssProperty(window, '[title="Scheduled"]', "background-color"))
-        .toBe(await resolveColor(window, expected["--sidebar-control-surface"]!));
+        .toBe(await resolveColor(window, expected["--sidebar-row-hover"]!));
       await window.screenshot({ path: test.info().outputPath(`navigation-${variant}.png`) });
       await openAppearance(window);
     }
@@ -260,6 +261,7 @@ async function elementCssProperty(
 
 /** Each surface reads the same token in every preset, as Default does. */
 async function expectSameDesign(window: Page): Promise<void> {
+  await window.mouse.move(900, 600);
   const surfaces: readonly (readonly [selector: string, property: string, token: string])[] = [
     [".main", "background-color", "var(--main)"],
     [".sidebar", "background-color", "var(--sidebar)"],

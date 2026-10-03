@@ -137,6 +137,15 @@ test("create_child_thread returns after a slow worker starts, before its turn co
       (entry) => entry.sourceToolCallId === "create-child-start-ack",
     );
     expect(child?.status).toBe("running");
+    const subagents = window.getByRole("region", { name: "Pi subagents" });
+    await expect(subagents).toBeVisible();
+    await expect(subagents.getByRole("button", { name: /1 Pi subagent running/ })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+    await expect(subagents.getByText(child!.title)).toBeVisible();
+    await subagents.locator(".subagent-panel__item-heading").click();
+    await expect(subagents.getByRole("button", { name: "Open thread" })).toBeVisible();
     const childRunningIndicator = window.locator(
       `.session-row[data-session-id="${child?.childSessionId}"] .session-row__status--running`,
     );

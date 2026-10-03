@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { basename } from "node:path";
 import { writeFile } from "node:fs/promises";
 import {
@@ -9,6 +9,13 @@ import {
   makeWorkspace,
   selectSession,
 } from "../helpers/electron-app";
+
+async function openThreadMenu(page: Page) {
+  const menu = page.locator(".thread-tab-picker");
+  if (!(await menu.evaluate((element) => (element as HTMLDetailsElement).open))) {
+    await menu.locator("summary").click();
+  }
+}
 
 test("thread tabs switch across folders, preserve drafts, and close without deleting sessions", async () => {
   const first = await makeWorkspace("tabs-first");
@@ -22,18 +29,24 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
     // Seed named empty sessions through the shared Core helper; tab interactions use the UI.
     await createNamedThread(page, "First thread", { workspaceName: basename(first) });
     await createNamedThread(page, "Second thread", { workspaceName: basename(second) });
+    await openThreadMenu(page);
     const tabs = page.getByRole("tablist", { name: "Open threads" });
     const firstTab = tabs.getByRole("tab", { name: "First thread", exact: true });
     const secondTab = tabs.getByRole("tab", { name: "Second thread", exact: true });
+    await openThreadMenu(page);
     await firstTab.click();
     await page.getByTestId("composer").fill("First draft");
+    await openThreadMenu(page);
     await secondTab.click();
     await page.getByTestId("composer").fill("Second draft");
+    await openThreadMenu(page);
     await firstTab.click();
     await expect(page.getByTestId("composer")).toHaveValue("First draft");
+    await openThreadMenu(page);
     await secondTab.click();
     await expect(page.getByTestId("composer")).toHaveValue("Second draft");
     await selectSession(page, "Second thread");
+    await openThreadMenu(page);
     await expect(tabs.getByRole("tab")).toHaveCount(2);
     await secondTab.focus();
     await secondTab.press("Home");
@@ -48,6 +61,7 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
     await expect(tabs.getByRole("tab")).toHaveCount(1);
     await expect(page.getByTestId("composer")).toHaveValue("Second draft");
     await selectSession(page, "First thread");
+    await openThreadMenu(page);
     await expect(firstTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByTestId("composer")).toHaveValue("First draft");
     await firstTab.press("Delete");
@@ -61,6 +75,7 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
       state.workspaces.flatMap((workspace) => workspace.sessions).map((session) => session.title),
     ).toEqual(expect.arrayContaining(["First thread", "Second thread"]));
     await selectSession(page, "Second thread");
+    await openThreadMenu(page);
     await expect(page.getByTestId("composer")).toHaveValue("Second draft");
     await page.getByRole("button", { name: "New thread tab", exact: true }).click();
     await expect(page.getByTestId("new-thread-composer")).toBeVisible();
@@ -69,6 +84,7 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
       "aria-selected",
       "true",
     );
+    await openThreadMenu(page);
     await secondTab.click();
     const row = page.locator(".session-list > .session-row").filter({ hasText: "Second thread" });
     await row.hover();
@@ -91,6 +107,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
       BrowserWindow.getAllWindows()[0]?.setContentSize(800, 800);
     });
     for (let index = 1; index <= 8; index++) await createNamedThread(page, `Thread ${index}`);
+    await openThreadMenu(page);
     const strip = page.getByRole("tablist", { name: "Open threads" });
     await expect(strip.getByRole("tab")).toHaveCount(8);
     await expect
@@ -127,9 +144,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     await harness.electronApp.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0]?.setContentSize(1800, 900);
     });
-    await expect(page.getByRole("button", { name: "Scroll tabs left", exact: true })).toHaveCount(
-      0,
-    );
+    await expect(page.getByRole("button", { name: "Scroll tabs left", exact: true })).toBeVisible();
     const rows = await strip
       .locator(".thread-tabs__item")
       .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().top));
@@ -149,6 +164,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     const toggleBounds = await page
       .getByRole("button", { name: "Toggle sidebar", exact: true })
       .boundingBox();
+    await openThreadMenu(page);
     const stripBounds = await strip.boundingBox();
     expect(stripBounds!.x).toBeGreaterThan(toggleBounds!.x + toggleBounds!.width);
     await page.screenshot({ path: test.info().outputPath("wide-tabs.png") });
@@ -167,6 +183,7 @@ test("split panes stay in one window and keep their own tabs and selected conver
     const left = await harness.firstWindow();
     await createNamedThread(left, "Left thread");
     await createNamedThread(left, "Right thread");
+    await openThreadMenu(left);
     await left.getByRole("button", { name: "Split editor" }).click();
     await expect(left.getByTestId("split-pane-target")).toBeVisible();
     await expect
@@ -289,9 +306,9 @@ test("split panes stay in one window and keep their own tabs and selected conver
     await expect
       .poll(() =>
         inspectRight(`(() => {
-          const strip = document.querySelector('.thread-tabs__strip');
-          return strip && strip.scrollWidth > strip.clientWidth && getComputedStyle(strip).maskImage !== 'none';
-        })()`),
+      const heading = document.querySelector('.thread-heading');
+      return heading && heading.getBoundingClientRect().right <= innerWidth;
+    })()`),
       )
       .toBe(true);
     await left.evaluate(() => globalThis.window.piApp?.setActiveView("settings"));
@@ -317,6 +334,7 @@ test("split panes stay in one window and keep their own tabs and selected conver
         ),
       )
       .toBeGreaterThan(0);
+    await openThreadMenu(left);
     await left.getByRole("button", { name: "Close split pane" }).click();
     await expect(left.getByTestId("split-pane-target")).toHaveCount(0);
   } finally {

@@ -43,16 +43,10 @@ test("empty projects open the composer on startup, folder selection, and restart
     const canvas = await window.locator(".canvas--new-thread").boundingBox();
     expect(geometry).not.toBeNull();
     expect(canvas).not.toBeNull();
-    const maxWidth = await window.evaluate(
-      () =>
-        Number.parseFloat(
-          getComputedStyle(document.documentElement).getPropertyValue("--chat-max-width"),
-        ) * Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+    expect(geometry!.width).toBeLessThanOrEqual(760);
+    expect(Math.abs(canvas!.y + canvas!.height - geometry!.y - geometry!.height - 12)).toBeLessThan(
+      2,
     );
-    expect(geometry!.width).toBeLessThanOrEqual(maxWidth + 1);
-    expect(
-      Math.abs(geometry!.y + geometry!.height / 2 - (canvas!.y + canvas!.height / 2)),
-    ).toBeLessThan(4);
     await window.screenshot({ path: test.info().outputPath("empty-project-composer.png") });
     await harness.close();
     harness = await launchDesktop(userDataDir, { agentDir, testMode: "background" });
@@ -83,7 +77,7 @@ test("new thread reuses composer behaviors for slash commands, image previews, a
     await openNewThread(window);
 
     const composer = window.getByTestId("new-thread-composer");
-    await expect(window.getByRole("heading", { name: /^What should we build/ })).toBeVisible();
+    await expect(window.getByRole("heading", { name: "Pi", exact: true })).toBeVisible();
     await expect(composer).toBeFocused();
     await expect(composer).toHaveAttribute(
       "placeholder",

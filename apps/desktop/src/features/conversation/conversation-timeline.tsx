@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   type RefObject,
+  type ReactNode,
 } from "react";
 import type {
   DisplayTimelineItem,
@@ -53,6 +54,7 @@ interface ConversationTimelineProps {
   readonly workspacePath?: string;
   readonly annotations?: TranscriptAnnotations;
   readonly platform: NodeJS.Platform;
+  readonly footer?: ReactNode;
 }
 const NO_MARKERS: readonly AnnotationMarker[] = [];
 export function ConversationTimeline({
@@ -72,6 +74,7 @@ export function ConversationTimeline({
   workspacePath,
   annotations,
   platform,
+  footer,
 }: ConversationTimelineProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const annotationSelection = useAnnotationSelection({
@@ -194,6 +197,7 @@ export function ConversationTimeline({
                 ))}
               </div>
             )}
+            {footer ? <div className="timeline-footer">{footer}</div> : null}
             {!transcriptFailed && viewport.showJumpToLatest ? (
               <button
                 className="timeline-jump"

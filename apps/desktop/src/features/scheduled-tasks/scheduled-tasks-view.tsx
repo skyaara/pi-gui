@@ -56,7 +56,7 @@ export function ScheduledTasksView({
     <section className="canvas scheduled-tasks-view" data-testid="scheduled-tasks-view">
       <header className="view-header">
         <div>
-          <h1 className="view-header__title">Scheduled tasks</h1>
+          <h1 className="view-header__title">Automations</h1>
           <p className="view-header__body">
             Ask pi to schedule tasks, set reminders, or monitor for updates.
           </p>
@@ -72,7 +72,7 @@ export function ScheduledTasksView({
               aria-expanded={createOpen}
               onClick={() => setCreateOpen((open) => !open)}
             >
-              Create
+              New automation
             </button>
             {createOpen ? (
               <div className="workspace-menu scheduled-create__menu" role="menu">

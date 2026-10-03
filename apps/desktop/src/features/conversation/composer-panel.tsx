@@ -14,7 +14,6 @@ import type {
   QueuedComposerMessage,
   SessionExtensionNoticeRecord,
   SessionRecord,
-  WorkspaceRecord,
 } from "../../../contracts/desktop-state";
 import type { MentionOption } from "./hooks/use-mention-menu";
 import { ArrowUpIcon, PlusIcon, StopSquareIcon } from "../../ui/icons";
@@ -25,7 +24,6 @@ import type {
   ComposerSlashOption,
   ComposerSlashOptionEmptyState,
 } from "./composer-commands";
-import { ComposerWorkspace } from "./composer-workspace";
 import { ComposerSurface } from "./composer-surface";
 import { AnnotationChip } from "./annotations/annotation-chip";
 import type { TranscriptAnnotations } from "./annotations/use-transcript-annotations";
@@ -41,7 +39,9 @@ import { ExtensionFlagsBadge } from "../threads/extension-flags-selector";
 import type { ExtensionDockModel } from "../extensions/extension-session-ui";
 
 interface ComposerPanelProps {
-  readonly workspace: WorkspaceRecord;
+  readonly onOpenSkills: () => void;
+  readonly onOpenExtensions: () => void;
+  readonly onOpenShortcuts: () => void;
   readonly preparingTaskDraft?: boolean;
   readonly selectedSession: SessionRecord;
   readonly lastError?: string;
@@ -104,7 +104,9 @@ interface ComposerPanelProps {
 }
 
 export function ComposerPanel({
-  workspace,
+  onOpenSkills,
+  onOpenExtensions,
+  onOpenShortcuts,
   preparingTaskDraft = false,
   selectedSession,
   lastError,
@@ -224,7 +226,6 @@ export function ComposerPanel({
             <div className="composer__footer">
               <div className="composer__footer-row">
                 <div className="composer__config">
-                  <ComposerWorkspace workspace={workspace} />
                   <ModelSelector
                     runtime={runtime}
                     provider={provider}
@@ -239,6 +240,30 @@ export function ComposerPanel({
                     onSetFastMode={onSetFastMode}
                   />
                   <ExtensionFlagsBadge values={extensionFlags} />
+                  <button
+                    className="composer__feature-control"
+                    type="button"
+                    aria-label="Open extensions"
+                    onClick={onOpenExtensions}
+                  >
+                    Extensions
+                  </button>
+                  <button
+                    className="composer__feature-control"
+                    type="button"
+                    aria-label="Open skills"
+                    onClick={onOpenSkills}
+                  >
+                    Skills
+                  </button>
+                  <button
+                    className="composer__feature-control"
+                    type="button"
+                    aria-label="Keyboard shortcuts"
+                    onClick={onOpenShortcuts}
+                  >
+                    ?
+                  </button>
                   <ContextMeter usage={usage} />
                 </div>
                 <div className="composer__actions">

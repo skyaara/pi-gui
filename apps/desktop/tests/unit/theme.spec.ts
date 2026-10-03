@@ -44,18 +44,19 @@ test("every preset keeps text readable in both variants", () => {
   }
 });
 
-test("Default uses the T3 Code palette in both appearances", () => {
+test("Default uses PiUI's minimal desktop palette in both appearances", () => {
   const light = themeTokensFor("default", "light");
-  expect(light["--main"]).toBe("#fcfcfc");
+  expect(light["--main"]).toBe("#ffffff");
   expect(light["--surface"]).toBe("#ffffff");
-  expect(light["--text-strong"]).toBe("#27272a");
-  expect(light["--button-primary-bg"]).toBe("#1b4ed8");
+  expect(light["--text-strong"]).toBe("#181818");
+  expect(light["--button-primary-bg"]).toBe("#16833b");
   expect(light["--sidebar"]).toBe("#fafafa");
   const dark = themeTokensFor("default", "dark");
-  expect(dark["--main"]).toBe("#0a0a0a");
-  expect(dark["--text-strong"]).toBe("#f5f5f5");
-  expect(dark["--sidebar"]).toBe("#000000");
-  expect(dark["--surface"]).toBe("#111111");
+  expect(dark["--main"]).toBe("#171717");
+  expect(dark["--text-strong"]).toBe("#eeeeee");
+  expect(dark["--sidebar"]).toBe("#1b1b1b");
+  expect(dark["--surface"]).toBe("#1b1b1b");
+  expect(dark["--button-primary-bg"]).toBe("#5cbb77");
 });
 
 test("presets derive every token, so no preset can inherit another's greys", () => {

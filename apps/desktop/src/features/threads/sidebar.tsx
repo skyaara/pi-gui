@@ -50,7 +50,6 @@ import {
   ExtensionIcon,
   FolderIcon,
   SearchIcon,
-  PencilIcon,
   PinIcon,
   PlusIcon,
   RestoreIcon,
@@ -416,28 +415,49 @@ export function Sidebar(props: SidebarProps) {
         onReset={() => setSidebarWidth(undefined)}
       />
       <div className="sidebar__top">
-        <div className="sidebar__brand">piui</div>
-        <div className="sidebar__toolbar">
+        <div className="sidebar__nav" aria-label="Main navigation">
           <Button
-            className="sidebar__search"
+            className="sidebar__nav-item sidebar__new"
             variant="ghost"
             type="button"
+            aria-label="New thread"
+            onClick={() => onNewThread()}
+          >
+            <PlusIcon />
+            <span>New Session</span>
+            <kbd>⌘N</kbd>
+          </Button>
+          <button
+            title="Threads"
+            className={`sidebar__nav-item ${activeView === "threads" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "threads" ? "page" : undefined}
+            type="button"
+            onClick={() => onSetActiveView("threads")}
+          >
+            <FolderIcon />
+            <span>Threads</span>
+          </button>
+          <button
+            title="Automations"
+            className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
+            aria-current={activeView === "scheduled" ? "page" : undefined}
+            type="button"
+            data-testid="sidebar-scheduled"
+            onClick={() => onSetActiveView("scheduled")}
+          >
+            <ClockIcon />
+            <span>Automations</span>
+          </button>
+          <button
+            className="sidebar__nav-item sidebar__search"
+            type="button"
+            aria-label="Search"
             onClick={onSearchThreads}
           >
             <SearchIcon />
             <span>Search</span>
-          </Button>
-          <Button
-            className="sidebar__new"
-            size="icon"
-            variant="ghost"
-            type="button"
-            aria-label="New thread"
-            title="New thread"
-            onClick={() => onNewThread()}
-          >
-            <PencilIcon />
-          </Button>
+            <kbd>⌘K</kbd>
+          </button>
         </div>
       </div>
 
@@ -640,39 +660,11 @@ export function Sidebar(props: SidebarProps) {
         </div>
       ) : null}
       <div className="sidebar__footer">
-        <button
-          title="Settings"
-          className="sidebar__nav-item"
-          type="button"
-          onClick={() =>
-            onOpenSettings(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
-          }
-        >
-          <SettingsIcon />
-          <span>Settings</span>
-        </button>
-        <div className="sidebar__nav">
-          <button
-            title="Threads"
-            className={`sidebar__nav-item ${activeView === "threads" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "threads" ? "page" : undefined}
-            type="button"
-            onClick={() => onSetActiveView("threads")}
-          >
-            <FolderIcon />
-            <span>Threads</span>
-          </button>
-          <button
-            title="Scheduled"
-            className={`sidebar__nav-item ${activeView === "scheduled" ? "sidebar__nav-item--active" : ""}`}
-            aria-current={activeView === "scheduled" ? "page" : undefined}
-            type="button"
-            data-testid="sidebar-scheduled"
-            onClick={() => onSetActiveView("scheduled")}
-          >
-            <ClockIcon />
-            <span>Scheduled</span>
-          </button>
+        <div className="sidebar__identity" aria-label="piui">
+          <span className="sidebar__identity-mark">π</span>
+          <span>piui</span>
+        </div>
+        <div className="sidebar__resources">
           <button
             title="Skills"
             className={`sidebar__nav-item ${activeView === "skills" ? "sidebar__nav-item--active" : ""}`}
@@ -698,6 +690,17 @@ export function Sidebar(props: SidebarProps) {
             <span>Extensions</span>
           </button>
         </div>
+        <button
+          title="Settings"
+          className="sidebar__nav-item"
+          type="button"
+          onClick={() =>
+            onOpenSettings(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
+          }
+        >
+          <SettingsIcon />
+          <span className="sr-only">Settings</span>
+        </button>
       </div>
     </aside>
   );
