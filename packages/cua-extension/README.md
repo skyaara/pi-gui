@@ -28,7 +28,9 @@ The names, argument schemas, descriptions, and read-only/destructive hints come
 from the installed Cua SDK version.
 Run `/cua` to check that the tools loaded in the current Pi thread.
 
-Screenshots are returned as Pi image blocks, along with Cua's text result.
+Screenshots are returned as Pi image blocks, along with Cua's text and structured
+results. The structured result carries window IDs and element tokens needed for
+follow-up actions.
 Choose a vision-capable model when screenshot interpretation is needed. Cua's
 tool refusals remain failed Pi tool results, including their error codes.
 

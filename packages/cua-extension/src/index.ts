@@ -81,10 +81,12 @@ async function createDriver(host: DriverAuthorizationHost): Promise<NativeDriver
 }
 
 function toolContent(result: ToolResult) {
+  const summary = result.text || (result.isError ? "Cua action failed." : "Done.");
+  const structured = result.structuredJson?.trim();
   return [
     {
       type: "text" as const,
-      text: result.text || (result.isError ? "Cua action failed." : "Done."),
+      text: structured ? `${summary}\n\nStructured result:\n${structured}` : summary,
     },
     ...result.images.map((image) => ({
       type: "image" as const,

@@ -76,6 +76,7 @@ function setup(
 test("registers native schemas and returns images to Pi", async () => {
   const app = setup(async () => ({
     text: "Window state",
+    structuredJson: '{"pid":41,"window_id":7,"elements":[{"element_token":"button-1"}]}',
     images: [{ mimeType: "image/png", dataBase64: "aGVsbG8=" }],
     isError: false,
     degraded: false,
@@ -103,7 +104,10 @@ test("registers native schemas and returns images to Pi", async () => {
   assert.equal(app.calls[0].name, "get_window_state");
   assert.deepEqual(app.calls[0].args, { pid: 41, window_id: 7 });
   assert.deepEqual(result.content, [
-    { type: "text", text: "Window state" },
+    {
+      type: "text",
+      text: 'Window state\n\nStructured result:\n{"pid":41,"window_id":7,"elements":[{"element_token":"button-1"}]}',
+    },
     { type: "image", data: "aGVsbG8=", mimeType: "image/png" },
   ]);
   await app.handlers.get("session_shutdown")();
