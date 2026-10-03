@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { basename } from "node:path";
+import { writeFile } from "node:fs/promises";
 import {
   createNamedThread,
   getDesktopState,
@@ -96,6 +97,8 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
       .poll(() => strip.evaluate((element) => element.scrollWidth > element.clientWidth))
       .toBe(true);
     await expect.poll(() => strip.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+    await expect(strip).toHaveClass(/thread-tabs__strip--fade-start/);
+    expect(await strip.evaluate((element) => getComputedStyle(element).maskImage)).not.toBe("none");
     const bounds = await strip.boundingBox();
     const selectedBounds = await strip
       .getByRole("tab", { name: "Thread 8", exact: true })
@@ -114,6 +117,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
     await strip.getByRole("tab", { name: "Thread 8", exact: true }).focus();
     await strip.getByRole("tab", { name: "Thread 8", exact: true }).press("Home");
     await expect.poll(() => strip.evaluate((element) => element.scrollLeft)).toBeLessThan(1);
+    await expect(strip).toHaveClass(/thread-tabs__strip--fade-end/);
     await strip.getByRole("tab", { name: "Thread 1", exact: true }).press("ArrowRight");
     await expect(strip.getByRole("tab", { name: "Thread 2", exact: true })).toHaveAttribute(
       "aria-selected",
@@ -153,7 +157,7 @@ test("tabs lay out in one row and scroll to the selected thread in a narrow wind
   }
 });
 
-test("split windows keep their own thread tabs and selected conversations", async () => {
+test("split panes stay in one window and keep their own tabs and selected conversations", async () => {
   const workspace = await makeWorkspace("split-window-tabs");
   const harness = await launchDesktop(await makeUserDataDir(), {
     initialWorkspaces: [workspace],
@@ -163,39 +167,158 @@ test("split windows keep their own thread tabs and selected conversations", asyn
     const left = await harness.firstWindow();
     await createNamedThread(left, "Left thread");
     await createNamedThread(left, "Right thread");
-    const newWindow = harness.electronApp.waitForEvent("window");
-    await left.getByRole("button", { name: "Split into two windows" }).click();
-    const right = await newWindow;
+    await left.getByRole("button", { name: "Split editor" }).click();
+    await expect(left.getByTestId("split-pane-target")).toBeVisible();
+    await expect
+      .poll(async () =>
+        harness.electronApp.evaluate(({ webContents }) =>
+          webContents
+            .getAllWebContents()
+            .some((contents) => contents.getURL().includes("pane=secondary")),
+        ),
+      )
+      .toBe(true);
     const leftTabs = left.getByRole("tablist", { name: "Open threads" });
-    const rightTabs = right.getByRole("tablist", { name: "Open threads" });
-    await expect(rightTabs.getByRole("tab", { name: "Right thread" })).toBeVisible();
+    const inspectRight = (script: string) =>
+      harness.electronApp.evaluate(async ({ webContents }, source) => {
+        const pane = webContents
+          .getAllWebContents()
+          .find((contents) => contents.getURL().includes("pane=secondary"));
+        if (!pane) throw new Error("Split pane is unavailable");
+        return (await pane.executeJavaScript(source)) as unknown;
+      }, script);
+    await expect.poll(() => inspectRight('document.querySelectorAll("[role=tab]").length')).toBe(1);
     await leftTabs.getByRole("tab", { name: "Left thread" }).click();
     await expect(leftTabs.getByRole("tab", { name: "Left thread" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
-    await expect(rightTabs.getByRole("tab", { name: "Right thread" })).toHaveAttribute(
+    await expect
+      .poll(() =>
+        inspectRight(
+          'document.querySelector("[role=tab][aria-selected=true]")?.textContent?.trim()',
+        ),
+      )
+      .toBe("Right thread");
+    const state = await getDesktopState(left);
+    const leftSession = state.workspaces
+      .flatMap((item) => item.sessions)
+      .find((item) => item.title === "Left thread")!;
+    const rightWorkspace = state.workspaces.find((item) =>
+      item.sessions.some((session) => session.id === leftSession.id),
+    )!;
+    await inspectRight(
+      `window.piApp.selectSession({ workspaceId: ${JSON.stringify(rightWorkspace.id)}, sessionId: ${JSON.stringify(leftSession.id)} })`,
+    );
+    await expect.poll(() => inspectRight('document.querySelectorAll("[role=tab]").length')).toBe(2);
+    await expect
+      .poll(() =>
+        inspectRight(
+          'document.querySelector("[role=tab][aria-selected=true]")?.textContent?.trim()',
+        ),
+      )
+      .toBe("Left thread");
+    await expect(leftTabs.getByRole("tab", { name: "Left thread" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
-    await expect(rightTabs.getByRole("tab")).toHaveCount(1);
-    await left.getByTestId("composer").fill("Draft in left window");
-    await right.getByTestId("composer").fill("Draft in right window");
-    await expect(left.getByTestId("composer")).toHaveValue("Draft in left window");
-    await expect(right.getByTestId("composer")).toHaveValue("Draft in right window");
-    const singleTab = (await rightTabs.getByRole("tab", { name: "Right thread" }).boundingBox())!;
-    expect(singleTab.width).toBeLessThanOrEqual(240);
-    const bounds = await harness.electronApp.evaluate(({ BrowserWindow }) =>
-      BrowserWindow.getAllWindows()
-        .map((window) => window.getBounds())
-        .sort((a, b) => a.x - b.x),
+    await inspectRight('document.querySelector("[role=tab]")?.click()');
+    await expect
+      .poll(() =>
+        inspectRight(
+          'document.querySelector("[role=tab][aria-selected=true]")?.textContent?.trim()',
+        ),
+      )
+      .toBe("Right thread");
+    await expect(leftTabs.getByRole("tab", { name: "Left thread" })).toHaveAttribute(
+      "aria-selected",
+      "true",
     );
-    expect(bounds).toHaveLength(2);
-    expect(bounds[0]!.x + bounds[0]!.width).toBe(bounds[1]!.x);
-    expect(bounds[0]!.y).toBe(bounds[1]!.y);
-    expect(bounds[0]!.height).toBe(bounds[1]!.height);
+    await inspectRight('document.querySelectorAll("[role=tab]")[1]?.click()');
+    await leftTabs.getByRole("tab", { name: "Right thread" }).click();
+    await expect
+      .poll(() =>
+        inspectRight(
+          'document.querySelector("[role=tab][aria-selected=true]")?.textContent?.trim()',
+        ),
+      )
+      .toBe("Left thread");
+    const windowCount = await harness.electronApp.evaluate(
+      ({ BrowserWindow }) => BrowserWindow.getAllWindows().length,
+    );
+    expect(windowCount).toBe(1);
+    const nativeBounds = await harness.electronApp.evaluate(({ BrowserWindow }) => {
+      const window = BrowserWindow.getAllWindows()[0]!;
+      const pane = window.contentView.children.find((view) => "webContents" in view);
+      return { pane: pane?.getBounds(), size: window.getContentSize() };
+    });
+    const targetBounds = await left.getByTestId("split-pane-target").boundingBox();
+    expect(nativeBounds.pane?.x).toBeCloseTo(targetBounds!.x + 6, 0);
+    expect(nativeBounds.pane?.width).toBeCloseTo(targetBounds!.width - 6, 0);
+    expect(nativeBounds.pane?.height).toBe(nativeBounds.size[1]);
+    await left.getByRole("separator", { name: "Resize split panes" }).focus();
+    await left.getByRole("separator", { name: "Resize split panes" }).press("ArrowRight");
+    await expect
+      .poll(() =>
+        harness.electronApp.evaluate(
+          ({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows()[0]
+              ?.contentView.children.find((view) => "webContents" in view)
+              ?.getBounds().x,
+        ),
+      )
+      .toBeGreaterThan(nativeBounds.pane!.x);
+    const nativeImage = await harness.electronApp.evaluate(async ({ BrowserWindow }) =>
+      (await BrowserWindow.getAllWindows()[0]!.capturePage()).toPNG().toString("base64"),
+    );
+    await writeFile(test.info().outputPath("split-native.png"), Buffer.from(nativeImage, "base64"));
+    const paneImage = await harness.electronApp.evaluate(async ({ webContents }) => {
+      const pane = webContents
+        .getAllWebContents()
+        .find((contents) => contents.getURL().includes("pane=secondary"));
+      return (await pane!.capturePage()).toPNG().toString("base64");
+    });
+    await writeFile(
+      test.info().outputPath("split-pane-native.png"),
+      Buffer.from(paneImage, "base64"),
+    );
     await left.screenshot({ path: test.info().outputPath("split-left.png") });
-    await right.screenshot({ path: test.info().outputPath("split-right.png") });
+    await harness.electronApp.evaluate(({ BrowserWindow }) => {
+      BrowserWindow.getAllWindows()[0]?.setContentSize(950, 800);
+    });
+    await expect
+      .poll(() =>
+        inspectRight(`(() => {
+          const strip = document.querySelector('.thread-tabs__strip');
+          return strip && strip.scrollWidth > strip.clientWidth && getComputedStyle(strip).maskImage !== 'none';
+        })()`),
+      )
+      .toBe(true);
+    await left.evaluate(() => globalThis.window.piApp?.setActiveView("settings"));
+    await expect
+      .poll(() =>
+        harness.electronApp.evaluate(
+          ({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows()[0]
+              ?.contentView.children.find((view) => "webContents" in view)
+              ?.getBounds().width,
+        ),
+      )
+      .toBe(0);
+    await left.evaluate(() => globalThis.window.piApp?.setActiveView("threads"));
+    await expect(left.getByTestId("split-pane-target")).toBeVisible();
+    await expect
+      .poll(() =>
+        harness.electronApp.evaluate(
+          ({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows()[0]
+              ?.contentView.children.find((view) => "webContents" in view)
+              ?.getBounds().width,
+        ),
+      )
+      .toBeGreaterThan(0);
+    await left.getByRole("button", { name: "Close split pane" }).click();
+    await expect(left.getByTestId("split-pane-target")).toHaveCount(0);
   } finally {
     await harness.close();
   }

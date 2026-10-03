@@ -9,10 +9,11 @@ import {
   nativeTheme,
   net,
   protocol,
-  screen,
   shell,
+  WebContentsView,
   type MenuItemConstructorOptions,
   type MessageBoxOptions,
+  type WebContents,
 } from "electron";
 import { isValidHttpBaseUrl } from "@pi-gui/pi-sdk-driver";
 import { createRequire } from "node:module";
@@ -332,7 +333,14 @@ function isInAppNavigationUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
     const appUrl = new URL(appRendererUrl());
-    return parsed.href === appUrl.href || (isDev && parsed.origin === appUrl.origin);
+    return (
+      parsed.href === appUrl.href ||
+      (parsed.protocol === appUrl.protocol &&
+        parsed.pathname === appUrl.pathname &&
+        parsed.searchParams.get("pane") === "secondary" &&
+        [...parsed.searchParams.keys()].length === 1) ||
+      (isDev && parsed.origin === appUrl.origin)
+    );
   } catch {
     return false;
   }
@@ -439,14 +447,14 @@ function readClipboardImageAttachment(): ClipboardImageRead {
   };
 }
 
-function dispatchCloseFocusedSurface(window: BrowserWindow, event: Electron.Event): void {
+function dispatchCloseFocusedSurface(contents: WebContents, event: Electron.Event): void {
   event.preventDefault();
-  const webContentsId = window.webContents.id;
+  const webContentsId = contents.id;
   surfaceCloseShortcutIds.add(webContentsId);
   setImmediate(() => {
     surfaceCloseShortcutIds.delete(webContentsId);
   });
-  window.webContents.send(desktopIpc.appCommand, desktopCommands.closeFocusedSurface);
+  contents.send(desktopIpc.appCommand, desktopCommands.closeFocusedSurface);
 }
 
 // The native window colour matches the renderer's theme, so load, reload and
@@ -460,6 +468,7 @@ function currentWindowBackground(): string {
 
 // Windows created transparent keep their glass until the next launch.
 const opaqueAppWindows = new Set<BrowserWindow>();
+const inputHandlers = new WeakMap<BrowserWindow, (contents: WebContents) => void>();
 
 function refreshWindowBackgrounds(): void {
   if (!store) return;
@@ -467,6 +476,26 @@ function refreshWindowBackgrounds(): void {
   for (const window of opaqueAppWindows) {
     if (!window.isDestroyed()) window.setBackgroundColor(color);
   }
+}
+
+function guardExtensionFrames(contents: WebContents): void {
+  contents.on("will-frame-navigate", (event) => {
+    if (event.isMainFrame) return;
+    try {
+      const url = new URL(event.url);
+      if (
+        url.protocol !== `${DESKTOP_EXTENSION_SCHEME}:` ||
+        url.pathname !== "/" ||
+        url.search ||
+        url.hash
+      )
+        throw new Error("Unexpected frame navigation");
+      if (!extensionViewOwner) throw new Error("Extension host unavailable");
+      extensionViewOwner.getConnectionContext(url.hostname, contents.id);
+    } catch {
+      event.preventDefault();
+    }
+  });
 }
 
 function createWindow(): BrowserWindow {
@@ -501,23 +530,7 @@ function createWindow(): BrowserWindow {
     }
     return { action: "deny" };
   });
-  window.webContents.on("will-frame-navigate", (event) => {
-    if (event.isMainFrame) return;
-    try {
-      const url = new URL(event.url);
-      if (
-        url.protocol !== `${DESKTOP_EXTENSION_SCHEME}:` ||
-        url.pathname !== "/" ||
-        url.search ||
-        url.hash
-      )
-        throw new Error("Unexpected frame navigation");
-      if (!extensionViewOwner) throw new Error("Extension host unavailable");
-      extensionViewOwner.getConnectionContext(url.hostname, window.webContents.id);
-    } catch {
-      event.preventDefault();
-    }
-  });
+  guardExtensionFrames(window.webContents);
   window.webContents.on("will-navigate", (event, url) => {
     if (isInAppNavigationUrl(url)) {
       return;
@@ -544,7 +557,10 @@ function createWindow(): BrowserWindow {
     // the window would discard it.
     event.preventDefault();
     void composerDraftFlusher
-      .flush([window])
+      .flushContents([
+        window.webContents,
+        ...(splitPanes.get(window) ? [splitPanes.get(window)!.webContents] : []),
+      ])
       .finally(() => {
         if (window.isDestroyed()) return;
         windowsClosingAfterDraftFlush.add(window);
@@ -559,101 +575,104 @@ function createWindow(): BrowserWindow {
       window.show();
     }
   });
-  window.webContents.on("before-input-event", (event, input) => {
-    if (shortcutRecordingWindows.has(window.webContents.id)) return;
-    if (input.type !== "keyDown") {
-      return;
-    }
-
-    // Side panel tab chords act from the terminal and extension views too. The
-    // key is not consumed: that would also swallow the modifier's keyup, leaving
-    // the tab hints up, and on Windows and Linux it would let the Alt release
-    // open the hidden menu bar. The page takes no default action for these keys,
-    // and the renderer's own handling of the same keydown is idempotent.
-    const sidePanelTabCommand = getSidePanelTabCommand(process.platform, input);
-    if (sidePanelTabCommand) {
-      if (!input.isAutoRepeat) window.webContents.send(desktopIpc.appCommand, sidePanelTabCommand);
-      return;
-    }
-
-    const lowerKey = input.key.toLowerCase();
-    const platformModifier = platformShortcutModifier(process.platform, input);
-    const command = getDesktopCommandFromShortcut(
-      {
-        modifier: platformModifier,
-        alt: input.alt,
-        shift: input.shift,
-        key: input.key,
-        code: input.code,
-      },
-      store.snapshot().keyboardShortcuts,
-    );
-    const webContentsId = window.webContents.id;
-    const terminalFocused = terminalFocusedWebContentsIds.has(webContentsId);
-    const closeFocusedSurface =
-      isCloseFocusedSurfaceShortcut({
-        meta: input.meta,
-        control: input.control,
-        alt: input.alt,
-        shift: input.shift,
-        key: input.key,
-        code: input.code,
-        platform: process.platform,
-      }) &&
-      (terminalFocused || sidePanelFocusedWebContentsIds.has(webContentsId));
-    if (terminalFocused) {
-      // Control chords belong to the shell, so only macOS Command chords open
-      // a palette or act on the thread from the terminal.
-      if (process.platform === "darwin" && isSinglePressCommand(command)) {
-        event.preventDefault();
-        if (!input.isAutoRepeat) window.webContents.send(desktopIpc.appCommand, command);
-      } else if (
-        command === desktopCommands.toggleSidePanel ||
-        command === desktopCommands.toggleTerminal
-      ) {
-        event.preventDefault();
-        window.webContents.send(desktopIpc.appCommand, command);
-      } else if (closeFocusedSurface) {
-        dispatchCloseFocusedSurface(window, event);
-      }
-      return;
-    }
-    if (closeFocusedSurface) {
-      dispatchCloseFocusedSurface(window, event);
-      return;
-    }
-    if (platformModifier && !input.alt && input.shift && lowerKey === "n") {
-      event.preventDefault();
-      createAppWindow(windowOwner.viewForWindow(window));
-      return;
-    }
-
-    if (platformModifier && !input.alt && !input.shift && lowerKey === "o") {
-      event.preventDefault();
-      void pickWorkspaceViaDialog(window).catch((error: unknown) => {
-        console.error("[main] pickWorkspaceViaDialog failed", error);
-      });
-      return;
-    }
-
-    if (platformModifier && !input.alt && !input.shift && lowerKey === "v") {
-      const clipboardImage = readClipboardImageAttachment();
-      if (clipboardImage.ok || clipboardImage.message) {
-        event.preventDefault();
-        window.webContents.send(desktopIpc.clipboardImagePasted, clipboardImage);
+  const attachInputHandler = (contents: WebContents) =>
+    contents.on("before-input-event", (event, input) => {
+      if (shortcutRecordingWindows.has(contents.id)) return;
+      if (input.type !== "keyDown") {
         return;
       }
-    }
 
-    if (command) {
-      event.preventDefault();
-      // Holding a palette chord would open and close it at the repeat rate.
-      if (isSinglePressCommand(command) && input.isAutoRepeat) {
+      // Side panel tab chords act from the terminal and extension views too. The
+      // key is not consumed: that would also swallow the modifier's keyup, leaving
+      // the tab hints up, and on Windows and Linux it would let the Alt release
+      // open the hidden menu bar. The page takes no default action for these keys,
+      // and the renderer's own handling of the same keydown is idempotent.
+      const sidePanelTabCommand = getSidePanelTabCommand(process.platform, input);
+      if (sidePanelTabCommand) {
+        if (!input.isAutoRepeat) contents.send(desktopIpc.appCommand, sidePanelTabCommand);
         return;
       }
-      window.webContents.send(desktopIpc.appCommand, command);
-    }
-  });
+
+      const lowerKey = input.key.toLowerCase();
+      const platformModifier = platformShortcutModifier(process.platform, input);
+      const command = getDesktopCommandFromShortcut(
+        {
+          modifier: platformModifier,
+          alt: input.alt,
+          shift: input.shift,
+          key: input.key,
+          code: input.code,
+        },
+        store.snapshot().keyboardShortcuts,
+      );
+      const webContentsId = contents.id;
+      const terminalFocused = terminalFocusedWebContentsIds.has(webContentsId);
+      const closeFocusedSurface =
+        isCloseFocusedSurfaceShortcut({
+          meta: input.meta,
+          control: input.control,
+          alt: input.alt,
+          shift: input.shift,
+          key: input.key,
+          code: input.code,
+          platform: process.platform,
+        }) &&
+        (terminalFocused || sidePanelFocusedWebContentsIds.has(webContentsId));
+      if (terminalFocused) {
+        // Control chords belong to the shell, so only macOS Command chords open
+        // a palette or act on the thread from the terminal.
+        if (process.platform === "darwin" && isSinglePressCommand(command)) {
+          event.preventDefault();
+          if (!input.isAutoRepeat) contents.send(desktopIpc.appCommand, command);
+        } else if (
+          command === desktopCommands.toggleSidePanel ||
+          command === desktopCommands.toggleTerminal
+        ) {
+          event.preventDefault();
+          contents.send(desktopIpc.appCommand, command);
+        } else if (closeFocusedSurface) {
+          dispatchCloseFocusedSurface(contents, event);
+        }
+        return;
+      }
+      if (closeFocusedSurface) {
+        dispatchCloseFocusedSurface(contents, event);
+        return;
+      }
+      if (platformModifier && !input.alt && input.shift && lowerKey === "n") {
+        event.preventDefault();
+        createAppWindow(windowOwner.viewForWindow(window));
+        return;
+      }
+
+      if (platformModifier && !input.alt && !input.shift && lowerKey === "o") {
+        event.preventDefault();
+        void pickWorkspaceViaDialog(window).catch((error: unknown) => {
+          console.error("[main] pickWorkspaceViaDialog failed", error);
+        });
+        return;
+      }
+
+      if (platformModifier && !input.alt && !input.shift && lowerKey === "v") {
+        const clipboardImage = readClipboardImageAttachment();
+        if (clipboardImage.ok || clipboardImage.message) {
+          event.preventDefault();
+          contents.send(desktopIpc.clipboardImagePasted, clipboardImage);
+          return;
+        }
+      }
+
+      if (command) {
+        event.preventDefault();
+        // Holding a palette chord would open and close it at the repeat rate.
+        if (isSinglePressCommand(command) && input.isAutoRepeat) {
+          return;
+        }
+        contents.send(desktopIpc.appCommand, command);
+      }
+    });
+  attachInputHandler(window.webContents);
+  inputHandlers.set(window, attachInputHandler);
 
   if (isDev) {
     void window.loadURL(process.env.ELECTRON_RENDERER_URL as string).catch((error: unknown) => {
@@ -705,39 +724,72 @@ function createAppWindow(sourceView?: DesktopAppViewState): BrowserWindow {
   return window;
 }
 
+const splitPanes = new Map<BrowserWindow, WebContentsView>();
+const closingSplitPanes = new WeakSet<BrowserWindow>();
+
+function closeSplitPane(window: BrowserWindow): void {
+  const pane = splitPanes.get(window);
+  if (!pane || closingSplitPanes.has(window)) return;
+  closingSplitPanes.add(window);
+  splitPanes.delete(window);
+  const finish = () => {
+    closingSplitPanes.delete(window);
+    windowOwner.removePane(pane.webContents);
+    if (!window.isDestroyed()) {
+      window.contentView.removeChildView(pane);
+      window.webContents.send(desktopIpc.splitChanged, false);
+    }
+    if (!pane.webContents.isDestroyed()) pane.webContents.close();
+  };
+  if (window.isDestroyed()) finish();
+  else {
+    void composerDraftFlusher.flushContents([pane.webContents]).then(finish, (error: unknown) => {
+      console.error("[main] split pane draft flush failed", error);
+      finish();
+    });
+  }
+}
+
 function splitWindow(source: BrowserWindow): void {
-  const area = screen.getDisplayMatching(source.getBounds()).workArea;
-  const leftWidth = Math.floor(area.width / 2);
-  const rightWidth = area.width - leftWidth;
-  if (leftWidth < 560 || rightWidth < 560) {
-    void dialog
-      .showMessageBox(source, {
-        type: "info",
-        message: "This display is too narrow for two PiUI windows.",
-        detail: "A display at least 1120 pixels wide is needed to place them side by side.",
-      })
-      .catch(console.error);
+  if (closingSplitPanes.has(source)) return;
+  if (splitPanes.has(source)) {
+    closeSplitPane(source);
     return;
   }
-  const tile = () => {
-    if (source.isDestroyed()) return;
-    const sibling = createAppWindow(windowOwner.viewForWindow(source));
-    if (source.isMaximized()) source.unmaximize();
-    if (source.isMinimized()) source.restore();
-    source.setBounds({ x: area.x, y: area.y, width: leftWidth, height: area.height });
-    sibling.setBounds({
-      x: area.x + leftWidth,
-      y: area.y,
-      width: rightWidth,
-      height: area.height,
-    });
-  };
-  if (source.isFullScreen()) {
-    source.once("leave-full-screen", tile);
-    source.setFullScreen(false);
-  } else {
-    tile();
-  }
+  const pane = new WebContentsView({
+    webPreferences: {
+      preload: path.join(__dirname, "..", "preload", "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      backgroundThrottling: windowTestMode !== "background",
+    },
+  });
+  const [width = 0, height = 0] = source.getContentSize();
+  pane.setBounds({ x: Math.floor(width / 2), y: 0, width: Math.ceil(width / 2), height });
+  source.contentView.addChildView(pane);
+  splitPanes.set(source, pane);
+  windowOwner.addPane(source, pane.webContents, windowOwner.viewForWindow(source));
+  themeManager.trackPane(pane.webContents);
+  guardExtensionFrames(pane.webContents);
+  inputHandlers.get(source)?.(pane.webContents);
+  pane.webContents.setWindowOpenHandler(({ url }) => {
+    if (!isInAppNavigationUrl(url)) openExternalWebUrl(url);
+    return { action: "deny" };
+  });
+  pane.webContents.on("will-navigate", (event, url) => {
+    if (isInAppNavigationUrl(url)) return;
+    event.preventDefault();
+    openExternalWebUrl(url);
+  });
+  const url = new URL(isDev ? (process.env.ELECTRON_RENDERER_URL as string) : appRendererUrl());
+  url.searchParams.set("pane", "secondary");
+  void pane.webContents.loadURL(url.toString()).catch((error: unknown) => {
+    console.error("[main] split pane failed to load", error);
+    closeSplitPane(source);
+  });
+  source.webContents.send(desktopIpc.splitChanged, true);
+  source.once("closed", () => closeSplitPane(source));
 }
 
 function canPublishToWindow(window: BrowserWindow): boolean {
@@ -1202,6 +1254,10 @@ app
       for (const window of windowOwner.allWindows()) {
         if (canPublishToWindow(window)) {
           window.webContents.send(desktopIpc.notificationPermissionStatusChanged, status);
+          const pane = splitPanes.get(window);
+          if (pane && !pane.webContents.isDestroyed()) {
+            pane.webContents.send(desktopIpc.notificationPermissionStatusChanged, status);
+          }
         }
       }
     });
@@ -1262,6 +1318,18 @@ app
         terminal: getTerminalService,
         optionalTerminal: () => terminalService,
         splitWindow,
+        setSplitPaneBounds: (window, bounds) => {
+          const pane = splitPanes.get(window);
+          if (!pane) return;
+          const [contentWidth = 0, contentHeight = 0] = window.getContentSize();
+          const boundedX = Math.min(Math.round(bounds.x), contentWidth);
+          pane.setBounds({
+            x: boundedX,
+            y: 0,
+            width: Math.max(0, Math.min(Math.round(bounds.width), contentWidth - boundedX)),
+            height: contentHeight,
+          });
+        },
         setShortcutRecording: (window, recording) => {
           if (recording) shortcutRecordingWindows.add(window.webContents.id);
           else shortcutRecordingWindows.delete(window.webContents.id);
@@ -1387,7 +1455,14 @@ app.on("before-quit", (event) => {
   const quittingStore = store;
   // Renderers send their debounced drafts first so the store flush below includes them.
   const flush = composerDraftFlusher
-    .flush(windowOwner.allWindows())
+    .flushContents(
+      windowOwner
+        .allWindows()
+        .flatMap((window) => [
+          window.webContents,
+          ...(splitPanes.get(window) ? [splitPanes.get(window)!.webContents] : []),
+        ]),
+    )
     .then(() => Promise.all([quittingStore.flushPersistence(), extensionViewOwner?.dispose()]))
     .catch((error: unknown) => {
       console.error("pi-gui: persistence flush failed during quit:", error);

@@ -607,6 +607,13 @@ contextBridge.exposeInMainWorld("piApp", {
     ) as Promise<void>,
   toggleWindowMaximize: () => ipcRenderer.invoke(desktopIpc.toggleWindowMaximize) as Promise<void>,
   splitWindow: () => ipcRenderer.invoke(desktopIpc.splitWindow) as Promise<void>,
+  setSplitPaneBounds: (bounds) =>
+    ipcRenderer.invoke(desktopIpc.setSplitPaneBounds, bounds) as Promise<void>,
+  onSplitChanged: (listener) => {
+    const handle = (_event: Electron.IpcRendererEvent, active: boolean) => listener(active);
+    ipcRenderer.on(desktopIpc.splitChanged, handle);
+    return () => ipcRenderer.removeListener(desktopIpc.splitChanged, handle);
+  },
   openExternal: (url: string) => ipcRenderer.invoke(desktopIpc.openExternal, url) as Promise<void>,
   getThemeMode: () =>
     ipcRenderer.invoke(desktopIpc.getThemeMode) as Promise<"system" | "light" | "dark">,

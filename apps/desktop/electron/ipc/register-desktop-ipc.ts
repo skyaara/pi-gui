@@ -204,6 +204,10 @@ export interface DesktopIpcCapabilities {
   readonly setSidePanelFocused: (webContentsId: number, focused: boolean) => void;
   readonly setTransparency: (enabled: boolean) => void;
   readonly splitWindow: (window: BrowserWindow) => void;
+  readonly setSplitPaneBounds: (
+    window: BrowserWindow,
+    bounds: { readonly x: number; readonly width: number },
+  ) => void;
   readonly pickComposerAttachments: (
     window: BrowserWindow,
     existing?: readonly ComposerAttachment[],
@@ -268,9 +272,9 @@ export function registerDesktopIpc({
     (input, request) => workbench.save(trackWorkbenchSender(request.contents), input),
   );
   const run = (event: IpcMainInvokeEvent, action: () => Promise<DesktopAppState>) =>
-    windows.runStateAction(senderWindow(windows, event), action);
+    windows.runStateAction(senderWindow(windows, event), action, {}, event.sender);
   const immediate = (event: IpcMainInvokeEvent, action: () => Promise<DesktopAppState>) =>
-    windows.runImmediateStateAction(senderWindow(windows, event), action);
+    windows.runImmediateStateAction(senderWindow(windows, event), action, event.sender);
   const reportLimit = (event: IpcMainInvokeEvent, error: ComposerAttachmentLimitError) =>
     run(event, () => owners.conversation.withError(error));
   const runCatchingLimits = async (
@@ -509,12 +513,15 @@ export function registerDesktopIpc({
     desktopIpc.loginProvider,
     (event, rawWorkspaceId: unknown, rawProviderId: unknown) => {
       const window = senderWindow(windows, event);
-      return windows.runUnscopedStateAction(window, () =>
-        owners.settings.loginProvider(
-          expectNonEmptyString(rawWorkspaceId, "workspaceId"),
-          expectNonEmptyString(rawProviderId, "providerId"),
-          capabilities.createLoginCallbacks(window),
-        ),
+      return windows.runUnscopedStateAction(
+        window,
+        () =>
+          owners.settings.loginProvider(
+            expectNonEmptyString(rawWorkspaceId, "workspaceId"),
+            expectNonEmptyString(rawProviderId, "providerId"),
+            capabilities.createLoginCallbacks(window),
+          ),
+        event.sender,
       );
     },
   );
@@ -686,11 +693,15 @@ export function registerDesktopIpc({
   ipcMain.handle(desktopIpc.setEnableTransparency, async (event, rawEnabled: unknown) => {
     const window = senderWindow(windows, event);
     const enabled = expectBoolean(rawEnabled, "enabled");
-    return windows.runUnscopedStateAction(window, async () => {
-      const state = await owners.settings.setEnableTransparency(enabled);
-      capabilities.setTransparency(enabled);
-      return state;
-    });
+    return windows.runUnscopedStateAction(
+      window,
+      async () => {
+        const state = await owners.settings.setEnableTransparency(enabled);
+        capabilities.setTransparency(enabled);
+        return state;
+      },
+      event.sender,
+    );
   });
 
   registerTerminalIpc(windows, capabilities);
@@ -792,14 +803,19 @@ export function registerDesktopIpc({
     runCatchingLimits(event, async () => {
       const window = senderWindow(windows, event);
       const target = windows.targetForSender(event.sender);
-      const existing = (await windows.stateForWindow(window)).composerAttachments ?? [];
+      const existing =
+        (await owners.state.getStateForView(windows.viewForSender(event.sender)))
+          .composerAttachments ?? [];
       const attachments = await capabilities.pickComposerAttachments(window, existing);
       if (!attachments?.length) {
-        return windows.stateForWindow(window);
+        return owners.state.getStateForView(windows.viewForSender(event.sender));
       }
       assertComposerAttachmentPixels(attachments);
-      return windows.runStateAction(window, () =>
-        owners.conversation.addComposerAttachments(target, attachments),
+      return windows.runStateAction(
+        window,
+        () => owners.conversation.addComposerAttachments(target, attachments),
+        {},
+        event.sender,
       );
     }),
   );
@@ -975,8 +991,11 @@ export function registerDesktopIpc({
       const target = expectSessionTarget(rawTarget);
       const targetId = expectNonEmptyString(rawTargetId, "targetId");
       const options = expectNavigateSessionTreeOptions(rawOptions);
-      return windows.runStateResultAction(window, () =>
-        owners.conversation.navigateSessionTree(target, targetId, options),
+      return windows.runStateResultAction(
+        window,
+        () => owners.conversation.navigateSessionTree(target, targetId, options),
+        {},
+        event.sender,
       );
     },
   );
@@ -995,6 +1014,30 @@ export function registerDesktopIpc({
     () => undefined,
     (_input, { window }) => {
       capabilities.splitWindow(window);
+    },
+  );
+  handleMainFrame(
+    desktopIpc.setSplitPaneBounds,
+    (raw: unknown) => {
+      if (!raw || typeof raw !== "object") throw new Error("Invalid split pane bounds");
+      const { x, width } = raw as Record<string, unknown>;
+      if (
+        typeof x !== "number" ||
+        typeof width !== "number" ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(width) ||
+        x < 0 ||
+        width < 0
+      ) {
+        throw new Error("Invalid split pane bounds");
+      }
+      return { x, width };
+    },
+    (bounds, { window, contents }) => {
+      if (contents !== window.webContents) {
+        throw new Error("Only the primary pane can resize the split");
+      }
+      capabilities.setSplitPaneBounds(window, bounds);
     },
   );
 }

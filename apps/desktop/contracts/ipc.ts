@@ -221,6 +221,8 @@ export const desktopIpc = {
   navigateSessionTree: "pi-gui:navigate-session-tree",
   toggleWindowMaximize: "pi-gui:toggle-window-maximize",
   splitWindow: "piui:split-window",
+  splitChanged: "piui:split-changed",
+  setSplitPaneBounds: "piui:set-split-pane-bounds",
   listWorkspaceFiles: "pi-gui:list-workspace-files",
   readWorkspaceFile: "pi-gui:read-workspace-file",
   revealWorkspaceFile: "pi-gui:reveal-workspace-file",
@@ -919,6 +921,8 @@ export interface PiDesktopApi {
   changeReviewFileStage(input: ChangeReviewFileStageInput): Promise<ChangeReviewFileStageResult>;
   toggleWindowMaximize(): Promise<void>;
   splitWindow(): Promise<void>;
+  setSplitPaneBounds(bounds: { readonly x: number; readonly width: number }): Promise<void>;
+  onSplitChanged(listener: (active: boolean) => void): () => void;
   openExternal(url: string): Promise<void>;
   getThemeMode(): Promise<"system" | "light" | "dark">;
   getResolvedTheme(): Promise<"light" | "dark">;

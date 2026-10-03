@@ -60,6 +60,8 @@ function canPublishToWindow(window: BrowserWindow): boolean {
 export class WindowOwner {
   private readonly lastPublishedTranscript = new Map<number, SelectedTranscriptRecord | null>();
   private readonly windows = new Set<BrowserWindow>();
+  private readonly panes = new Map<number, { window: BrowserWindow; contents: WebContents }>();
+  private readonly activePaneByWindow = new WeakMap<BrowserWindow, number>();
   private readonly windowIds = new WeakMap<BrowserWindow, number>();
   private readonly views = new Map<number, WindowViewState>();
   private readonly stopPublishingState = new Map<number, () => void>();
@@ -81,12 +83,16 @@ export class WindowOwner {
     this.windows.add(window);
     this.windowIds.set(window, webContentsId);
     this.views.set(webContentsId, this.resolveView(sourceView));
+    this.activePaneByWindow.set(window, webContentsId);
     this.setActiveWindow(window);
     this.attachStatePublisher(window);
     this.attachActivationTracking(window);
   }
 
   remove(window: BrowserWindow): void {
+    for (const [id, pane] of this.panes) {
+      if (pane.window === window) this.removePane(pane.contents);
+    }
     const webContentsId = this.windowIds.get(window);
     if (webContentsId === undefined) {
       return;
@@ -154,6 +160,8 @@ export class WindowOwner {
   }
 
   windowForSender(sender: WebContents): BrowserWindow {
+    const pane = this.panes.get(sender.id);
+    if (pane && !sender.isDestroyed() && canPublishToWindow(pane.window)) return pane.window;
     const window = BrowserWindow.fromWebContents(sender);
     if (!window || !this.windows.has(window) || !canPublishToWindow(window)) {
       throw new Error("IPC sender is not an active pi-gui window");
@@ -162,12 +170,56 @@ export class WindowOwner {
   }
 
   viewForSender(sender: WebContents): DesktopAppViewState {
-    const window = this.windowForSender(sender);
-    return this.viewForWindow(window);
+    this.windowForSender(sender);
+    return this.views.get(sender.id) ?? viewFromState(this.stateOwner.snapshot());
   }
 
   viewForWindow(window: BrowserWindow): DesktopAppViewState {
-    return this.views.get(window.webContents.id) ?? viewFromState(this.stateOwner.snapshot());
+    return (
+      this.views.get(this.activePaneByWindow.get(window) ?? window.webContents.id) ??
+      viewFromState(this.stateOwner.snapshot())
+    );
+  }
+
+  addPane(window: BrowserWindow, contents: WebContents, sourceView?: DesktopAppViewState): void {
+    this.windowForSender(window.webContents);
+    this.panes.set(contents.id, { window, contents });
+    this.views.set(contents.id, this.resolveView(sourceView ?? this.viewForWindow(window)));
+    const publish = () => {
+      if (contents.isDestroyed() || !canPublishToWindow(window)) return;
+      this.publishStateTo(contents);
+      this.publishTranscriptToSoon(contents);
+    };
+    this.stopPublishingState.set(contents.id, this.stateOwner.subscribe(publish));
+    this.stopPublishingTranscript.set(
+      contents.id,
+      this.stateOwner.subscribeToSelectedTranscript(() => this.publishTranscriptToSoon(contents)),
+    );
+    contents.on("focus", () => {
+      if (this.activeActionWebContentsId !== undefined) {
+        this.deferredActivationWebContentsId = contents.id;
+        return;
+      }
+      this.activePaneByWindow.set(window, contents.id);
+      this.applyViewToStateOwner(contents.id);
+    });
+    contents.on("did-finish-load", publish);
+  }
+
+  removePane(contents: WebContents): void {
+    const pane = this.panes.get(contents.id);
+    if (!pane) return;
+    this.stopPublishingState.get(contents.id)?.();
+    this.stopPublishingTranscript.get(contents.id)?.();
+    this.stopPublishingState.delete(contents.id);
+    this.stopPublishingTranscript.delete(contents.id);
+    this.panes.delete(contents.id);
+    this.views.delete(contents.id);
+    this.lastPublishedTranscript.delete(contents.id);
+    if (!pane.window.isDestroyed() && this.activePaneByWindow.get(pane.window) === contents.id) {
+      this.activePaneByWindow.set(pane.window, pane.window.webContents.id);
+      this.applyViewToStateOwner(pane.window.webContents.id);
+    }
   }
 
   targetForSender(sender: WebContents): SessionRef | undefined {
@@ -220,15 +272,16 @@ export class WindowOwner {
     window: BrowserWindow | null | undefined,
     action: () => Promise<DesktopAppState>,
     options: WindowActionOptions = {},
+    sender?: WebContents,
   ): Promise<DesktopAppState> {
     return this.enqueueAction(async () => {
-      const context = this.beginAction(window, options);
+      const context = this.beginAction(window, options, sender);
       try {
         const state = await action();
         if (!context.window || context.webContentsId === undefined) {
           return state;
         }
-        return this.finishStateAction(context.window, state);
+        return this.finishStateAction(context.window, state, sender);
       } finally {
         this.endAction(context.webContentsId, context.previousActionWebContentsId);
       }
@@ -239,15 +292,16 @@ export class WindowOwner {
     window: BrowserWindow | null | undefined,
     action: () => Promise<T>,
     options: WindowActionOptions = {},
+    sender?: WebContents,
   ): Promise<T> {
     return this.enqueueAction(async () => {
-      const context = this.beginAction(window, options);
+      const context = this.beginAction(window, options, sender);
       try {
         const result = await action();
         if (!context.window || context.webContentsId === undefined) {
           return result;
         }
-        const state = this.finishStateAction(context.window, result.state);
+        const state = this.finishStateAction(context.window, result.state, sender);
         return { ...result, state };
       } finally {
         this.endAction(context.webContentsId, context.previousActionWebContentsId);
@@ -258,25 +312,28 @@ export class WindowOwner {
   async runUnscopedStateAction(
     window: BrowserWindow | null | undefined,
     action: () => Promise<DesktopAppState>,
+    sender?: WebContents,
   ): Promise<DesktopAppState> {
     const state = await action();
     if (!window || !canPublishToWindow(window)) {
       return state;
     }
-    return this.projectAndRemember(window.webContents.id, state);
+    return this.projectAndRemember(sender?.id ?? window.webContents.id, state);
   }
 
   async runImmediateStateAction(
     window: BrowserWindow | null | undefined,
     action: () => Promise<DesktopAppState>,
+    sender?: WebContents,
   ): Promise<DesktopAppState> {
     const state = await action();
     if (!window || !canPublishToWindow(window)) {
       return state;
     }
-    const projected = this.projectAndRemember(window.webContents.id, state);
-    window.webContents.send(desktopIpc.stateChanged, projected);
-    this.publishTranscriptSoon(window);
+    const contents = sender ?? window.webContents;
+    const projected = this.projectAndRemember(contents.id, state);
+    contents.send(desktopIpc.stateChanged, projected);
+    this.publishTranscriptToSoon(contents);
     return projected;
   }
 
@@ -285,7 +342,8 @@ export class WindowOwner {
     action: () => Promise<T>,
   ): Promise<T> {
     const previousOrigin = this.composerDraftPersistOriginWebContentsId;
-    this.composerDraftPersistOriginWebContentsId = this.windowForSender(sender).webContents.id;
+    this.windowForSender(sender);
+    this.composerDraftPersistOriginWebContentsId = sender.id;
     try {
       return await action();
     } finally {
@@ -330,25 +388,35 @@ export class WindowOwner {
     if (!canPublishToWindow(window)) {
       return;
     }
-    const webContentsId = window.webContents.id;
+    this.publishStateTo(window.webContents, state);
+  }
+
+  private publishStateTo(
+    contents: WebContents,
+    state: DesktopAppState = this.stateOwner.snapshot(),
+  ): void {
+    if (contents.isDestroyed() || contents.isCrashed()) return;
+    const webContentsId = contents.id;
     const view =
       webContentsId === this.activeActionWebContentsId
         ? viewFromState(state)
         : (this.views.get(webContentsId) ?? viewFromState(state));
     const projected = this.projectState(webContentsId, state, view);
     this.views.set(webContentsId, viewFromState(projected));
-    window.webContents.send(desktopIpc.stateChanged, projected);
+    contents.send(desktopIpc.stateChanged, projected);
   }
 
   private async publishTranscript(window: BrowserWindow): Promise<void> {
-    if (!canPublishToWindow(window)) {
-      return;
-    }
-    const webContentsId = window.webContents.id;
-    const payload = await this.stateOwner.getSelectedTranscriptForView(this.viewForWindow(window));
-    if (!canPublishToWindow(window)) {
-      return;
-    }
+    if (canPublishToWindow(window)) await this.publishTranscriptTo(window.webContents);
+  }
+
+  private async publishTranscriptTo(contents: WebContents): Promise<void> {
+    if (contents.isDestroyed() || contents.isCrashed()) return;
+    const webContentsId = contents.id;
+    const payload = await this.stateOwner.getSelectedTranscriptForView(
+      this.views.get(webContentsId) ?? viewFromState(this.stateOwner.snapshot()),
+    );
+    if (contents.isDestroyed() || contents.isCrashed()) return;
     const projected = this.projectState(webContentsId);
     if (payload) {
       if (
@@ -377,12 +445,18 @@ export class WindowOwner {
       return;
     }
     this.lastPublishedTranscript.set(webContentsId, payload);
-    window.webContents.send(desktopIpc.selectedTranscriptChanged, payload);
+    contents.send(desktopIpc.selectedTranscriptChanged, payload);
   }
 
   private publishTranscriptSoon(window: BrowserWindow): void {
     void this.publishTranscript(window).catch((error: unknown) => {
       console.error("[window-owner] failed to publish selected transcript", error);
+    });
+  }
+
+  private publishTranscriptToSoon(contents: WebContents): void {
+    void this.publishTranscriptTo(contents).catch((error: unknown) => {
+      console.error("[window-owner] failed to publish pane transcript", error);
     });
   }
 
@@ -401,9 +475,10 @@ export class WindowOwner {
 
   private applyActivation(window: BrowserWindow): void {
     this.setActiveWindow(window);
-    this.applyViewToStateOwner(window.webContents.id);
+    const activeId = this.activePaneByWindow.get(window) ?? window.webContents.id;
+    this.applyViewToStateOwner(activeId);
     this.stateOwner.handleWindowActivation();
-    this.views.set(window.webContents.id, viewFromState(this.stateOwner.snapshot()));
+    this.views.set(activeId, viewFromState(this.stateOwner.snapshot()));
   }
 
   private applyDeferredActivation(): boolean {
@@ -412,22 +487,28 @@ export class WindowOwner {
     if (webContentsId === undefined) {
       return false;
     }
-    const window = [...this.windows].find(
-      (candidate) => !candidate.isDestroyed() && candidate.webContents.id === webContentsId,
-    );
+    const window =
+      this.panes.get(webContentsId)?.window ??
+      [...this.windows].find(
+        (candidate) => !candidate.isDestroyed() && candidate.webContents.id === webContentsId,
+      );
     if (!window || !canPublishToWindow(window)) {
       return false;
     }
+    this.activePaneByWindow.set(window, webContentsId);
     this.applyActivation(window);
     return true;
   }
 
   private restoreForegroundUnlessSender(senderWebContentsId: number | undefined): void {
     const foregroundWindow = this.foreground();
-    if (!foregroundWindow || foregroundWindow.webContents.id === senderWebContentsId) {
+    if (!foregroundWindow) {
       return;
     }
-    this.applyViewToStateOwner(foregroundWindow.webContents.id);
+    const activeId =
+      this.activePaneByWindow.get(foregroundWindow) ?? foregroundWindow.webContents.id;
+    if (activeId === senderWebContentsId) return;
+    this.applyViewToStateOwner(activeId);
     this.stateOwner.emit();
   }
 
@@ -435,17 +516,23 @@ export class WindowOwner {
     return this.actionQueue.run(action);
   }
 
-  private beginAction(window: BrowserWindow | null | undefined, options: WindowActionOptions) {
+  private beginAction(
+    window: BrowserWindow | null | undefined,
+    options: WindowActionOptions,
+    sender?: WebContents,
+  ) {
     const liveWindow = window && !window.isDestroyed() ? window : undefined;
-    const webContentsId = liveWindow?.webContents.id;
+    const webContentsId = liveWindow ? (sender?.id ?? liveWindow.webContents.id) : undefined;
     const foregroundWindow = this.foreground();
     const senderIsForeground = Boolean(
       liveWindow && foregroundWindow?.webContents.id === liveWindow.webContents.id,
     );
     const windowIsFocused =
-      Boolean(liveWindow?.isFocused()) || senderIsForeground || options.forceActiveWindow === true;
+      (sender ? sender.isFocused() : Boolean(liveWindow?.isFocused()) || senderIsForeground) ||
+      options.forceActiveWindow === true;
     if (liveWindow && webContentsId !== undefined) {
       if (windowIsFocused) {
+        this.activePaneByWindow.set(liveWindow, webContentsId);
         this.setActiveWindow(liveWindow);
       }
       this.applyViewToStateOwner(webContentsId);
@@ -455,13 +542,18 @@ export class WindowOwner {
     return { window: liveWindow, webContentsId, previousActionWebContentsId };
   }
 
-  private finishStateAction(window: BrowserWindow, state: DesktopAppState): DesktopAppState {
-    const webContentsId = window.webContents.id;
+  private finishStateAction(
+    window: BrowserWindow,
+    state: DesktopAppState,
+    sender?: WebContents,
+  ): DesktopAppState {
+    const contents = sender ?? window.webContents;
+    const webContentsId = contents.id;
     const previousView = this.views.get(webContentsId);
     const projected = this.projectState(webContentsId, state, viewFromState(state), previousView);
     this.views.set(webContentsId, viewFromState(projected));
-    this.publishState(window, projected);
-    this.publishTranscriptSoon(window);
+    this.publishStateTo(contents, projected);
+    this.publishTranscriptToSoon(contents);
     return projected;
   }
 

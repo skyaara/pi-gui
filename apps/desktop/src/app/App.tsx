@@ -95,8 +95,11 @@ import { useTreeForkModals } from "../features/conversation/hooks/use-tree-fork-
 import { useComposerDraftSync } from "../features/conversation/hooks/use-composer-draft-sync";
 import { useSessionComposer } from "../features/conversation/hooks/use-session-composer";
 import { useTranscriptAnnotations } from "../features/conversation/annotations/use-transcript-annotations";
+import { SplitPaneTarget, useSplitPane } from "./split-pane";
+import { StartupDiagnostics } from "./startup-diagnostics";
 
 export default function App() {
+  const secondaryPane = new URLSearchParams(window.location.search).get("pane") === "secondary";
   const desktop = useDesktopAppState();
   const workbenchWidth = useWorkbenchWidth();
   const snapshot = desktop.snapshot;
@@ -107,7 +110,6 @@ export default function App() {
   const [settingsWorkspaceId, setSettingsWorkspaceId] = useState("");
   const [skillsWorkspaceId, setSkillsWorkspaceId] = useState("");
   const [extensionsWorkspaceId, setExtensionsWorkspaceId] = useState("");
-  // Unknown until main answers; until then the theme from the last launch stays.
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark" | null>(null);
   const [dockExpandedBySession, setDockExpandedBySession] = useState<Record<string, string>>({});
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
@@ -121,6 +123,7 @@ export default function App() {
   } | null>(null);
   const [scheduledEditor, setScheduledEditor] = useState<ScheduledEditorState | null>(null);
   const api = window.piApp;
+  const splitPane = useSplitPane(api, secondaryPane, snapshot);
 
   useEffect(() => {
     const piApi = window.piApp;
@@ -964,15 +967,19 @@ export default function App() {
     );
   }
 
-  const shellClassName = `shell${snapshot.sidebarCollapsed ? " shell--sidebar-collapsed" : ""}`;
+  const shellClassName = `shell${snapshot.sidebarCollapsed ? " shell--sidebar-collapsed" : ""}${secondaryPane ? " shell--secondary-pane" : ""}`;
   const showNewThread =
     snapshot.activeView === "new-thread" ||
     (snapshot.activeView === "threads" && selectedWorkspace && !selectedSession);
   const splitWindow = () => void api.splitWindow().catch(console.error);
 
   return (
-    <div className={shellClassName}>
-      {canTogglePrimarySidebar(snapshot.activeView) ? (
+    <div
+      className={shellClassName}
+      ref={splitPane.shellRef}
+      style={{ gridTemplateColumns: splitPane.columns }}
+    >
+      {!secondaryPane && canTogglePrimarySidebar(snapshot.activeView) ? (
         <SidebarToggleButton
           collapsed={snapshot.sidebarCollapsed}
           platform={api.platform}
@@ -980,7 +987,7 @@ export default function App() {
           onToggle={commands.togglePrimarySidebar}
         />
       ) : null}
-      {!snapshot.sidebarCollapsed ? (
+      {!secondaryPane && !snapshot.sidebarCollapsed ? (
         <Sidebar
           keyboardShortcuts={snapshot.keyboardShortcuts}
           activeView={snapshot.activeView}
@@ -1070,6 +1077,7 @@ export default function App() {
           }
           onMaximize={() => void api.toggleWindowMaximize().catch(console.error)}
           onSplitWindow={selectedSession && !showNewThread ? splitWindow : undefined}
+          splitActive={secondaryPane || splitPane.active}
           onSelect={handleSelectSession}
           onNewThread={() =>
             newThread.openSurface(selectedWorkspace?.rootWorkspaceId ?? selectedWorkspace?.id)
@@ -1084,22 +1092,7 @@ export default function App() {
           }}
         />
 
-        {snapshot.startupDiagnostics.length > 0 ? (
-          <div className="startup-diagnostics" role="status" data-testid="startup-diagnostics">
-            <strong>Some saved workspaces could not be refreshed.</strong>
-            <span>
-              {snapshot.startupDiagnostics
-                .map((diagnostic) => {
-                  const workspaceName = diagnostic.workspacePath
-                    ?.split(/[\\/]/)
-                    .filter(Boolean)
-                    .at(-1);
-                  return workspaceName ? `${workspaceName} is unavailable.` : diagnostic.message;
-                })
-                .join(" ")}
-            </span>
-          </div>
-        ) : null}
+        <StartupDiagnostics diagnostics={snapshot.startupDiagnostics} />
 
         <>
           {secondarySurface ? (
@@ -1421,6 +1414,13 @@ export default function App() {
           </Workbench>
         ) : null}
       </main>
+      {splitPane.active && !secondaryPane ? (
+        <SplitPaneTarget
+          shellRef={splitPane.shellRef}
+          targetRef={splitPane.targetRef}
+          setRatio={splitPane.setRatio}
+        />
+      ) : null}
       {scheduledEditor ? (
         <ScheduledTaskEditor
           editor={scheduledEditor}

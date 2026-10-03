@@ -1,10 +1,11 @@
-import { nativeTheme, type BrowserWindow } from "electron";
+import { nativeTheme, type BrowserWindow, type WebContents } from "electron";
 import { desktopIpc } from "../../contracts/ipc";
 import type { ThemeMode } from "../../contracts/desktop-state";
 
 export class ThemeManager {
   private mode: ThemeMode = "system";
   private readonly windows = new Set<BrowserWindow>();
+  private readonly panes = new Set<WebContents>();
 
   constructor() {
     nativeTheme.on("updated", () => {
@@ -20,6 +21,11 @@ export class ThemeManager {
     win.once("closed", () => {
       this.windows.delete(win);
     });
+  }
+
+  trackPane(contents: WebContents): void {
+    this.panes.add(contents);
+    contents.once("destroyed", () => this.panes.delete(contents));
   }
 
   getMode(): ThemeMode {
@@ -48,6 +54,9 @@ export class ThemeManager {
       if (!window.isDestroyed() && !window.webContents.isDestroyed()) {
         window.webContents.send(desktopIpc.themeChanged, this.getResolvedTheme());
       }
+    }
+    for (const contents of this.panes) {
+      if (!contents.isDestroyed()) contents.send(desktopIpc.themeChanged, this.getResolvedTheme());
     }
   }
 }

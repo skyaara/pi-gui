@@ -19,7 +19,13 @@ export class PendingComposerDraftFlusher {
   constructor(private readonly timeoutMs: number) {}
 
   flush(windows: readonly BrowserWindow[]): Promise<void> {
-    return Promise.all(windows.map((window) => this.flushWindow(window))).then(() => undefined);
+    return this.flushContents(
+      windows.filter((window) => !window.isDestroyed()).map((window) => window.webContents),
+    );
+  }
+
+  flushContents(contents: readonly WebContents[]): Promise<void> {
+    return Promise.all(contents.map((item) => this.flushContent(item))).then(() => undefined);
   }
 
   /** Called for the owning window's main frame only, through the main-frame IPC helper. */
@@ -28,10 +34,8 @@ export class PendingComposerDraftFlusher {
     if (entry?.contents === contents) entry.done();
   }
 
-  private flushWindow(window: BrowserWindow): Promise<void> {
-    if (window.isDestroyed() || window.webContents.isDestroyed() || window.webContents.isCrashed())
-      return Promise.resolve();
-    const contents = window.webContents;
+  private flushContent(contents: WebContents): Promise<void> {
+    if (contents.isDestroyed() || contents.isCrashed()) return Promise.resolve();
     const requestId = this.nextRequestId++;
     return new Promise<void>((resolve) => {
       const done = () => {

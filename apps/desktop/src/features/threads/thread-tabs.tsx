@@ -17,6 +17,7 @@ export function ThreadTabs({
   onClose,
   onNewThread,
   onSplitWindow,
+  splitActive = false,
   actions,
   title,
   onMaximize,
@@ -31,6 +32,7 @@ export function ThreadTabs({
   onClose(target: WorkspaceSessionTarget): void;
   onNewThread(): void;
   onSplitWindow?(): void;
+  splitActive?: boolean;
   actions?: ReactNode;
   title?: string;
   onMaximize(): void;
@@ -97,7 +99,7 @@ export function ThreadTabs({
         </button>
       )}
       <div
-        className="thread-tabs__strip"
+        className={`thread-tabs__strip${overflow && !edges.start ? " thread-tabs__strip--fade-start" : ""}${overflow && !edges.end ? " thread-tabs__strip--fade-end" : ""}`}
         role="tablist"
         aria-label="Open threads"
         ref={strip}
@@ -233,8 +235,8 @@ export function ThreadTabs({
       {onSplitWindow && (
         <button
           className="thread-tabs__split"
-          aria-label="Split into two windows"
-          title="Split into two windows"
+          aria-label={splitActive ? "Close split pane" : "Split editor"}
+          title={splitActive ? "Close split pane" : "Split editor"}
           onClick={onSplitWindow}
         >
           <SplitWindowIcon />

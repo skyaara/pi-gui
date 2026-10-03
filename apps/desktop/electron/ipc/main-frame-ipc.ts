@@ -23,7 +23,7 @@ export function mainFrameHandler(windows: Pick<WindowOwner, "windowForSender">):
   return (channel, decode, handler) => {
     ipcMain.handle(channel, (event, raw: unknown) => {
       const window = windows.windowForSender(event.sender);
-      const contents = window.webContents;
+      const contents = event.sender;
       if (!event.senderFrame || event.senderFrame !== contents.mainFrame) {
         throw new Error(`${channel} must originate from the window's main frame.`);
       }
