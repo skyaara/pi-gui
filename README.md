@@ -179,6 +179,7 @@ platform, and how the product media is recorded.
 - `packages/session-driver`: shared session driver types.
 - `packages/catalogs`: workspace and session catalog state.
 - `packages/extension-ui`: helpers for building desktop extension views.
+- `packages/cua-extension`: standalone Pi extension for native computer use through Cua Driver.
 - `examples/desktop-extensions`: example extensions with their own workbench tabs.
 - `video`: the Remotion showcase video.
 - `docs`: architecture, CI and design notes.

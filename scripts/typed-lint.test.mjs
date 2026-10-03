@@ -185,8 +185,8 @@ test("a new workspace cannot silently receive only syntax lint", async () => {
   writeFileSync(
     configPath,
     readFileSync(configPath, "utf8").replace(
-      '...["catalogs", "pi-sdk-driver", "session-driver", "extension-ui"]',
-      '...["catalogs", "pi-sdk-driver", "session-driver", "extension-ui", "new-feature"]',
+      '...["catalogs", "pi-sdk-driver", "session-driver", "extension-ui", "cua-extension"]',
+      '...["catalogs", "pi-sdk-driver", "session-driver", "extension-ui", "cua-extension", "new-feature"]',
     ),
   );
   mkdirSync(path.join(registeredWorkspace, "src"));
