@@ -63,7 +63,11 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
     await expect(page.getByTestId("composer")).toHaveValue("Second draft");
     await page.getByRole("button", { name: "New thread tab", exact: true }).click();
     await expect(page.getByTestId("new-thread-composer")).toBeVisible();
-    await expect(tabs.getByRole("tab")).toHaveCount(1);
+    await expect(tabs.getByRole("tab")).toHaveCount(2);
+    await expect(tabs.getByRole("tab", { name: "New thread", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await secondTab.click();
     const row = page.locator(".session-list > .session-row").filter({ hasText: "Second thread" });
     await row.hover();

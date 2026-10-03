@@ -320,9 +320,9 @@ function NewThreadComposerFooter({
   return (
     <>
       <div className="composer__footer">
-        {workspaceContext}
         <div className="composer__footer-row">
           <div className="composer__hint new-thread__hint">
+            {workspaceContext}
             <ModelSelector
               runtime={runtime}
               provider={provider}

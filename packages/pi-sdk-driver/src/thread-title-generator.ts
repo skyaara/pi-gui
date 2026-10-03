@@ -63,18 +63,21 @@ export async function generateThreadTitle(
     sessionManager: SessionManager.inMemory(),
     tools: [],
   };
-  if (options.model) {
-    const selectedModel = modelRuntime.getModel(options.model.provider, options.model.modelId);
-    if (!selectedModel) {
-      return null;
-    }
-    createOptions.model = selectedModel;
+  // Naming uses a small Luna model independently of the conversation model.
+  const providers =
+    options.model?.provider === "openai" ? ["openai", "openai-codex"] : ["openai-codex", "openai"];
+  for (const provider of providers) {
+    const model =
+      modelRuntime.getModel(provider, "gpt-6-luna") ??
+      modelRuntime.getModel(provider, "gpt-5.6-luna");
+    if (!model) continue;
+    const auth = await modelRuntime.getAuth(provider);
+    if (!auth?.auth.apiKey) continue;
+    createOptions.model = model;
+    break;
   }
-  if (options.thinkingLevel) {
-    createOptions.thinkingLevel = options.thinkingLevel as NonNullable<
-      CreateAgentSessionOptions["thinkingLevel"]
-    >;
-  }
+  if (!createOptions.model) return null;
+  createOptions.thinkingLevel = "off";
 
   const { session } = await createAgentSession(createOptions);
   const handleAbort = () => {

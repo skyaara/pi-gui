@@ -1016,8 +1016,18 @@ export default function App() {
       <main className={mainClassName} style={workbenchWidth.style}>
         <ThreadTabs
           tabs={threadTabs.tabs}
-          selectedKey={snapshot.activeView === "threads" ? selectedSessionKey : ""}
-          title={snapshot.activeView === "threads" ? displayedSessionTitle : undefined}
+          draftOpen={Boolean(showNewThread)}
+          onCloseDraft={() => setActiveView("threads")}
+          selectedKey={
+            !showNewThread && snapshot.activeView === "threads" ? selectedSessionKey : ""
+          }
+          title={
+            showNewThread
+              ? "New thread"
+              : snapshot.activeView === "threads"
+                ? displayedSessionTitle
+                : undefined
+          }
           actions={
             <ThreadTabActions
               keyboardShortcuts={snapshot.keyboardShortcuts}

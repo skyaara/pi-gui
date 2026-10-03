@@ -43,10 +43,12 @@
 .composer__workspace-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 6px;
+  max-width: 240px;
+  flex: 0 1 auto;
   min-width: 0;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   color: var(--muted-strong);
   font-size: var(--text-xs);
 }
@@ -70,7 +72,7 @@
   white-space: nowrap;
 }
 .composer__workspace-row .new-thread__workspace-picker {
-  max-width: 60%;
+  max-width: 140px;
 }
 .composer__workspace-row .new-thread__workspace {
   font-size: var(--text-xs);

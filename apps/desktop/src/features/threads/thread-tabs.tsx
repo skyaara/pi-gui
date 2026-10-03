@@ -19,6 +19,8 @@ export function ThreadTabs({
   actions,
   title,
   onMaximize,
+  draftOpen = false,
+  onCloseDraft,
 }: {
   tabs: readonly ThreadTab[];
   selectedKey: string;
@@ -28,6 +30,8 @@ export function ThreadTabs({
   actions?: ReactNode;
   title?: string;
   onMaximize(): void;
+  draftOpen?: boolean;
+  onCloseDraft?(): void;
 }) {
   const strip = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState(false);
@@ -60,7 +64,7 @@ export function ThreadTabs({
       inline: "nearest",
     });
     measure();
-  }, [selectedKey, tabs.length, overflow]);
+  }, [selectedKey, tabs.length, overflow, draftOpen]);
 
   const scroll = (direction: number) =>
     strip.current?.scrollBy({
@@ -91,7 +95,7 @@ export function ThreadTabs({
         role="tablist"
         aria-label="Open threads"
         ref={strip}
-        style={{ maxWidth: tabs.length * 244 }}
+        style={{ maxWidth: (tabs.length + (draftOpen ? 1 : 0)) * 164 }}
         onScroll={measure}
         onWheel={(event) => {
           if (overflow && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
@@ -160,6 +164,22 @@ export function ThreadTabs({
             </div>
           );
         })}
+        {draftOpen && (
+          <div className="thread-tabs__item thread-tabs__item--selected">
+            <button role="tab" aria-selected="true" className="thread-tabs__tab">
+              <span className="thread-tabs__label">New thread</span>
+            </button>
+            {tabs.length > 0 && (
+              <button
+                className="thread-tabs__close"
+                aria-label="Close new thread tab"
+                onClick={onCloseDraft}
+              >
+                <CloseIcon />
+              </button>
+            )}
+          </div>
+        )}
       </div>
       {overflow && (
         <button

@@ -20,6 +20,10 @@ test("one tab row holds thread controls and the prompt identifies its workspace"
     await expect(
       page.locator(".new-thread__composer .composer__surface").getByTestId("composer-workspace"),
     ).toBeVisible();
+    await expect(page.getByRole("tab", { name: "New thread", exact: true })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     await createNamedThread(page, "Alpha", { workspaceName: basename(first) });
     await createNamedThread(page, "Bravo", { workspaceName: basename(second) });
     const row = page.locator(".thread-tabs");
@@ -30,6 +34,27 @@ test("one tab row holds thread controls and the prompt identifies its workspace"
     await tabs.getByRole("tab", { name: "Alpha", exact: true }).click();
     await expect(context).toHaveText(basename(first));
     await expect(context).toHaveAttribute("title", first);
+    const folderBounds = (await context.boundingBox())!;
+    const modelBounds = (await page
+      .locator(".composer__config")
+      .getByRole("button")
+      .first()
+      .boundingBox())!;
+    expect(
+      Math.abs(folderBounds.y + folderBounds.height / 2 - modelBounds.y - modelBounds.height / 2),
+    ).toBeLessThan(4);
+    expect(folderBounds.x + folderBounds.width).toBeLessThanOrEqual(modelBounds.x);
+    const lastTabBounds = (await tabs.locator(".thread-tabs__item").last().boundingBox())!;
+    const plusBounds = (await row
+      .getByRole("button", { name: "New thread tab", exact: true })
+      .boundingBox())!;
+    expect(plusBounds.x - lastTabBounds.x - lastTabBounds.width).toBeLessThan(12);
+    const colors = await page.evaluate(() => ({
+      tab: getComputedStyle(document.querySelector(".thread-tabs__item--selected")!)
+        .backgroundColor,
+      main: getComputedStyle(document.querySelector(".main")!).backgroundColor,
+    }));
+    expect(colors.tab).toBe(colors.main);
     for (const [label, surface] of [
       ["Files", "file-workbench"],
       ["Review", "review-panel"],

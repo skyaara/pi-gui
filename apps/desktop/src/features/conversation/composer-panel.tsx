@@ -221,9 +221,9 @@ export function ComposerPanel({
           }
           footer={
             <div className="composer__footer">
-              <ComposerWorkspace workspace={workspace} />
               <div className="composer__footer-row">
                 <div className="composer__config">
+                  <ComposerWorkspace workspace={workspace} />
                   <ModelSelector
                     runtime={runtime}
                     provider={provider}

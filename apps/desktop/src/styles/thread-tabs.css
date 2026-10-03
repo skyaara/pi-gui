@@ -7,7 +7,7 @@
   min-width: 0;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border-light);
-  background: var(--main);
+  background: var(--surface);
   -webkit-app-region: drag;
 }
 
@@ -39,8 +39,9 @@
 .thread-tabs__item:hover {
   background: var(--overlay-hover);
 }
-.thread-tabs__item--selected {
-  background: var(--overlay-hover);
+.thread-tabs__item--selected,
+.thread-tabs__item--selected:hover {
+  background: var(--main);
   color: var(--text);
 }
 .thread-tabs button {
