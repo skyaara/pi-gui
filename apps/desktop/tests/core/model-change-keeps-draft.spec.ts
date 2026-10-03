@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
 import { expect, test } from "@playwright/test";
 import {
   createNamedThread,
@@ -6,6 +7,7 @@ import {
   launchDesktop,
   makeUserDataDir,
   makeWorkspace,
+  openNewThread,
   pasteTinyPng,
   seedAgentDir,
 } from "../helpers/electron-app";
@@ -88,6 +90,113 @@ test("changing model or thinking from the composer footer keeps the typed prompt
     await expect(attachment).toHaveCount(1);
     await expect.poll(async () => (await getDesktopState(window)).composerDraft).toBe(prompt);
     await window.screenshot({ path: test.info().outputPath("pi-thinking-minimal.png") });
+  } finally {
+    await harness.close();
+  }
+});
+
+test("switching provider and model keeps session and new-thread drafts", async () => {
+  test.setTimeout(60_000);
+  const userDataDir = await makeUserDataDir();
+  const agentDir = join(userDataDir, "agent");
+  const workspacePath = await makeWorkspace("provider-model-draft");
+  await seedAgentDir(agentDir, {
+    enabledModels: ["openai/gpt-5", "local-test/limited", "openai/gpt-4o"],
+  });
+  await writeFile(
+    join(agentDir, "models.json"),
+    JSON.stringify({
+      providers: {
+        "local-test": {
+          api: "openai-completions",
+          apiKey: "fixture-key",
+          baseUrl: "http://localhost:9/v1",
+          models: [
+            {
+              id: "limited",
+              name: "Limited effort",
+              reasoning: false,
+              input: ["text"],
+              contextWindow: 32000,
+              maxTokens: 4000,
+              cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+            },
+          ],
+        },
+      },
+    }),
+  );
+  let harness = await launchDesktop(userDataDir, {
+    agentDir,
+    initialWorkspaces: [workspacePath],
+  });
+
+  try {
+    let window = await harness.firstWindow();
+    if (process.env.PI_APP_TEST_MODE === "foreground") {
+      await harness.focusWindow();
+      expect(
+        await harness.electronApp.evaluate(({ BrowserWindow }) => {
+          const appWindow = BrowserWindow.getAllWindows()[0];
+          return { visible: appWindow?.isVisible(), focused: appWindow?.isFocused() };
+        }),
+      ).toEqual({ visible: true, focused: true });
+    }
+    await createNamedThread(window, "Switch providers with a draft");
+    // Keep the normal draft debounce pending while both model changes complete.
+    await window.evaluate(() => {
+      const schedule = globalThis.window.setTimeout.bind(globalThis.window);
+      globalThis.window.setTimeout = (handler: TimerHandler, delay?: number, ...args: unknown[]) =>
+        schedule(handler, delay === 350 ? 60_000 : delay, ...args);
+    });
+    const draft = "Preserve this exact unsent draft\nwhile switching providers";
+    const composer = window.getByTestId("composer");
+    await composer.fill(draft);
+    const modelButton = window.locator(".composer__bar .model-selector__badge").first();
+    await modelButton.click();
+    let picker = window.getByRole("dialog", { name: "Choose model" });
+    await picker.getByRole("button", { name: "Limited effort" }).click();
+    await expect(modelButton).toHaveText("Limited effort");
+    await expect(window.getByTestId("transcript")).toContainText("Model set to local-test:limited");
+    await expect(composer).toHaveValue(draft);
+
+    await modelButton.click();
+    picker = window.getByRole("dialog", { name: "Choose model" });
+    await picker.getByRole("button", { name: "GPT-4o" }).click();
+    await expect(modelButton).toHaveText("GPT-4o");
+    await expect(window.getByTestId("transcript")).toContainText("Model set to openai:gpt-4o");
+    await expect(composer).toHaveValue(draft);
+
+    await harness.close();
+    harness = await launchDesktop(userDataDir, { agentDir });
+    window = await harness.firstWindow();
+    await expect(window.getByTestId("composer")).toHaveValue(draft);
+    await expect(window.locator(".composer__bar .model-selector__badge").first()).toHaveText(
+      "GPT-4o",
+    );
+
+    await openNewThread(window);
+    const newThreadDraft = "Keep this new-thread draft across provider choices";
+    const newThreadComposer = window.getByTestId("new-thread-composer");
+    await newThreadComposer.fill(newThreadDraft);
+    const newThreadModelButton = window.locator(".new-thread__hint .model-selector__badge").first();
+    await newThreadModelButton.click();
+    picker = window.getByRole("dialog", { name: "Choose model" });
+    await window.keyboard.press("Escape");
+    await expect(picker).toHaveCount(0);
+    await expect(newThreadModelButton).toHaveText("GPT-5");
+    await expect(newThreadComposer).toHaveValue(newThreadDraft);
+    await newThreadModelButton.click();
+    picker = window.getByRole("dialog", { name: "Choose model" });
+    await picker.getByRole("button", { name: "Limited effort" }).click();
+    await expect(newThreadModelButton).toHaveText("Limited effort");
+    await expect(newThreadComposer).toHaveValue(newThreadDraft);
+    await newThreadModelButton.click();
+    picker = window.getByRole("dialog", { name: "Choose model" });
+    await picker.getByRole("button", { name: "GPT-4o" }).click();
+    await expect(newThreadModelButton).toHaveText("GPT-4o");
+    await expect(newThreadComposer).toHaveValue(newThreadDraft);
+    await window.screenshot({ path: test.info().outputPath("provider-model-drafts.png") });
   } finally {
     await harness.close();
   }
