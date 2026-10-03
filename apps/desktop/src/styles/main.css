@@ -1741,8 +1741,12 @@
 }
 
 .enable-transparency .thread-tabs {
-  background: var(--surface-glass) !important;
-  backdrop-filter: var(--glass-blur) var(--glass-saturation);
+  background: transparent !important;
+}
+
+.enable-transparency .thread-tabs__item--selected,
+.enable-transparency .thread-tabs__item--selected:hover {
+  background: transparent;
 }
 
 .enable-transparency .composer {
