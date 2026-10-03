@@ -20,6 +20,8 @@ export function ThreadTabs({
   title,
   onMaximize,
   draftOpen = false,
+  draftSelected = false,
+  onSelectDraft,
   onCloseDraft,
 }: {
   tabs: readonly ThreadTab[];
@@ -31,6 +33,8 @@ export function ThreadTabs({
   title?: string;
   onMaximize(): void;
   draftOpen?: boolean;
+  draftSelected?: boolean;
+  onSelectDraft?(): void;
   onCloseDraft?(): void;
 }) {
   const strip = useRef<HTMLDivElement>(null);
@@ -64,7 +68,7 @@ export function ThreadTabs({
       inline: "nearest",
     });
     measure();
-  }, [selectedKey, tabs.length, overflow, draftOpen]);
+  }, [selectedKey, tabs.length, overflow, draftOpen, draftSelected]);
 
   const scroll = (direction: number) =>
     strip.current?.scrollBy({
@@ -130,20 +134,22 @@ export function ThreadTabs({
                     onClose(tab);
                     return;
                   }
+                  const tabCount = tabs.length + (draftOpen ? 1 : 0);
                   const next =
                     event.key === "ArrowRight"
-                      ? (index + 1) % tabs.length
+                      ? (index + 1) % tabCount
                       : event.key === "ArrowLeft"
-                        ? (index + tabs.length - 1) % tabs.length
+                        ? (index + tabCount - 1) % tabCount
                         : event.key === "Home"
                           ? 0
                           : event.key === "End"
-                            ? tabs.length - 1
+                            ? tabCount - 1
                             : -1;
                   if (next < 0) return;
                   event.preventDefault();
                   strip.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
-                  onSelect(tabs[next]!);
+                  if (next === tabs.length) onSelectDraft?.();
+                  else onSelect(tabs[next]!);
                 }}
               >
                 {(tab.running || tab.unseen) && (
@@ -165,19 +171,42 @@ export function ThreadTabs({
           );
         })}
         {draftOpen && (
-          <div className="thread-tabs__item thread-tabs__item--selected">
-            <button role="tab" aria-selected="true" className="thread-tabs__tab">
+          <div
+            className={`thread-tabs__item${draftSelected ? " thread-tabs__item--selected" : ""}`}
+          >
+            <button
+              role="tab"
+              aria-selected={draftSelected}
+              className="thread-tabs__tab"
+              tabIndex={draftSelected || tabs.length === 0 ? 0 : -1}
+              onClick={onSelectDraft}
+              onKeyDown={(event) => {
+                if (event.key === "Delete") {
+                  event.preventDefault();
+                  onCloseDraft?.();
+                  return;
+                }
+                const next =
+                  event.key === "ArrowLeft"
+                    ? tabs.length - 1
+                    : event.key === "ArrowRight" || event.key === "Home"
+                      ? 0
+                      : -1;
+                if (next < 0 || !tabs[next]) return;
+                event.preventDefault();
+                strip.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[next]?.focus();
+                onSelect(tabs[next]!);
+              }}
+            >
               <span className="thread-tabs__label">New thread</span>
             </button>
-            {tabs.length > 0 && (
-              <button
-                className="thread-tabs__close"
-                aria-label="Close new thread tab"
-                onClick={onCloseDraft}
-              >
-                <CloseIcon />
-              </button>
-            )}
+            <button
+              className="thread-tabs__close"
+              aria-label="Close new thread tab"
+              onClick={onCloseDraft}
+            >
+              <CloseIcon />
+            </button>
           </div>
         )}
       </div>

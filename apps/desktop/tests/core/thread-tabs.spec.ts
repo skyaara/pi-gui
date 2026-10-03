@@ -53,7 +53,7 @@ test("thread tabs switch across folders, preserve drafts, and close without dele
     await expect(secondTab).toHaveAttribute("aria-selected", "true");
     await expect(page.getByTestId("composer")).toHaveValue("Second draft");
     await page.getByRole("button", { name: "Close tab Second thread", exact: true }).click();
-    await expect(tabs.getByRole("tab")).toHaveCount(0);
+    await expect(tabs.getByRole("tab", { name: "New thread", exact: true })).toHaveCount(1);
     await expect(page.getByTestId("new-thread-composer")).toBeVisible();
     const state = await getDesktopState(page);
     expect(

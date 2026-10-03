@@ -19,6 +19,7 @@ import {
   type NewThreadEnvironment,
   type StartThreadInput,
   type WorkspaceRecord,
+  type WorkspaceSessionTarget,
 } from "../../../../contracts/desktop-state";
 import { acceptComposerAttachments } from "../../../../contracts/composer-attachments";
 import { applySnapshotIfNewer, updateSnapshot } from "../../../app/desktop-app-state";
@@ -70,6 +71,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
   const [rootWorkspaceId, setRootWorkspaceId] = useState("");
   const [environment, setEnvironment] = useState<NewThreadEnvironment>("local");
   const [prompt, setPrompt] = useState("");
+  const [hasOpenTab, setHasOpenTab] = useState(false);
   const [attachments, setAttachments] = useState<readonly ComposerAttachment[]>([]);
   const [provider, setProvider] = useState<string | undefined>();
   const [modelId, setModelId] = useState<string | undefined>();
@@ -230,8 +232,39 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
     [api, flushComposerDraft, resetSurface, setSnapshot, prompt],
   );
 
+  const resumeSurface = useCallback(() => {
+    openedInAppRef.current = true;
+    flushComposerDraft();
+    if (api) {
+      void updateSnapshot(setSnapshot, () => api.setActiveView("new-thread")).catch(console.error);
+    }
+  }, [api, flushComposerDraft, setSnapshot]);
+
+  const closeTab = useCallback(
+    (next?: WorkspaceSessionTarget) => {
+      if (
+        (prompt.trim() || attachments.length > 0) &&
+        !window.confirm("Discard this unsent draft and close the tab?")
+      )
+        return false;
+      resetSurface();
+      setHasOpenTab(false);
+      if (api && next && snapshot?.activeView === "new-thread") {
+        void updateSnapshot(setSnapshot, () => api.selectSession(next)).catch(console.error);
+      }
+      return true;
+    },
+    [api, attachments.length, prompt, resetSurface, setSnapshot, snapshot?.activeView],
+  );
+
   const openSurface = useCallback(
     (workspaceId?: string) => {
+      if (hasOpenTab || prompt.trim() || attachments.length > 0) {
+        setHasOpenTab(true);
+        resumeSurface();
+        return;
+      }
+      setHasOpenTab(true);
       if (rootWorkspaceOptions.length === 0) {
         openStandalone();
         return;
@@ -256,6 +289,10 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       setSnapshot,
       rootWorkspaceOptions.length,
       openStandalone,
+      hasOpenTab,
+      prompt,
+      attachments.length,
+      resumeSurface,
     ],
   );
 
@@ -397,6 +434,7 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
           setComposerError(next.lastError);
           return;
         }
+        setHasOpenTab(false);
         setPrompt("");
         setAttachments([]);
         setProvider(undefined);
@@ -502,6 +540,10 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
   );
 
   useEffect(() => {
+    if (prompt || attachments.length > 0) setHasOpenTab(true);
+  }, [prompt, attachments.length]);
+
+  useEffect(() => {
     if (rootWorkspaceOptions.length === 0) {
       setPendingWorkspaceId("");
       setRootWorkspaceId("");
@@ -586,6 +628,9 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       handleComposerKeyDown,
       startThread,
       openSurface,
+      resumeSurface,
+      closeTab,
+      hasOpenTab,
       openStandalone,
       resetSurface,
       setComposerError,
@@ -618,6 +663,9 @@ export function useNewThreadController(params: UseNewThreadControllerParams) {
       handleComposerKeyDown,
       startThread,
       openSurface,
+      resumeSurface,
+      closeTab,
+      hasOpenTab,
       openStandalone,
       resetSurface,
     ],

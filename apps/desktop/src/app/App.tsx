@@ -1016,8 +1016,10 @@ export default function App() {
       <main className={mainClassName} style={workbenchWidth.style}>
         <ThreadTabs
           tabs={threadTabs.tabs}
-          draftOpen={Boolean(showNewThread)}
-          onCloseDraft={() => setActiveView("threads")}
+          draftOpen={newThread.hasOpenTab || Boolean(showNewThread)}
+          draftSelected={Boolean(showNewThread)}
+          onSelectDraft={newThread.resumeSurface}
+          onCloseDraft={() => newThread.closeTab(threadTabs.tabs.at(-1))}
           selectedKey={
             !showNewThread && snapshot.activeView === "threads" ? selectedSessionKey : ""
           }
@@ -1038,32 +1040,30 @@ export default function App() {
               onTogglePanel={commands.toggleSidePanel}
             >
               {snapshot.activeView === "threads" && selectedWorkspace && selectedSession ? (
-                <>
-                  <div
-                    className="chat-header__menu-wrap"
-                    ref={
-                      threadMenu.openMenu?.surface === "header" ? threadMenu.menuWrapRef : undefined
-                    }
+                <div
+                  className="chat-header__menu-wrap"
+                  ref={
+                    threadMenu.openMenu?.surface === "header" ? threadMenu.menuWrapRef : undefined
+                  }
+                >
+                  <button
+                    aria-haspopup="menu"
+                    aria-expanded={threadMenu.openMenu?.surface === "header"}
+                    aria-label="Thread actions"
+                    className="icon-button"
+                    data-testid="thread-header-menu"
+                    type="button"
+                    onClick={threadMenu.toggleHeaderMenu}
                   >
-                    <button
-                      aria-haspopup="menu"
-                      aria-expanded={threadMenu.openMenu?.surface === "header"}
-                      aria-label="Thread actions"
-                      className="icon-button"
-                      data-testid="thread-header-menu"
-                      type="button"
-                      onClick={threadMenu.toggleHeaderMenu}
-                    >
-                      <MoreIcon />
-                    </button>
-                    {threadMenu.openMenu?.surface === "header" && selectedThreadActions ? (
-                      <ThreadActionsMenu
-                        actions={selectedThreadActions}
-                        className="chat-header__menu"
-                      />
-                    ) : null}
-                  </div>
-                </>
+                    <MoreIcon />
+                  </button>
+                  {threadMenu.openMenu?.surface === "header" && selectedThreadActions ? (
+                    <ThreadActionsMenu
+                      actions={selectedThreadActions}
+                      className="chat-header__menu"
+                    />
+                  ) : null}
+                </div>
               ) : null}
             </ThreadTabActions>
           }
