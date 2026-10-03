@@ -58,7 +58,7 @@ test("one tab row holds thread controls and the prompt identifies its workspace"
       const canvasBounds = (await page.locator(".canvas--thread").boundingBox())!;
       const controlsBounds = (await row.locator(".thread-tabs__actions").boundingBox())!;
       const tabsBounds = (await tabs.boundingBox())!;
-      expect(rowBounds.height).toBe(48);
+      expect(rowBounds.height).toBe(44);
       expect(Math.abs(canvasBounds.y - rowBounds.y - rowBounds.height)).toBeLessThan(1);
       expect(controlsBounds.x).toBeGreaterThan(tabsBounds.x + tabsBounds.width);
       expect(controlsBounds.x + controlsBounds.width).toBeLessThanOrEqual(width);

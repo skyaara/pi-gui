@@ -3,9 +3,9 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 48px;
+  height: 44px;
   min-width: 0;
-  padding: 6px 10px 0;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border-light);
   background: var(--main);
   -webkit-app-region: drag;
@@ -13,7 +13,7 @@
 
 .thread-tabs__strip {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: 4px;
   min-width: 0;
   flex: 1;
@@ -28,21 +28,20 @@
 .thread-tabs__item {
   display: flex;
   align-items: center;
-  flex: 1 0 140px;
-  max-width: 240px;
+  flex: 1 0 120px;
+  max-width: 160px;
   min-width: 0;
-  border-radius: 8px 8px 0 0;
+  height: 28px;
+  border-radius: 5px;
   color: var(--muted);
-  border: 1px solid transparent;
+  border: 0;
 }
 .thread-tabs__item:hover {
   background: var(--overlay-hover);
 }
 .thread-tabs__item--selected {
-  background: var(--surface);
+  background: var(--overlay-hover);
   color: var(--text);
-  border-color: var(--border-light);
-  border-bottom-color: transparent;
 }
 .thread-tabs button {
   -webkit-app-region: no-drag;
@@ -59,7 +58,7 @@
   min-width: 0;
   height: 100%;
   padding: 0 10px;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   text-align: left;
 }
 .thread-tabs__label {
@@ -78,7 +77,16 @@
   border-radius: 6px;
 }
 .thread-tabs__close {
-  margin-right: 5px;
+  margin-right: 2px;
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  opacity: 0;
+}
+.thread-tabs__item:hover .thread-tabs__close,
+.thread-tabs__item:focus-within .thread-tabs__close,
+.thread-tabs__item--selected .thread-tabs__close {
+  opacity: 1;
 }
 .thread-tabs button:hover {
   background: var(--overlay-hover);
@@ -123,7 +131,7 @@
 
 @media (max-width: 980px) {
   .main--with-thread-tabs.main--with-side-panel > .side-panel {
-    top: 48px;
+    top: 44px;
   }
 }
 
